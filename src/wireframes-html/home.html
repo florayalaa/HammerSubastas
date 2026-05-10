@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe - Home</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 16px 0;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 120px;
+            height: 40px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .nav {
+            display: flex;
+            gap: 16px;
+        }
+        .nav-item {
+            padding: 8px 16px;
+            background-color: #ddd;
+            border-radius: 4px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background-color: #999;
+            padding: 80px 20px;
+        }
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+        .hero-image {
+            width: 240px;
+            height: 240px;
+            background-color: #666;
+            border-radius: 8px;
+            margin: 0 auto;
+        }
+        .hero-text h1 {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+        .hero-text p {
+            font-size: 20px;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 32px;
+            background-color: #ddd;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 80px 20px;
+        }
+        .section-title {
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+        .feature-card {
+            background-color: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #ddd;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        /* Categories Section */
+        .categories {
+            padding: 80px 20px;
+            background-color: #fff;
+        }
+        .categories-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 48px;
+            font-size: 16px;
+        }
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .category-card {
+            background-color: #fff;
+            padding: 24px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .category-icon {
+            width: 64px;
+            height: 64px;
+            background-color: #999;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+        }
+        .category-card h4 {
+            font-size: 16px;
+        }
+        
+        /* CTA Section */
+        .cta {
+            background-color: #666;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        .cta h2 {
+            font-size: 40px;
+            margin-bottom: 24px;
+        }
+        .cta p {
+            font-size: 20px;
+            margin-bottom: 32px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+            }
+            .hero-text {
+                text-align: center;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .categories-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo"></div>
+                <nav class="nav">
+                    <div class="nav-item">Ver Subastas</div>
+                    <div class="nav-item">Iniciar Sesión</div>
+                    <div class="nav-item">Registrarse</div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div>
+                    <div class="hero-image"></div>
+                </div>
+                <div class="hero-text">
+                    <h1>Bienvenido</h1>
+                    <p>Participa en subastas exclusivas, vende tus artículos de valor y únete a una comunidad de coleccionistas y compradores exigentes.</p>
+                    <a href="#" class="btn">Ver Subastas</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">¿Por qué elegir HAMMER?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h3>Subastas en Tiempo Real</h3>
+                    <p>Participa en subastas dinámicas con actualizaciones en vivo</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h3>Seguridad Garantizada</h3>
+                    <p>Verificación completa de usuarios y transacciones seguras</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h3>Categorías Premium</h3>
+                    <p>Accede a categorías especiales según tu actividad</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h3>Historial Completo</h3>
+                    <p>Revisa todas tus participaciones y estadísticas</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories">
+        <div class="container">
+            <h2 class="section-title">Categorías de Usuario</h2>
+            <p class="categories-subtitle">Tu categoría determina tu acceso a subastas exclusivas y se mejora con tu actividad</p>
+            <div class="categories-grid">
+                <div class="category-card">
+                    <div class="category-icon"></div>
+                    <h4>Común</h4>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"></div>
+                    <h4>Especial</h4>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"></div>
+                    <h4>Plata</h4>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"></div>
+                    <h4>Oro</h4>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"></div>
+                    <h4>Platino</h4>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>¿Listo para comenzar?</h2>
+            <p>Regístrate hoy y accede a subastas exclusivas de artículos únicos</p>
+            <a href="#" class="btn">Crear Cuenta Gratuita</a>
+        </div>
+    </section>
+</body>
+</html>

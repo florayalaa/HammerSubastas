@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Completar Registro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .logo {
+            width: 120px;
+            height: 36px;
+            background-color: #999;
+            border-radius: 4px;
+            margin: 0 auto;
+        }
+        
+        /* Success Banner */
+        .success-banner {
+            background-color: #e8f5e9;
+            padding: 20px 16px;
+            text-align: center;
+            border-bottom: 2px solid #4caf50;
+        }
+        .check-icon {
+            width: 64px;
+            height: 64px;
+            background-color: #4caf50;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+        }
+        .success-banner h1 {
+            font-size: 22px;
+            margin-bottom: 8px;
+            color: #2e7d32;
+        }
+        .success-banner p {
+            font-size: 14px;
+            color: #558b2f;
+        }
+        
+        /* Content */
+        .content {
+            background-color: #fff;
+            padding: 24px 16px;
+        }
+        .content h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+        .content p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 24px;
+        }
+        
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #666;
+        }
+        .helper-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        /* File Upload */
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            background-color: #fafafa;
+        }
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #999;
+            border-radius: 8px;
+            margin: 0 auto 12px;
+        }
+        .upload-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .upload-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #666;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        
+        /* Requirements */
+        .requirements {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .requirements h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #856404;
+        }
+        .requirements ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .requirements li {
+            font-size: 13px;
+            color: #856404;
+            padding-left: 20px;
+            margin-bottom: 6px;
+            position: relative;
+        }
+        .requirements li:before {
+            content: "•";
+            position: absolute;
+            left: 8px;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: #666;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            margin-bottom: 12px;
+            border: none;
+        }
+        .btn-secondary {
+            background-color: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        
+        /* Info Box */
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+        .info-box p {
+            font-size: 13px;
+            color: #1565c0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo"></div>
+    </header>
+    
+    <!-- Success Banner -->
+    <div class="success-banner">
+        <div class="check-icon"></div>
+        <h1>¡Documentos Aprobados!</h1>
+        <p>Tu identidad ha sido verificada exitosamente</p>
+    </div>
+    
+    <!-- Content -->
+    <div class="content">
+        <h2>Completar Registro</h2>
+        <p>Para comenzar a participar en subastas, necesitamos que completes los siguientes pasos finales:</p>
+        
+        <!-- Info Box -->
+        <div class="info-box">
+            <p><strong>Importante:</strong> Estos datos son necesarios para poder registrar tus pujas y gestionar tus compras de forma segura.</p>
+        </div>
+        
+        <!-- Form -->
+        <form>
+            <!-- Password -->
+            <div class="form-group">
+                <label class="form-label">Crear Contraseña *</label>
+                <input type="password" class="form-input" placeholder="Mínimo 8 caracteres">
+                <p class="helper-text">Debe incluir mayúsculas, minúsculas y números</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Confirmar Contraseña *</label>
+                <input type="password" class="form-input" placeholder="Repetir contraseña">
+            </div>
+            
+            <!-- Phone -->
+            <div class="form-group">
+                <label class="form-label">Teléfono de Contacto *</label>
+                <input type="tel" class="form-input" placeholder="+54 11 1234-5678">
+                <p class="helper-text">Usaremos este número para notificaciones importantes</p>
+            </div>
+            
+            <!-- Address -->
+            <div class="form-group">
+                <label class="form-label">Dirección Completa *</label>
+                <input type="text" class="form-input" placeholder="Calle, número, piso, depto">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Ciudad *</label>
+                <input type="text" class="form-input" placeholder="Ciudad">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Código Postal *</label>
+                <input type="text" class="form-input" placeholder="1234">
+            </div>
+            
+            <!-- Selfie Verification -->
+            <div class="form-group">
+                <label class="form-label">Foto Selfie con DNI *</label>
+                <div class="requirements">
+                    <h3>Requisitos de la foto:</h3>
+                    <ul>
+                        <li>Sostén tu DNI junto a tu rostro</li>
+                        <li>Asegúrate que tu cara y el DNI sean visibles</li>
+                        <li>Buena iluminación, sin sombras</li>
+                        <li>Formato: JPG, PNG (máx 5MB)</li>
+                    </ul>
+                </div>
+                <div class="upload-area">
+                    <div class="upload-icon"></div>
+                    <p class="upload-text">Arrastra tu foto aquí o haz clic para seleccionar</p>
+                    <a href="#" class="upload-btn">Seleccionar Archivo</a>
+                </div>
+            </div>
+            
+            <!-- Terms -->
+            <div class="form-group" style="display: flex; gap: 12px; align-items: flex-start;">
+                <input type="checkbox" style="width: 20px; height: 20px; margin-top: 2px;">
+                <label style="font-size: 13px; line-height: 1.5;">
+                    Acepto los <a href="#" style="color: #666; text-decoration: underline;">Términos y Condiciones</a> y la <a href="#" style="color: #666; text-decoration: underline;">Política de Privacidad</a>
+                </label>
+            </div>
+            
+            <!-- Buttons -->
+            <button type="submit" class="btn">Completar Registro</button>
+            <button type="button" class="btn btn-secondary">Completar Más Tarde</button>
+        </form>
+    </div>
+</body>
+</html>

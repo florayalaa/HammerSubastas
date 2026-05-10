@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Solicitar Venta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            width: 32px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .save-btn {
+            padding: 8px 16px;
+            background-color: #666;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        /* Page Header */
+        .page-header {
+            background-color: #fff;
+            padding: 20px 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .page-header p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        /* Form */
+        .form {
+            padding: 20px 16px;
+        }
+        .form-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .helper-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+        
+        /* Image Upload */
+        .image-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 32px 20px;
+            text-align: center;
+            background-color: #fafafa;
+            margin-bottom: 12px;
+        }
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #999;
+            border-radius: 8px;
+            margin: 0 auto 12px;
+        }
+        .upload-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .upload-btn {
+            display: inline-block;
+            padding: 10px 24px;
+            background-color: #666;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        
+        /* Image Preview Grid */
+        .image-previews {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .preview-item {
+            position: relative;
+            aspect-ratio: 1;
+            background-color: #e0e0e0;
+            border-radius: 6px;
+        }
+        .preview-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(0,0,0,0.6);
+            border-radius: 50%;
+        }
+        
+        /* Info Box */
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .info-box p {
+            font-size: 13px;
+            color: #1565c0;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        /* Requirements List */
+        .requirements {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .requirements h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #856404;
+        }
+        .requirements ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .requirements li {
+            font-size: 13px;
+            color: #856404;
+            padding-left: 20px;
+            margin-bottom: 6px;
+            position: relative;
+        }
+        .requirements li:before {
+            content: "•";
+            position: absolute;
+            left: 8px;
+        }
+        
+        /* Submit Button */
+        .submit-section {
+            padding: 16px;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+        }
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background-color: #666;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="back-btn"></div>
+            <a href="#" class="save-btn">Guardar Borrador</a>
+        </div>
+    </header>
+    
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Solicitar Venta</h1>
+        <p>Completa el formulario para que nuestro equipo evalúe tu producto y lo incluya en una subasta</p>
+    </div>
+    
+    <!-- Form -->
+    <div class="form">
+        <!-- Info Box -->
+        <div class="info-box">
+            <p><strong>Tiempo de evaluación:</strong> Una vez enviada tu solicitud, nuestro equipo de expertos la revisará en 3-5 días hábiles. Recibirás una notificación con el resultado.</p>
+        </div>
+        
+        <!-- Basic Information -->
+        <div class="form-section">
+            <h2 class="section-title">Información Básica</h2>
+            
+            <div class="form-group">
+                <label class="form-label">Título del Producto *</label>
+                <input type="text" class="form-input" placeholder="Ej: Reloj Omega Vintage 1960">
+                <p class="helper-text">Sé descriptivo y específico</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Categoría *</label>
+                <select class="form-select">
+                    <option>Seleccionar categoría...</option>
+                    <option>Arte</option>
+                    <option>Joyería</option>
+                    <option>Relojes</option>
+                    <option>Antigüedades</option>
+                    <option>Coleccionables</option>
+                    <option>Vinos y Licores</option>
+                    <option>Otros</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Descripción Detallada *</label>
+                <textarea class="form-textarea" placeholder="Describe el estado, historia, características especiales, procedencia..."></textarea>
+                <p class="helper-text">Incluye toda la información relevante: año, fabricante, materiales, dimensiones, etc.</p>
+            </div>
+        </div>
+        
+        <!-- Images -->
+        <div class="form-section">
+            <h2 class="section-title">Imágenes del Producto</h2>
+            
+            <div class="requirements">
+                <h3>Requisitos de las fotos:</h3>
+                <ul>
+                    <li>Mínimo 3 fotos, máximo 10</li>
+                    <li>Buena iluminación natural</li>
+                    <li>Fondo neutro y limpio</li>
+                    <li>Mostrar todos los ángulos</li>
+                    <li>Incluir detalles de marcas o firmas</li>
+                    <li>Formato JPG o PNG (máx 5MB cada una)</li>
+                </ul>
+            </div>
+            
+            <div class="image-upload-area">
+                <div class="upload-icon"></div>
+                <p class="upload-text">Arrastra tus fotos aquí o haz clic para seleccionar</p>
+                <a href="#" class="upload-btn">Seleccionar Imágenes</a>
+            </div>
+            
+            <!-- Preview (ejemplo con 3 imágenes) -->
+            <div class="image-previews">
+                <div class="preview-item">
+                    <div class="preview-remove"></div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-remove"></div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-remove"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pricing -->
+        <div class="form-section">
+            <h2 class="section-title">Precio y Condiciones</h2>
+            
+            <div class="form-group">
+                <label class="form-label">Precio Base Estimado *</label>
+                <input type="number" class="form-input" placeholder="50000">
+                <p class="helper-text">Este es tu precio mínimo esperado. Los expertos pueden sugerir ajustes.</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Moneda *</label>
+                <select class="form-select">
+                    <option>Pesos Argentinos (ARS)</option>
+                    <option>Dólares Estadounidenses (USD)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">¿Tienes documentación de autenticidad?</label>
+                <select class="form-select">
+                    <option>No</option>
+                    <option>Sí - Certificado de autenticidad</option>
+                    <option>Sí - Factura original</option>
+                    <option>Sí - Certificado de tasación</option>
+                    <option>Sí - Otro (especificar en descripción)</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="form-section">
+            <h2 class="section-title">Información Adicional</h2>
+            
+            <div class="form-group">
+                <label class="form-label">Año de Fabricación (si aplica)</label>
+                <input type="text" class="form-input" placeholder="1960">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Fabricante o Artista</label>
+                <input type="text" class="form-input" placeholder="Omega, Cartier, etc.">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Estado del Producto *</label>
+                <select class="form-select">
+                    <option>Nuevo / Sin uso</option>
+                    <option>Excelente</option>
+                    <option>Muy bueno</option>
+                    <option>Bueno</option>
+                    <option>Regular</option>
+                    <option>Requiere restauración</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Notas para el Evaluador</label>
+                <textarea class="form-textarea" placeholder="Información adicional que quieras compartir..."></textarea>
+            </div>
+        </div>
+        
+        <!-- Terms -->
+        <div class="form-section">
+            <div class="form-group" style="display: flex; gap: 12px; align-items: flex-start;">
+                <input type="checkbox" style="width: 20px; height: 20px; margin-top: 2px;">
+                <label style="font-size: 13px; line-height: 1.5;">
+                    Confirmo que soy el propietario legítimo del producto y acepto las <a href="#" style="color: #666; text-decoration: underline;">Condiciones de Venta</a> de HAMMER (comisión del 15% sobre precio final)
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Submit Button -->
+    <div class="submit-section">
+        <button type="submit" class="submit-btn">Enviar Solicitud</button>
+    </div>
+</body>
+</html>

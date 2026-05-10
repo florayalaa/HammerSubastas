@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Subastas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 100px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 20px 16px;
+        }
+        
+        /* Page Header */
+        .page-header {
+            margin-bottom: 20px;
+        }
+        .page-title {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+        .page-subtitle {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Filter Section */
+        .filter-section {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .filter-group {
+            margin-bottom: 12px;
+        }
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        .filter-label {
+            font-size: 13px;
+            margin-bottom: 6px;
+            display: block;
+            font-weight: 500;
+        }
+        .filter-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fafafa;
+        }
+        .filter-input.with-icon {
+            padding-left: 38px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            background-color: #999;
+            border-radius: 50%;
+        }
+        
+        /* Auction Card */
+        .auction-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        
+        /* Status Badge */
+        .auction-image-wrapper {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background-color: #ccc;
+        }
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: bold;
+            background-color: #999;
+            color: #fff;
+        }
+        .status-badge.live {
+            background-color: #666;
+        }
+        .status-badge.upcoming {
+            background-color: #999;
+        }
+        
+        /* Auction Content */
+        .auction-content {
+            padding: 12px;
+        }
+        .auction-header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .auction-tag {
+            padding: 4px 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .auction-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        
+        /* Auction Details */
+        .auction-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .detail-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+        .detail-icon {
+            width: 14px;
+            height: 14px;
+            background-color: #999;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        /* Auction Footer */
+        .auction-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        .starting-bid {
+            display: flex;
+            flex-direction: column;
+        }
+        .bid-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+        .bid-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .view-btn {
+            padding: 8px 16px;
+            background-color: #999;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            background-color: #ddd;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+        }
+        .empty-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .empty-text {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"></div>
+            <div class="menu-icon"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Subastas Disponibles</h1>
+            <p class="page-subtitle">Explora todas las subastas activas y próximas</p>
+        </div>
+        
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label class="filter-label">Buscar</label>
+                <div class="input-wrapper">
+                    <div class="input-icon"></div>
+                    <input type="text" class="filter-input with-icon" placeholder="Buscar subastas...">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Categoría</label>
+                <select class="filter-input">
+                    <option>Todas las categorías</option>
+                    <option>Común</option>
+                    <option>Especial</option>
+                    <option>Plata</option>
+                    <option>Oro</option>
+                    <option>Platino</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Moneda</label>
+                <select class="filter-input">
+                    <option>Todas las monedas</option>
+                    <option>USD</option>
+                    <option>ARS</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Auction Cards -->
+        <div class="auction-card">
+            <div class="auction-image-wrapper">
+                <div class="status-badge upcoming">PRÓXIMA</div>
+            </div>
+            <div class="auction-content">
+                <div class="auction-header">
+                    <span class="auction-tag">Oro</span>
+                    <span class="auction-tag">USD</span>
+                    <span class="auction-tag">24 items</span>
+                </div>
+                <h3 class="auction-title">Subasta de Arte Contemporáneo</h3>
+                <div class="auction-details">
+                    <div class="detail-row">
+                        <div class="detail-icon"></div>
+                        <span>18 de Marzo, 2026 - 18:00</span>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-icon"></div>
+                        <span>Buenos Aires, Argentina</span>
+                    </div>
+                </div>
+                <div class="auction-footer">
+                    <div class="starting-bid">
+                        <span class="bid-label">Puja inicial</span>
+                        <span class="bid-value">$5,000</span>
+                    </div>
+                    <div class="view-btn">Ver Detalles</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="auction-card">
+            <div class="auction-image-wrapper">
+                <div class="status-badge live">EN VIVO</div>
+            </div>
+            <div class="auction-content">
+                <div class="auction-header">
+                    <span class="auction-tag">Platino</span>
+                    <span class="auction-tag">USD</span>
+                    <span class="auction-tag">18 items</span>
+                </div>
+                <h3 class="auction-title">Colección de Relojes de Lujo</h3>
+                <div class="auction-details">
+                    <div class="detail-row">
+                        <div class="detail-icon"></div>
+                        <span>19 de Marzo, 2026 - 20:00</span>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-icon"></div>
+                        <span>Montevideo, Uruguay</span>
+                    </div>
+                </div>
+                <div class="auction-footer">
+                    <div class="starting-bid">
+                        <span class="bid-label">Puja inicial</span>
+                        <span class="bid-value">$15,000</span>
+                    </div>
+                    <div class="view-btn">Ver Detalles</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="auction-card">
+            <div class="auction-image-wrapper">
+                <div class="status-badge upcoming">PRÓXIMA</div>
+            </div>
+            <div class="auction-content">
+                <div class="auction-header">
+                    <span class="auction-tag">Plata</span>
+                    <span class="auction-tag">ARS</span>
+                    <span class="auction-tag">32 items</span>
+                </div>
+                <h3 class="auction-title">Joyería Vintage Exclusiva</h3>
+                <div class="auction-details">
+                    <div class="detail-row">
+                        <div class="detail-icon"></div>
+                        <span>20 de Marzo, 2026 - 19:00</span>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-icon"></div>
+                        <span>Santiago, Chile</span>
+                    </div>
+                </div>
+                <div class="auction-footer">
+                    <div class="starting-bid">
+                        <span class="bid-label">Puja inicial</span>
+                        <span class="bid-value">$3,500</span>
+                    </div>
+                    <div class="view-btn">Ver Detalles</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="auction-card">
+            <div class="auction-image-wrapper">
+                <div class="status-badge upcoming">PRÓXIMA</div>
+            </div>
+            <div class="auction-content">
+                <div class="auction-header">
+                    <span class="auction-tag">Oro</span>
+                    <span class="auction-tag">USD</span>
+                    <span class="auction-tag">15 items</span>
+                </div>
+                <h3 class="auction-title">Pintura Clásica Europea</h3>
+                <div class="auction-details">
+                    <div class="detail-row">
+                        <div class="detail-icon"></div>
+                        <span>22 de Marzo, 2026 - 17:00</span>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-icon"></div>
+                        <span>Madrid, España</span>
+                    </div>
+                </div>
+                <div class="auction-footer">
+                    <div class="starting-bid">
+                        <span class="bid-label">Puja inicial</span>
+                        <span class="bid-value">$25,000</span>
+                    </div>
+                    <div class="view-btn">Ver Detalles</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Empty State (comentado - mostrar cuando no hay resultados) -->
+        <!-- 
+        <div class="empty-state">
+            <div class="empty-icon"></div>
+            <h3 class="empty-title">No se encontraron subastas</h3>
+            <p class="empty-text">Intenta ajustar tus filtros de búsqueda</p>
+        </div>
+        -->
+    </main>
+</body>
+</html>

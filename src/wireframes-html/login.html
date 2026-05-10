@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe - Inicio de Sesión</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 16px 0;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 120px;
+            height: 40px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            min-height: calc(100vh - 72px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 20px;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 480px;
+        }
+        .page-title {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 32px;
+        }
+        
+        /* Login Card */
+        .login-card {
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Alert */
+        .alert {
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 8px;
+        }
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+            background-color: #666;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .alert-content {
+            flex: 1;
+        }
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .alert-text {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Form */
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-label {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #999;
+            border-radius: 50%;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 12px 12px 44px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fafafa;
+        }
+        
+        /* Checkbox Row */
+        .checkbox-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 1px solid #999;
+            border-radius: 4px;
+        }
+        .link {
+            font-size: 14px;
+            color: #666;
+            text-decoration: underline;
+        }
+        
+        /* Button */
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background-color: #999;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        /* Footer Text */
+        .footer-text {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .login-card {
+                padding: 24px;
+            }
+            .page-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="login-container">
+            <h1 class="page-title">Ingrese sus datos</h1>
+            
+            <div class="login-card">
+                <!-- Alert (opcional - mostrar si viene de redirección) -->
+                <!-- <div class="alert">
+                    <div class="alert-icon"></div>
+                    <div class="alert-content">
+                        <div class="alert-title">Inicio de sesión requerido</div>
+                        <div class="alert-text">Debes iniciar sesión para acceder a esta página.</div>
+                    </div>
+                </div> -->
+                
+                <form class="form">
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label">Correo Electrónico</label>
+                        <div class="input-wrapper">
+                            <div class="input-icon"></div>
+                            <input type="email" class="form-input" placeholder="tu@email.com" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label class="form-label">Contraseña</label>
+                        <div class="input-wrapper">
+                            <div class="input-icon"></div>
+                            <input type="password" class="form-input" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="checkbox-row">
+                        <label class="checkbox-label">
+                            <div class="checkbox"></div>
+                            Recordarme
+                        </label>
+                        <a href="#" class="link">¿Olvidaste tu contraseña?</a>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-primary">Iniciar Sesión</button>
+                </form>
+                
+                <!-- Register Link -->
+                <div class="footer-text">
+                    ¿No tienes una cuenta? <a href="#" class="link">Regístrate aquí</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 100px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 24px 16px;
+        }
+        
+        .page-title {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 24px;
+            color: #666;
+        }
+        
+        /* Alert */
+        .alert {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+        }
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+            background-color: #999;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .alert-content {
+            flex: 1;
+        }
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #333;
+        }
+        .alert-text {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        /* Login Card */
+        .login-card {
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Form */
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-label {
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #999;
+            border-radius: 50%;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 12px 12px 44px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fafafa;
+        }
+        
+        /* Checkbox Row */
+        .checkbox-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 1px solid #999;
+            border-radius: 4px;
+        }
+        .link {
+            font-size: 13px;
+            color: #666;
+            text-decoration: underline;
+        }
+        
+        /* Button */
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background-color: #999;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        /* Footer Text */
+        .footer-text {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <h1 class="page-title">Ingrese sus datos</h1>
+        
+        <div class="login-card">
+            <!-- Alert (opcional - mostrar si viene de redirección) -->
+            <div class="alert">
+                <div class="alert-icon"></div>
+                <div class="alert-content">
+                    <div class="alert-title">Inicio de sesión requerido</div>
+                    <div class="alert-text">Debes iniciar sesión para acceder a esta página.</div>
+                </div>
+            </div>
+            
+            <form class="form">
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon"></div>
+                        <input type="email" class="form-input" placeholder="tu@email.com" required>
+                    </div>
+                </div>
+                
+                <!-- Password -->
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon"></div>
+                        <input type="password" class="form-input" placeholder="••••••••" required>
+                    </div>
+                </div>
+                
+                <!-- Remember Me & Forgot Password -->
+                <div class="checkbox-row">
+                    <label class="checkbox-label">
+                        <div class="checkbox"></div>
+                        Recordarme
+                    </label>
+                    <a href="#" class="link">¿Olvidaste tu contraseña?</a>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn-primary">Iniciar Sesión</button>
+            </form>
+            
+            <!-- Register Link -->
+            <div class="footer-text">
+                ¿No tienes una cuenta?<br>
+                <a href="#" class="link">Regístrate aquí</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Subasta en Vivo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            width: 32px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 50%;
+        }
+        .header-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Live Badge */
+        .live-badge {
+            background-color: #666;
+            color: #fff;
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        /* Current Item */
+        .current-item {
+            background-color: #fff;
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .item-number {
+            font-size: 12px;
+            color: #666;
+        }
+        .timer {
+            background-color: #f0f0f0;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .item-image {
+            width: 100%;
+            height: 240px;
+            background-color: #ccc;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .item-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .item-description {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        /* Bidding Section */
+        .bidding-section {
+            background-color: #fff;
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        .current-bid {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .bid-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .bid-amount {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .bid-status {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        /* Quick Bid Buttons */
+        .quick-bids {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .quick-bid-btn {
+            padding: 12px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* Custom Bid */
+        .custom-bid {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .custom-bid-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fafafa;
+        }
+        .place-bid-btn {
+            padding: 12px 24px;
+            background-color: #999;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        /* Info Alert */
+        .info-alert {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            line-height: 1.4;
+        }
+        
+        /* Bid History */
+        .bid-history {
+            padding: 16px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .bid-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .bid-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .bidder-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .bid-item-amount {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .bid-item-time {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Next Items */
+        .next-items {
+            padding: 16px;
+            background-color: #fff;
+        }
+        .next-item-card {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .next-item-image {
+            width: 80px;
+            height: 80px;
+            background-color: #ccc;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .next-item-info {
+            flex: 1;
+        }
+        .next-item-number {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .next-item-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .next-item-estimate {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="back-btn"></div>
+            <div class="header-title">Subasta en Vivo</div>
+            <div class="menu-icon"></div>
+        </div>
+    </header>
+
+    <!-- Live Badge -->
+    <div class="live-badge">EN VIVO - Colección de Relojes de Lujo</div>
+
+    <!-- Current Item -->
+    <div class="current-item">
+        <div class="item-header">
+            <span class="item-number">Lote #5 de 18</span>
+            <span class="timer">⏱ 2:45</span>
+        </div>
+        <div class="item-image"></div>
+        <h2 class="item-title">Reloj Patek Philippe 1942</h2>
+        <p class="item-description">Reloj de bolsillo vintage en oro de 18 quilates con esfera esmaltada.</p>
+    </div>
+
+    <!-- Bidding Section -->
+    <div class="bidding-section">
+        <div class="current-bid">
+            <div class="bid-label">Puja Actual</div>
+            <div class="bid-amount">$42,500</div>
+            <div class="bid-status">Estás ganando</div>
+        </div>
+
+        <div class="quick-bids">
+            <div class="quick-bid-btn">+1%<br>$42,925</div>
+            <div class="quick-bid-btn">+5%<br>$44,625</div>
+            <div class="quick-bid-btn">+10%<br>$46,750</div>
+        </div>
+
+        <div class="custom-bid">
+            <input type="text" class="custom-bid-input" placeholder="Puja personalizada">
+            <button class="place-bid-btn">Pujar</button>
+        </div>
+
+        <div class="info-alert">
+            Incremento mínimo: +1% | Máximo: +20%
+        </div>
+    </div>
+
+    <!-- Bid History -->
+    <div class="bid-history">
+        <h3 class="section-title">Historial de Pujas</h3>
+        
+        <div class="bid-item">
+            <div class="bid-item-header">
+                <span class="bidder-name">Tú</span>
+                <span class="bid-item-amount">$42,500</span>
+            </div>
+            <div class="bid-item-time">Hace 30 segundos</div>
+        </div>
+        
+        <div class="bid-item">
+            <div class="bid-item-header">
+                <span class="bidder-name">Usuario #482</span>
+                <span class="bid-item-amount">$42,000</span>
+            </div>
+            <div class="bid-item-time">Hace 1 minuto</div>
+        </div>
+        
+        <div class="bid-item">
+            <div class="bid-item-header">
+                <span class="bidder-name">Usuario #128</span>
+                <span class="bid-item-amount">$41,500</span>
+            </div>
+            <div class="bid-item-time">Hace 2 minutos</div>
+        </div>
+    </div>
+
+    <!-- Next Items -->
+    <div class="next-items">
+        <h3 class="section-title">Próximos Lotes</h3>
+        
+        <div class="next-item-card">
+            <div class="next-item-image"></div>
+            <div class="next-item-info">
+                <div class="next-item-number">Lote #6</div>
+                <div class="next-item-title">Rolex Submariner 1960</div>
+                <div class="next-item-estimate">Estimado: $35,000 - $45,000</div>
+            </div>
+        </div>
+        
+        <div class="next-item-card">
+            <div class="next-item-image"></div>
+            <div class="next-item-info">
+                <div class="next-item-number">Lote #7</div>
+                <div class="next-item-title">Omega Speedmaster Moon Watch</div>
+                <div class="next-item-estimate">Estimado: $28,000 - $38,000</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Detalle de Subasta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #666;
+            padding: 16px;
+            color: #fff;
+        }
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .back-icon {
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border-radius: 2px;
+        }
+        .header-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .badge {
+            padding: 4px 12px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            font-size: 12px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-icon {
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border-radius: 2px;
+        }
+        
+        /* Content */
+        .content {
+            background-color: #fff;
+            padding: 20px 16px;
+        }
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
+        .description {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 24px;
+        }
+        
+        /* Catalog Items */
+        .catalog {
+            padding: 20px 16px;
+            background-color: #f5f5f5;
+        }
+        .item-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .item-image {
+            width: 100%;
+            height: 200px;
+            background-color: #999;
+        }
+        .item-content {
+            padding: 16px;
+        }
+        .item-number {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .item-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .item-artist {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .item-description {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .item-bid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .bid-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .bid-amount {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* Action Buttons */
+        .actions {
+            padding: 16px;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: #666;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .btn-secondary {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="back-link">
+            <div class="back-icon"></div>
+            <span>Volver a Subastas</span>
+        </div>
+        
+        <div class="header-badges">
+            <span class="badge">Oro</span>
+            <span class="badge">USD</span>
+        </div>
+        
+        <h1>Subasta de Arte Contemporáneo</h1>
+        
+        <div class="header-info">
+            <div class="info-row">
+                <div class="info-icon"></div>
+                <span>18 de Marzo, 2026 • 18:00</span>
+            </div>
+            <div class="info-row">
+                <div class="info-icon"></div>
+                <span>Buenos Aires, Argentina</span>
+            </div>
+            <div class="info-row">
+                <div class="info-icon"></div>
+                <span>Ricardo Martínez</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Description -->
+    <div class="content">
+        <h2 class="section-title">Descripción</h2>
+        <p class="description">Una exclusiva colección de arte contemporáneo que incluye obras de reconocidos artistas internacionales. Esta subasta presenta piezas únicas que han sido cuidadosamente seleccionadas para coleccionistas exigentes.</p>
+    </div>
+    
+    <!-- Catalog Items -->
+    <div class="catalog">
+        <h2 class="section-title">Catálogo (3 items)</h2>
+        
+        <!-- Item 1 -->
+        <div class="item-card">
+            <div class="item-image"></div>
+            <div class="item-content">
+                <span class="item-number">Item #001</span>
+                <h3 class="item-title">Anillo de Diamantes Art Déco</h3>
+                <p class="item-artist">Cartier</p>
+                <p class="item-description">Exquisito anillo de platino con diamante central de 3.5 quilates, rodeado de diamantes más pequeños. Circa 1925.</p>
+                <div class="item-bid">
+                    <span class="bid-label">Puja inicial</span>
+                    <span class="bid-amount">$45,000</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Item 2 -->
+        <div class="item-card">
+            <div class="item-image"></div>
+            <div class="item-content">
+                <span class="item-number">Item #002</span>
+                <h3 class="item-title">Escultura de Bronce Moderna</h3>
+                <p class="item-artist">Pablo Serrano • 1968</p>
+                <p class="item-description">Escultura abstracta de bronce patinado. Altura: 85cm. Firmada y numerada 12/25.</p>
+                <div class="item-bid">
+                    <span class="bid-label">Puja inicial</span>
+                    <span class="bid-amount">$28,000</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Item 3 -->
+        <div class="item-card">
+            <div class="item-image"></div>
+            <div class="item-content">
+                <span class="item-number">Item #003</span>
+                <h3 class="item-title">Jarrón de Porcelana China</h3>
+                <p class="item-artist">Dinastía Qing • 1700</p>
+                <p class="item-description">Jarrón de porcelana con decoración de dragón y fénix. Dinastía Qing, periodo Kangxi. Altura: 42cm.</p>
+                <div class="item-bid">
+                    <span class="bid-label">Puja inicial</span>
+                    <span class="bid-amount">$65,000</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="actions">
+        <a href="#" class="btn">Ingresar a Subasta en Vivo</a>
+        <a href="#" class="btn btn-secondary">Descargar Catálogo PDF</a>
+    </div>
+</body>
+</html>

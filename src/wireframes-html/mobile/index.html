@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Índice - Wireframes Mobile HAMMER</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 32px;
+        }
+        
+        .section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #ddd;
+        }
+        
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #333;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .wireframe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        
+        .wireframe-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            background-color: #fafafa;
+            transition: all 0.2s;
+        }
+        
+        .wireframe-card:hover {
+            border-color: #999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .wireframe-card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .wireframe-card p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        
+        .wireframe-card a {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #666;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .wireframe-card a:hover {
+            background-color: #555;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-right: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+        
+        .info-box p {
+            font-size: 14px;
+            color: #1565c0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>📱 Wireframes Mobile - HAMMER Subastas</h1>
+    <p class="subtitle">Sistema completo de wireframes en escala de grises</p>
+    
+    <div class="info-box">
+        <p><strong>Nota:</strong> Todos los wireframes están en escala de grises y optimizados para dispositivos móviles (max-width: 414px). Haz clic en cada card para ver el wireframe completo.</p>
+    </div>
+    
+    <!-- Autenticación y Registro -->
+    <div class="section">
+        <h2>🔐 Autenticación y Registro</h2>
+        <div class="wireframe-grid">
+            <div class="wireframe-card">
+                <h3>Login</h3>
+                <div>
+                    <span class="badge">Auth</span>
+                </div>
+                <p>Pantalla de inicio de sesión con formulario de email y contraseña, link de recuperación y opción de registro.</p>
+                <a href="login-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Registro - Paso 1</h3>
+                <div>
+                    <span class="badge">Auth</span>
+                    <span class="badge">Paso 1/2</span>
+                </div>
+                <p>Formulario de datos personales: nombre, apellido, email, DNI, fecha de nacimiento, teléfono y dirección.</p>
+                <a href="register-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Registro - Paso 2</h3>
+                <div>
+                    <span class="badge">Auth</span>
+                    <span class="badge">Paso 2/2</span>
+                </div>
+                <p>Upload de documentos (DNI frente y dorso) con áreas de drag & drop y vista previa.</p>
+                <a href="register-step2-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Completar Registro</h3>
+                <div>
+                    <span class="badge">Auth</span>
+                    <span class="badge">Post-aprobación</span>
+                </div>
+                <p>Formulario post-aprobación para crear contraseña, agregar datos de contacto y verificación con selfie.</p>
+                <a href="complete-registration-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Recuperar Contraseña</h3>
+                <div>
+                    <span class="badge">Auth</span>
+                </div>
+                <p>Pantalla para solicitar recuperación de contraseña con formulario de email.</p>
+                <a href="forgot-password-mobile.html">Ver Wireframe →</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navegación Principal -->
+    <div class="section">
+        <h2>🏠 Navegación Principal</h2>
+        <div class="wireframe-grid">
+            <div class="wireframe-card">
+                <h3>Home</h3>
+                <div>
+                    <span class="badge">Pública</span>
+                </div>
+                <p>Página de inicio con hero section, features, categorías de usuario y CTA para registro.</p>
+                <a href="home-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Dashboard</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                </div>
+                <p>Panel de usuario con estadísticas, subastas activas y pujas recientes.</p>
+                <a href="dashboard-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Perfil</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                </div>
+                <p>Perfil de usuario con avatar, categoría, estadísticas y menú de opciones.</p>
+                <a href="profile-mobile.html">Ver Wireframe →</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Subastas -->
+    <div class="section">
+        <h2>🔨 Subastas</h2>
+        <div class="wireframe-grid">
+            <div class="wireframe-card">
+                <h3>Lista de Subastas</h3>
+                <div>
+                    <span class="badge">Pública</span>
+                </div>
+                <p>Explorar todas las subastas con filtros por categoría, moneda y búsqueda.</p>
+                <a href="auctions-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Detalle de Subasta</h3>
+                <div>
+                    <span class="badge">Pública</span>
+                </div>
+                <p>Información completa de una subasta con catálogo de items y precios.</p>
+                <a href="auction-detail-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Subasta en Vivo</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                    <span class="badge">En Vivo</span>
+                </div>
+                <p>Interfaz de subasta en tiempo real con item actual, botones de puja e historial.</p>
+                <a href="live-auction-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Catálogo</h3>
+                <div>
+                    <span class="badge">Pública</span>
+                </div>
+                <p>Catálogo completo de productos con filtros, búsqueda y grid de items.</p>
+                <a href="catalog-mobile.html">Ver Wireframe →</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actividad del Usuario -->
+    <div class="section">
+        <h2>📊 Actividad del Usuario</h2>
+        <div class="wireframe-grid">
+            <div class="wireframe-card">
+                <h3>Mis Pujas</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                </div>
+                <p>Historial completo de pujas con estados (ganando, superada, ganada, perdida) y acciones.</p>
+                <a href="my-bids-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Mis Ventas</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                </div>
+                <p>Gestión de productos en venta con estados, estadísticas y botón para agregar nuevos.</p>
+                <a href="my-sales-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Estadísticas</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                </div>
+                <p>Estadísticas completas con gráficos, progreso de categoría y actividad reciente.</p>
+                <a href="stats-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Notificaciones</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                </div>
+                <p>Centro de notificaciones con filtros, estados y acciones por tipo de alerta.</p>
+                <a href="notifications-mobile.html">Ver Wireframe →</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gestión de Cuenta -->
+    <div class="section">
+        <h2>⚙️ Gestión de Cuenta</h2>
+        <div class="wireframe-grid">
+            <div class="wireframe-card">
+                <h3>Medios de Pago</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                </div>
+                <p>Gestión de tarjetas con estados de verificación, agregar nuevas y requisitos.</p>
+                <a href="payment-methods-mobile.html">Ver Wireframe →</a>
+            </div>
+            
+            <div class="wireframe-card">
+                <h3>Solicitar Venta</h3>
+                <div>
+                    <span class="badge">Privada</span>
+                </div>
+                <p>Formulario completo para solicitar venta de productos con upload de imágenes.</p>
+                <a href="submit-item-mobile.html">Ver Wireframe →</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

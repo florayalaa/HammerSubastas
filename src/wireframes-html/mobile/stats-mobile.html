@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Estadísticas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 100px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, #666 0%, #999 100%);
+            color: #fff;
+            padding: 24px 16px;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .page-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            background-color: transparent;
+            border: none;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            color: #333;
+            font-weight: bold;
+            border-bottom-color: #666;
+        }
+        
+        /* Stats Section */
+        .stats-section {
+            padding: 16px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .stat-change {
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        .stat-change.positive {
+            color: #28a745;
+        }
+        .stat-change.negative {
+            color: #dc3545;
+        }
+        
+        /* Chart Placeholder */
+        .chart-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 16px;
+        }
+        .chart-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        .chart-placeholder {
+            width: 100%;
+            height: 200px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 13px;
+        }
+        
+        /* Activity List */
+        .activity-card {
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 16px;
+        }
+        .activity-header {
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .activity-header h3 {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .activity-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        .activity-name {
+            font-size: 13px;
+        }
+        .activity-value {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        /* Category Progress */
+        .category-progress {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 16px;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .current-category {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .next-category {
+            font-size: 12px;
+            color: #666;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background-color: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #666;
+            width: 65%;
+        }
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .requirements-list {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .requirement-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .requirement-label {
+            color: #666;
+        }
+        .requirement-status {
+            font-weight: bold;
+        }
+        .requirement-status.completed {
+            color: #28a745;
+        }
+        .requirement-status.pending {
+            color: #ffc107;
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 414px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #666;
+        }
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .nav-label {
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"></div>
+            <div class="menu-icon"></div>
+        </div>
+    </header>
+    
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Mis Estadísticas</h1>
+        <p>Seguimiento de tu actividad y rendimiento</p>
+    </div>
+    
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <button class="tab active">Este Mes</button>
+        <button class="tab">Últimos 3 Meses</button>
+        <button class="tab">Todo</button>
+    </div>
+    
+    <!-- Stats Section -->
+    <div class="stats-section">
+        <!-- Main Stats Grid -->
+        <h2 class="section-title">Resumen General</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">24</div>
+                <div class="stat-label">Pujas Realizadas</div>
+                <div class="stat-change positive">↑ +8 este mes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">8</div>
+                <div class="stat-label">Subastas Ganadas</div>
+                <div class="stat-change positive">↑ +3 este mes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$245,000</div>
+                <div class="stat-label">Total Invertido</div>
+                <div class="stat-change positive">↑ +15%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">92%</div>
+                <div class="stat-label">Tasa de Éxito</div>
+                <div class="stat-change positive">↑ +5%</div>
+            </div>
+        </div>
+        
+        <!-- Category Progress -->
+        <h2 class="section-title">Progreso de Categoría</h2>
+        <div class="category-progress">
+            <div class="progress-header">
+                <span class="current-category">⭐ Plata</span>
+                <span class="next-category">Siguiente: Oro</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <p class="progress-text">65% completado - Faltan 7 compras para Oro</p>
+            
+            <div class="requirements-list">
+                <div class="requirement-item">
+                    <span class="requirement-label">Total compras:</span>
+                    <span class="requirement-status completed">13/20 ✓</span>
+                </div>
+                <div class="requirement-item">
+                    <span class="requirement-label">Monto invertido:</span>
+                    <span class="requirement-status completed">$245K/$200K ✓</span>
+                </div>
+                <div class="requirement-item">
+                    <span class="requirement-label">Calificación promedio:</span>
+                    <span class="requirement-status completed">4.8/4.5 ✓</span>
+                </div>
+                <div class="requirement-item">
+                    <span class="requirement-label">Antigüedad:</span>
+                    <span class="requirement-status pending">8/12 meses</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Purchase Chart -->
+        <h2 class="section-title">Actividad de Compras</h2>
+        <div class="chart-card">
+            <h3 class="chart-title">Compras por Mes</h3>
+            <div class="chart-placeholder">Gráfico de barras</div>
+        </div>
+        
+        <!-- Spending Chart -->
+        <div class="chart-card">
+            <h3 class="chart-title">Inversión Mensual</h3>
+            <div class="chart-placeholder">Gráfico de líneas</div>
+        </div>
+        
+        <!-- Category Distribution -->
+        <div class="chart-card">
+            <h3 class="chart-title">Distribución por Categoría</h3>
+            <div class="chart-placeholder">Gráfico circular</div>
+        </div>
+        
+        <!-- Top Purchases -->
+        <h2 class="section-title">Compras Destacadas</h2>
+        <div class="activity-card">
+            <div class="activity-header">
+                <h3>Tus 5 Compras Más Valiosas</h3>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name">Pintura Impresionista</span>
+                <span class="activity-value">$65,000</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name">Reloj Patek Philippe</span>
+                <span class="activity-value">$48,500</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name">Anillo de Diamantes</span>
+                <span class="activity-value">$42,000</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name">Escultura de Bronce</span>
+                <span class="activity-value">$38,200</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name">Violín Antiguo</span>
+                <span class="activity-value">$29,500</span>
+            </div>
+        </div>
+        
+        <!-- Sales Stats -->
+        <h2 class="section-title">Estadísticas de Ventas</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Productos Vendidos</div>
+                <div class="stat-change positive">↑ +2 este mes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$145,000</div>
+                <div class="stat-label">Total Vendido</div>
+                <div class="stat-change positive">↑ +25%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$123,250</div>
+                <div class="stat-label">Ganancia Neta</div>
+                <div class="stat-change positive">↑ +25%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$29,000</div>
+                <div class="stat-label">Precio Promedio</div>
+                <div class="stat-change negative">↓ -5%</div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <h2 class="section-title">Actividad Reciente</h2>
+        <div class="activity-card">
+            <div class="activity-header">
+                <h3>Últimas 7 Transacciones</h3>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name" style="color: #28a745;">✓ Compra: Cámara Leica</span>
+                <span class="activity-value">$22,800</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name" style="color: #28a745;">✓ Venta: Reloj Omega</span>
+                <span class="activity-value">+$31,250</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name" style="color: #dc3545;">✗ Puja perdida: Violín</span>
+                <span class="activity-value">$85,000</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name" style="color: #28a745;">✓ Compra: Collar de Perlas</span>
+                <span class="activity-value">$18,500</span>
+            </div>
+            <div class="activity-item">
+                <span class="activity-name" style="color: #28a745;">✓ Venta: Pintura al Óleo</span>
+                <span class="activity-value">+$42,000</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Inicio</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Subastas</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Estadísticas</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Perfil</span>
+        </a>
+    </nav>
+    
+    <div style="height: 80px;"></div>
+</body>
+</html>

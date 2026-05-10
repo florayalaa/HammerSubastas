@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Notificaciones</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 100px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Page Header */
+        .page-header {
+            background-color: #fff;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .page-header h1 {
+            font-size: 24px;
+        }
+        .mark-all-btn {
+            font-size: 13px;
+            color: #666;
+            text-decoration: none;
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            overflow-x: auto;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 16px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background-color: #666;
+            color: #fff;
+            border-color: #666;
+        }
+        
+        /* Notifications List */
+        .notifications {
+            padding: 8px 0;
+        }
+        .notification {
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            position: relative;
+        }
+        .notification.unread {
+            background-color: #f8f9fa;
+        }
+        .notification.unread::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #666;
+        }
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #999;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .icon-success {
+            background-color: #4caf50;
+        }
+        .icon-error {
+            background-color: #f44336;
+        }
+        .icon-warning {
+            background-color: #ff9800;
+        }
+        .icon-info {
+            background-color: #2196f3;
+        }
+        .icon-bid {
+            background-color: #9c27b0;
+        }
+        .notification-content {
+            flex: 1;
+        }
+        .notification-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .notification-message {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+        .notification-time {
+            font-size: 11px;
+            color: #999;
+        }
+        .notification-badge {
+            width: 8px;
+            height: 8px;
+            background-color: #f44336;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        
+        /* Action Buttons */
+        .notification-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .action-btn {
+            padding: 6px 14px;
+            font-size: 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+        }
+        .action-btn-primary {
+            background-color: #666;
+            color: #fff;
+            border-color: #666;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 414px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #666;
+        }
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .nav-label {
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"></div>
+            <div class="menu-icon"></div>
+        </div>
+    </header>
+    
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Notificaciones</h1>
+        <a href="#" class="mark-all-btn">Marcar todo leído</a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters">
+        <button class="filter-btn active">Todas</button>
+        <button class="filter-btn">Pujas</button>
+        <button class="filter-btn">Documentos</button>
+        <button class="filter-btn">Ventas</button>
+        <button class="filter-btn">Pagos</button>
+    </div>
+    
+    <!-- Notifications List -->
+    <div class="notifications">
+        <!-- Unread - Bid Alert -->
+        <div class="notification unread">
+            <div class="notification-icon icon-bid"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">¡Te superaron en una puja!</h3>
+                <p class="notification-message">Tu puja de $47,250 por "Anillo de Diamantes" ha sido superada. La puja actual es $49,500.</p>
+                <span class="notification-time">Hace 5 minutos</span>
+                <div class="notification-actions">
+                    <a href="#" class="action-btn action-btn-primary">Pujar Nuevamente</a>
+                    <a href="#" class="action-btn">Ver Subasta</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Unread - Document Approved -->
+        <div class="notification unread">
+            <div class="notification-icon icon-success"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">Documentos Aprobados</h3>
+                <p class="notification-message">Tu identidad ha sido verificada exitosamente. Ahora puedes completar tu registro y comenzar a participar en subastas.</p>
+                <span class="notification-time">Hace 1 hora</span>
+                <div class="notification-actions">
+                    <a href="#" class="action-btn action-btn-primary">Completar Registro</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Unread - Live Auction -->
+        <div class="notification unread">
+            <div class="notification-icon icon-info"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">Subasta en Vivo Comenzó</h3>
+                <p class="notification-message">La "Subasta de Arte Contemporáneo" está en vivo ahora. No te pierdas las mejores obras.</p>
+                <span class="notification-time">Hace 2 horas</span>
+                <div class="notification-actions">
+                    <a href="#" class="action-btn action-btn-primary">Ingresar</a>
+                    <a href="#" class="action-btn">Ver Catálogo</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Read - Payment Approved -->
+        <div class="notification">
+            <div class="notification-icon icon-success"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">Medio de Pago Aprobado</h3>
+                <p class="notification-message">Tu tarjeta terminada en ****4532 ha sido verificada y aprobada para participar en subastas.</p>
+                <span class="notification-time">Hace 3 horas</span>
+            </div>
+        </div>
+        
+        <!-- Read - Item Rejected -->
+        <div class="notification">
+            <div class="notification-icon icon-error"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">Producto Rechazado</h3>
+                <p class="notification-message">Tu producto "Collar de Perlas" no cumple con los requisitos de calidad. Revisa los comentarios del evaluador.</p>
+                <span class="notification-time">Hace 5 horas</span>
+                <div class="notification-actions">
+                    <a href="#" class="action-btn">Ver Detalles</a>
+                    <a href="#" class="action-btn">Modificar Solicitud</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Read - Won Auction -->
+        <div class="notification">
+            <div class="notification-icon icon-success"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">¡Ganaste la Subasta!</h3>
+                <p class="notification-message">Felicitaciones, ganaste "Pintura Impresionista" por $18,500. Procede con el pago para finalizar la compra.</p>
+                <span class="notification-time">Ayer, 18:45</span>
+                <div class="notification-actions">
+                    <a href="#" class="action-btn action-btn-primary">Pagar Ahora</a>
+                    <a href="#" class="action-btn">Ver Detalles</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Read - Item Sold -->
+        <div class="notification">
+            <div class="notification-icon icon-success"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">Tu Producto se Vendió</h3>
+                <p class="notification-message">¡Excelente! "Reloj Omega Vintage" se vendió por $31,250. Tu ganancia después de comisiones: $26,562.</p>
+                <span class="notification-time">Ayer, 14:20</span>
+                <div class="notification-actions">
+                    <a href="#" class="action-btn">Ver Recibo</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Read - Upcoming Auction -->
+        <div class="notification">
+            <div class="notification-icon icon-warning"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">Subasta Comienza Pronto</h3>
+                <p class="notification-message">La "Subasta de Joyería Exclusiva" comienza en 2 horas. Revisa el catálogo y prepárate.</p>
+                <span class="notification-time">Hace 2 días</span>
+            </div>
+        </div>
+        
+        <!-- Read - Category Upgrade -->
+        <div class="notification">
+            <div class="notification-icon icon-info"></div>
+            <div class="notification-content">
+                <h3 class="notification-title">Categoría Actualizada</h3>
+                <p class="notification-message">¡Felicitaciones! Has sido promovido a la categoría "Plata". Ahora tienes acceso a subastas exclusivas.</p>
+                <span class="notification-time">Hace 3 días</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Inicio</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Subastas</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Notificaciones</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Perfil</span>
+        </a>
+    </nav>
+    
+    <div style="height: 80px;"></div>
+</body>
+</html>

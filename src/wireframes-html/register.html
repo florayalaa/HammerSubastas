@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe - Registrarse</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 16px 0;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 120px;
+            height: 40px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 48px 20px;
+        }
+        .register-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .page-title {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .page-subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        /* Progress Indicator */
+        .progress-indicator {
+            margin-bottom: 32px;
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #999;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .step-number.inactive {
+            background-color: #ddd;
+            color: #666;
+        }
+        .step-label {
+            font-size: 14px;
+        }
+        .progress-line {
+            width: 48px;
+            height: 4px;
+            background-color: #ddd;
+        }
+        .progress-line.active {
+            background-color: #999;
+        }
+        
+        /* Register Card */
+        .register-card {
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Form */
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .form-label {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #999;
+            border-radius: 50%;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 12px 12px 44px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fafafa;
+        }
+        .form-select {
+            width: 100%;
+            padding: 12px 12px 12px 44px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fafafa;
+        }
+        
+        /* Upload Area */
+        .upload-section {
+            margin-top: 8px;
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: #fafafa;
+        }
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #ddd;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+        }
+        .upload-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .upload-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+        .upload-btn {
+            display: inline-block;
+            padding: 8px 24px;
+            background-color: #999;
+            color: #fff;
+            border-radius: 8px;
+        }
+        
+        /* File Preview */
+        .file-preview {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            gap: 12px;
+            padding: 12px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .file-size {
+            font-size: 12px;
+            color: #666;
+        }
+        .file-remove {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 50%;
+        }
+        
+        /* Buttons */
+        .form-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background-color: #ddd;
+            color: #333;
+        }
+        .btn-primary {
+            background-color: #999;
+            color: #fff;
+        }
+        
+        /* Footer Text */
+        .footer-text {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .register-card {
+                padding: 24px;
+            }
+            .page-title {
+                font-size: 24px;
+            }
+            .step-label {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="register-container">
+            <div class="page-header">
+                <h1 class="page-title">Crear Cuenta</h1>
+                <p class="page-subtitle">Proceso de registro en dos etapas</p>
+            </div>
+            
+            <!-- Progress Indicator -->
+            <div class="progress-indicator">
+                <div class="progress-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <span class="step-label">Datos Personales</span>
+                    </div>
+                    <div class="progress-line"></div>
+                    <div class="step">
+                        <div class="step-number inactive">2</div>
+                        <span class="step-label">Verificación</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Register Card - Step 1: Personal Data -->
+            <div class="register-card">
+                <form class="form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Nombre</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon"></div>
+                                <input type="text" class="form-input" placeholder="Juan" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Apellido</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon"></div>
+                                <input type="text" class="form-input" placeholder="Pérez" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Correo Electrónico</label>
+                        <div class="input-wrapper">
+                            <div class="input-icon"></div>
+                            <input type="email" class="form-input" placeholder="tu@email.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Dirección</label>
+                        <div class="input-wrapper">
+                            <div class="input-icon"></div>
+                            <input type="text" class="form-input" placeholder="Calle 123" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">País</label>
+                        <div class="input-wrapper">
+                            <div class="input-icon"></div>
+                            <select class="form-select" required>
+                                <option>Selecciona un país</option>
+                                <option>Argentina</option>
+                                <option>Uruguay</option>
+                                <option>Chile</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Contraseña</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon"></div>
+                                <input type="password" class="form-input" placeholder="••••••••" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirmar Contraseña</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon"></div>
+                                <input type="password" class="form-input" placeholder="••••••••" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Continuar al Paso 2</button>
+                </form>
+                
+                <div class="footer-text">
+                    ¿Ya tienes una cuenta? <a href="#" class="link">Inicia sesión aquí</a>
+                </div>
+            </div>
+            
+            <!-- Register Card - Step 2: Verification (hidden by default) -->
+            <!-- 
+            <div class="register-card" style="display: none;">
+                <form class="form">
+                    <div class="form-group">
+                        <label class="form-label">Documento de Identidad (Frente)</label>
+                        <div class="upload-section">
+                            <div class="upload-area">
+                                <div class="upload-icon"></div>
+                                <div class="upload-title">Subir Documento (Frente)</div>
+                                <div class="upload-text">Arrastra el archivo o haz clic para seleccionar</div>
+                                <div class="upload-btn">Seleccionar Archivo</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Documento de Identidad (Dorso)</label>
+                        <div class="upload-section">
+                            <div class="upload-area">
+                                <div class="upload-icon"></div>
+                                <div class="upload-title">Subir Documento (Dorso)</div>
+                                <div class="upload-text">Arrastra el archivo o haz clic para seleccionar</div>
+                                <div class="upload-btn">Seleccionar Archivo</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button type="button" class="btn btn-secondary">Volver</button>
+                        <button type="submit" class="btn btn-primary">Completar Registro</button>
+                    </div>
+                </form>
+            </div>
+            -->
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Mis Pujas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 100px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Page Header */
+        .page-header {
+            background-color: #fff;
+            padding: 20px 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .page-header p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+            background-color: #fff;
+            margin-bottom: 2px;
+        }
+        .stat-card {
+            background-color: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            background-color: transparent;
+            border: none;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            color: #333;
+            font-weight: bold;
+            border-bottom-color: #666;
+        }
+        
+        /* Bids List */
+        .bids {
+            padding: 16px;
+        }
+        .bid-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .bid-header {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+        }
+        .bid-image {
+            width: 80px;
+            height: 80px;
+            background-color: #999;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .bid-info {
+            flex: 1;
+        }
+        .bid-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .bid-subtitle {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .bid-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-winning {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-outbid {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-won {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        .status-lost {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        .bid-details {
+            padding: 12px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #fafafa;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .detail-label {
+            color: #666;
+        }
+        .detail-value {
+            font-weight: bold;
+        }
+        .bid-actions {
+            padding: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .btn-small {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #666;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+            margin-right: 8px;
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: #666;
+            border: 1px solid #999;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 414px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #666;
+        }
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .nav-label {
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"></div>
+            <div class="menu-icon"></div>
+        </div>
+    </header>
+    
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Mis Pujas</h1>
+        <p>Historial completo de tus participaciones</p>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Pujas Activas</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Ganadas</div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active">Activas</button>
+        <button class="tab">Finalizadas</button>
+        <button class="tab">Todas</button>
+    </div>
+    
+    <!-- Bids List -->
+    <div class="bids">
+        <!-- Winning Bid -->
+        <div class="bid-card">
+            <div class="bid-header">
+                <div class="bid-image"></div>
+                <div class="bid-info">
+                    <h3 class="bid-title">Anillo de Diamantes</h3>
+                    <p class="bid-subtitle">Subasta de Joyería • Item #001</p>
+                    <span class="bid-status status-winning">Ganando</span>
+                </div>
+            </div>
+            <div class="bid-details">
+                <div class="detail-row">
+                    <span class="detail-label">Tu puja:</span>
+                    <span class="detail-value">$47,250</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Puja actual:</span>
+                    <span class="detail-value">$47,250</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Cierra en:</span>
+                    <span class="detail-value">2h 15m</span>
+                </div>
+            </div>
+            <div class="bid-actions">
+                <a href="#" class="btn-small">Ver Subasta</a>
+                <a href="#" class="btn-small btn-outline">Aumentar Puja</a>
+            </div>
+        </div>
+        
+        <!-- Outbid -->
+        <div class="bid-card">
+            <div class="bid-header">
+                <div class="bid-image"></div>
+                <div class="bid-info">
+                    <h3 class="bid-title">Reloj Patek Philippe</h3>
+                    <p class="bid-subtitle">Subasta de Relojes • Item #005</p>
+                    <span class="bid-status status-outbid">Superada</span>
+                </div>
+            </div>
+            <div class="bid-details">
+                <div class="detail-row">
+                    <span class="detail-label">Tu puja:</span>
+                    <span class="detail-value">$125,000</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Puja actual:</span>
+                    <span class="detail-value" style="color: #dc3545;">$132,000</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Cierra en:</span>
+                    <span class="detail-value">45m</span>
+                </div>
+            </div>
+            <div class="bid-actions">
+                <a href="#" class="btn-small">Pujar Nuevamente</a>
+                <a href="#" class="btn-small btn-outline">Ver Detalles</a>
+            </div>
+        </div>
+        
+        <!-- Won -->
+        <div class="bid-card">
+            <div class="bid-header">
+                <div class="bid-image"></div>
+                <div class="bid-info">
+                    <h3 class="bid-title">Pintura Impresionista</h3>
+                    <p class="bid-subtitle">Subasta de Arte • Item #012</p>
+                    <span class="bid-status status-won">Ganada</span>
+                </div>
+            </div>
+            <div class="bid-details">
+                <div class="detail-row">
+                    <span class="detail-label">Puja ganadora:</span>
+                    <span class="detail-value">$18,500</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Fecha:</span>
+                    <span class="detail-value">10 Mar 2026</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Estado pago:</span>
+                    <span class="detail-value" style="color: #28a745;">Pagado</span>
+                </div>
+            </div>
+            <div class="bid-actions">
+                <a href="#" class="btn-small">Ver Recibo</a>
+                <a href="#" class="btn-small btn-outline">Detalles</a>
+            </div>
+        </div>
+        
+        <!-- Active Bid -->
+        <div class="bid-card">
+            <div class="bid-header">
+                <div class="bid-image"></div>
+                <div class="bid-info">
+                    <h3 class="bid-title">Escultura de Bronce</h3>
+                    <p class="bid-subtitle">Subasta de Esculturas • Item #008</p>
+                    <span class="bid-status status-winning">Ganando</span>
+                </div>
+            </div>
+            <div class="bid-details">
+                <div class="detail-row">
+                    <span class="detail-label">Tu puja:</span>
+                    <span class="detail-value">$29,400</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Puja actual:</span>
+                    <span class="detail-value">$29,400</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Cierra en:</span>
+                    <span class="detail-value">1d 5h</span>
+                </div>
+            </div>
+            <div class="bid-actions">
+                <a href="#" class="btn-small">Ver Subasta</a>
+                <a href="#" class="btn-small btn-outline">Detalles</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Inicio</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Subastas</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Mis Pujas</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Perfil</span>
+        </a>
+    </nav>
+    
+    <div style="height: 80px;"></div>
+</body>
+</html>

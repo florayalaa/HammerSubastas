@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Mis Ventas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 100px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Page Header */
+        .page-header {
+            background-color: #fff;
+            padding: 20px 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .page-header p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+            background-color: #fff;
+            margin-bottom: 2px;
+        }
+        .stat-card {
+            background-color: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            background-color: transparent;
+            border: none;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            color: #333;
+            font-weight: bold;
+            border-bottom-color: #666;
+        }
+        
+        /* Sales List */
+        .sales {
+            padding: 16px;
+        }
+        .sale-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .sale-header {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+        }
+        .sale-image {
+            width: 80px;
+            height: 80px;
+            background-color: #999;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .sale-info {
+            flex: 1;
+        }
+        .sale-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .sale-subtitle {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .sale-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-sold {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .sale-details {
+            padding: 12px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #fafafa;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .detail-label {
+            color: #666;
+        }
+        .detail-value {
+            font-weight: bold;
+        }
+        .sale-actions {
+            padding: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .btn-small {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #666;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+            margin-right: 8px;
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: #666;
+            border: 1px solid #999;
+        }
+        
+        /* CTA Button */
+        .cta-button {
+            position: fixed;
+            bottom: 80px;
+            right: 16px;
+            width: 56px;
+            height: 56px;
+            background-color: #666;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .cta-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #fff;
+            border-radius: 2px;
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 414px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #666;
+        }
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .nav-label {
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"></div>
+            <div class="menu-icon"></div>
+        </div>
+    </header>
+    
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Mis Ventas</h1>
+        <p>Gestiona tus productos en subasta</p>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-value">8</div>
+            <div class="stat-label">En Subasta</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">$145,000</div>
+            <div class="stat-label">Total Vendido</div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active">Activas</button>
+        <button class="tab">Pendientes</button>
+        <button class="tab">Finalizadas</button>
+    </div>
+    
+    <!-- Sales List -->
+    <div class="sales">
+        <!-- Active Sale -->
+        <div class="sale-card">
+            <div class="sale-header">
+                <div class="sale-image"></div>
+                <div class="sale-info">
+                    <h3 class="sale-title">Reloj Omega Vintage</h3>
+                    <p class="sale-subtitle">Subasta de Relojes</p>
+                    <span class="sale-status status-active">En Subasta</span>
+                </div>
+            </div>
+            <div class="sale-details">
+                <div class="detail-row">
+                    <span class="detail-label">Puja inicial:</span>
+                    <span class="detail-value">$25,000</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Puja actual:</span>
+                    <span class="detail-value" style="color: #28a745;">$31,250</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Pujas recibidas:</span>
+                    <span class="detail-value">12</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Cierra en:</span>
+                    <span class="detail-value">3h 25m</span>
+                </div>
+            </div>
+            <div class="sale-actions">
+                <a href="#" class="btn-small">Ver Subasta</a>
+                <a href="#" class="btn-small btn-outline">Detalles</a>
+            </div>
+        </div>
+        
+        <!-- Pending Approval -->
+        <div class="sale-card">
+            <div class="sale-header">
+                <div class="sale-image"></div>
+                <div class="sale-info">
+                    <h3 class="sale-title">Collar de Perlas</h3>
+                    <p class="sale-subtitle">Pendiente de aprobación</p>
+                    <span class="sale-status status-pending">En Revisión</span>
+                </div>
+            </div>
+            <div class="sale-details">
+                <div class="detail-row">
+                    <span class="detail-label">Puja inicial propuesta:</span>
+                    <span class="detail-value">$18,500</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Fecha envío:</span>
+                    <span class="detail-value">12 Mar 2026</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Estado:</span>
+                    <span class="detail-value">Esperando revisión</span>
+                </div>
+            </div>
+            <div class="sale-actions">
+                <a href="#" class="btn-small btn-outline">Ver Detalles</a>
+            </div>
+        </div>
+        
+        <!-- Sold Item -->
+        <div class="sale-card">
+            <div class="sale-header">
+                <div class="sale-image"></div>
+                <div class="sale-info">
+                    <h3 class="sale-title">Pintura al Óleo</h3>
+                    <p class="sale-subtitle">Subasta de Arte</p>
+                    <span class="sale-status status-sold">Vendido</span>
+                </div>
+            </div>
+            <div class="sale-details">
+                <div class="detail-row">
+                    <span class="detail-label">Precio de venta:</span>
+                    <span class="detail-value">$42,000</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Comisión (15%):</span>
+                    <span class="detail-value">-$6,300</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Tu ganancia:</span>
+                    <span class="detail-value" style="color: #28a745;">$35,700</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Fecha venta:</span>
+                    <span class="detail-value">8 Mar 2026</span>
+                </div>
+            </div>
+            <div class="sale-actions">
+                <a href="#" class="btn-small">Ver Recibo</a>
+                <a href="#" class="btn-small btn-outline">Detalles</a>
+            </div>
+        </div>
+        
+        <!-- Active with Multiple Bids -->
+        <div class="sale-card">
+            <div class="sale-header">
+                <div class="sale-image"></div>
+                <div class="sale-info">
+                    <h3 class="sale-title">Cámara Leica M3</h3>
+                    <p class="sale-subtitle">Subasta de Antigüedades</p>
+                    <span class="sale-status status-active">En Subasta</span>
+                </div>
+            </div>
+            <div class="sale-details">
+                <div class="detail-row">
+                    <span class="detail-label">Puja inicial:</span>
+                    <span class="detail-value">$15,000</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Puja actual:</span>
+                    <span class="detail-value" style="color: #28a745;">$22,800</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Pujas recibidas:</span>
+                    <span class="detail-value">28</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Cierra en:</span>
+                    <span class="detail-value">1d 8h</span>
+                </div>
+            </div>
+            <div class="sale-actions">
+                <a href="#" class="btn-small">Ver Subasta</a>
+                <a href="#" class="btn-small btn-outline">Historial Pujas</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CTA Button -->
+    <a href="#" class="cta-button">
+        <div class="cta-icon"></div>
+    </a>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Inicio</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Subastas</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Mis Ventas</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Perfil</span>
+        </a>
+    </nav>
+    
+    <div style="height: 80px;"></div>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe Mobile - Medios de Pago</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 414px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 100px;
+            height: 32px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        
+        /* Page Header */
+        .page-header {
+            background-color: #fff;
+            padding: 20px 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .page-header p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Info Banner */
+        .info-banner {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin: 16px 16px 0 16px;
+            border-radius: 4px;
+        }
+        .info-banner p {
+            font-size: 13px;
+            color: #1565c0;
+            line-height: 1.5;
+        }
+        
+        /* Payment Methods */
+        .payment-methods {
+            padding: 16px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        
+        /* Payment Card */
+        .payment-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .payment-card.pending {
+            border-color: #ff9800;
+            background-color: #fff8e1;
+        }
+        .card-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .card-info {
+            flex: 1;
+        }
+        .card-type {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .card-icon {
+            width: 40px;
+            height: 28px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .card-brand {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .card-number {
+            font-size: 16px;
+            margin-bottom: 8px;
+            font-family: monospace;
+        }
+        .card-details {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #666;
+        }
+        .card-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-verified {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .card-actions {
+            padding: 12px 16px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+        }
+        .card-btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+        }
+        .card-btn-danger {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        /* Add New Button */
+        .add-button {
+            width: 100%;
+            padding: 16px;
+            background-color: #fff;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            color: #666;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .plus-icon {
+            width: 20px;
+            height: 20px;
+            background-color: #999;
+            border-radius: 50%;
+        }
+        
+        /* Requirements */
+        .requirements {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .requirements h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .requirements ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .requirements li {
+            font-size: 13px;
+            color: #666;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            position: relative;
+            line-height: 1.4;
+        }
+        .requirements li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 414px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #666;
+        }
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #999;
+            border-radius: 4px;
+        }
+        .nav-label {
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"></div>
+            <div class="menu-icon"></div>
+        </div>
+    </header>
+    
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Medios de Pago</h1>
+        <p>Gestiona tus métodos de pago para participar en subastas</p>
+    </div>
+    
+    <!-- Info Banner -->
+    <div class="info-banner">
+        <p><strong>Importante:</strong> Necesitas al menos un medio de pago verificado para participar en subastas. El proceso de verificación toma 24-48 horas.</p>
+    </div>
+    
+    <!-- Payment Methods -->
+    <div class="payment-methods">
+        <h2 class="section-title">Mis Tarjetas</h2>
+        
+        <!-- Verified Card -->
+        <div class="payment-card">
+            <div class="card-header">
+                <div class="card-info">
+                    <div class="card-type">
+                        <div class="card-icon"></div>
+                        <span class="card-brand">Visa</span>
+                    </div>
+                    <div class="card-number">•••• •••• •••• 4532</div>
+                    <div class="card-details">
+                        <span>Vence: 12/26</span>
+                        <span>Juan Pérez</span>
+                    </div>
+                </div>
+                <span class="card-status status-verified">Verificada</span>
+            </div>
+            <div class="card-actions">
+                <a href="#" class="card-btn">Establecer Principal</a>
+                <a href="#" class="card-btn card-btn-danger">Eliminar</a>
+            </div>
+        </div>
+        
+        <!-- Pending Card -->
+        <div class="payment-card pending">
+            <div class="card-header">
+                <div class="card-info">
+                    <div class="card-type">
+                        <div class="card-icon"></div>
+                        <span class="card-brand">Mastercard</span>
+                    </div>
+                    <div class="card-number">•••• •••• •••• 8821</div>
+                    <div class="card-details">
+                        <span>Vence: 08/27</span>
+                        <span>Juan Pérez</span>
+                    </div>
+                </div>
+                <span class="card-status status-pending">En Revisión</span>
+            </div>
+            <div class="card-actions">
+                <a href="#" class="card-btn">Ver Estado</a>
+            </div>
+        </div>
+        
+        <!-- Another Verified Card -->
+        <div class="payment-card">
+            <div class="card-header">
+                <div class="card-info">
+                    <div class="card-type">
+                        <div class="card-icon"></div>
+                        <span class="card-brand">American Express</span>
+                    </div>
+                    <div class="card-number">•••• •••• •• 1009</div>
+                    <div class="card-details">
+                        <span>Vence: 03/28</span>
+                        <span>Juan Pérez</span>
+                    </div>
+                </div>
+                <span class="card-status status-verified">Verificada</span>
+            </div>
+            <div class="card-actions">
+                <a href="#" class="card-btn">Establecer Principal</a>
+                <a href="#" class="card-btn card-btn-danger">Eliminar</a>
+            </div>
+        </div>
+        
+        <!-- Add New Button -->
+        <button class="add-button">
+            <div class="plus-icon"></div>
+            <span>Agregar Nueva Tarjeta</span>
+        </button>
+        
+        <!-- Requirements -->
+        <div class="requirements">
+            <h3>Requisitos de Verificación</h3>
+            <ul>
+                <li>La tarjeta debe estar a tu nombre (mismo que en tu DNI)</li>
+                <li>Debe ser una tarjeta de crédito o débito válida</li>
+                <li>Realizaremos un cargo temporal de $1 que se reembolsará automáticamente</li>
+                <li>La verificación puede demorar entre 24-48 horas</li>
+                <li>Aceptamos Visa, Mastercard y American Express</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Inicio</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Subastas</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Pagos</span>
+        </a>
+        <a href="#" class="nav-item">
+            <div class="nav-icon"></div>
+            <span class="nav-label">Perfil</span>
+        </a>
+    </nav>
+    
+    <div style="height: 80px;"></div>
+</body>
+</html>
