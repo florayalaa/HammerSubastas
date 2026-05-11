@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Home, Gavel, User, Tag } from 'lucide-react-native';
+import { Home, Gavel, User, Tag, Menu, HandCoins } from 'lucide-react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -7,6 +8,11 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: '#6A4F99',
         headerShown: true,
+        headerRight: () => (
+          <TouchableOpacity onPress={() => Alert.alert('Notificaciones', 'Aquí verás tus notificaciones.')} style={{ marginRight: 15 }}>
+            <Menu color="#333F48" size={24} />
+          </TouchableOpacity>
+        ),
       }}>
       <Tabs.Screen
         name="index"
@@ -27,6 +33,13 @@ export default function TabLayout() {
         options={{
           title: 'Vender',
           tabBarIcon: ({ color }) => <Tag color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="bids"
+        options={{
+          title: 'Mis Pujas',
+          tabBarIcon: ({ color }) => <HandCoins color={color} size={24} />,
         }}
       />
       <Tabs.Screen

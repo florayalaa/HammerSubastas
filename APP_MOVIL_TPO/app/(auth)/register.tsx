@@ -4,6 +4,8 @@ import { Link, useRouter } from 'expo-router';
 import { User, Mail, MapPin, FileText, Upload, X } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import * as ImagePicker from 'expo-image-picker';
+import { Picker } from '@react-native-picker/picker';
 
 export default function Register() {
   const router = useRouter();
@@ -23,11 +25,21 @@ export default function Register() {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleDocumentPick = (side: 'front' | 'back') => {
-    // En un entorno real, usarías expo-image-picker aquí
-    const mockFileName = `documento_${side}.jpg`;
-    if (side === 'front') setDocumentFront(mockFileName);
-    else setDocumentBack(mockFileName);
+  const handleDocumentPick = async (side: 'front' | 'back') => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      if (side === 'front') {
+        setDocumentFront(result.assets[0].uri);
+      } else {
+        setDocumentBack(result.assets[0].uri);
+      }
+    }
   };
 
   return (
@@ -90,13 +102,28 @@ export default function Register() {
 
           <View className="mb-6">
             <Text className="text-sm font-medium text-slate-700 mb-2">País de Origen</Text>
-            <View className="relative justify-center">
+            <View className="relative justify-center border border-slate-200 rounded-lg h-12 overflow-hidden bg-white">
               <View className="absolute left-3 z-10"><FileText color="#A08C79" size={18} /></View>
-              <Input
-                className="pl-9" containerClassName="mb-0"
-                value={formData.country} onChangeText={(t) => updateFormData('country', t)}
-                placeholder="Ej. Argentina"
-              />
+              <View className="pl-9 w-full">
+                <Picker
+                  selectedValue={formData.country}
+                  onValueChange={(itemValue) => updateFormData('country', itemValue)}
+                  style={{ width: '100%', height: '100%', color: formData.country ? '#333F48' : '#9CA3AF' }}
+                  dropdownIconColor="#A08C79"
+                >
+                  <Picker.Item label="Selecciona un país" value="" color="#9CA3AF" />
+                  <Picker.Item label="Argentina" value="Argentina" />
+                  <Picker.Item label="Bolivia" value="Bolivia" />
+                  <Picker.Item label="Brasil" value="Brasil" />
+                  <Picker.Item label="Chile" value="Chile" />
+                  <Picker.Item label="Colombia" value="Colombia" />
+                  <Picker.Item label="Ecuador" value="Ecuador" />
+                  <Picker.Item label="Paraguay" value="Paraguay" />
+                  <Picker.Item label="Perú" value="Perú" />
+                  <Picker.Item label="Uruguay" value="Uruguay" />
+                  <Picker.Item label="Venezuela" value="Venezuela" />
+                </Picker>
+              </View>
             </View>
           </View>
 

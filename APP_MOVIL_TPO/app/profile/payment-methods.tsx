@@ -10,6 +10,16 @@ export default function PaymentMethods() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [paymentType, setPaymentType] = useState<"card" | "bank" | "check">("card");
   const [showInfoBanner, setShowInfoBanner] = useState(false);
+  const [cardData, setCardData] = useState({ number: '', exp: '', cvv: '' });
+  const [bankData, setBankData] = useState({ name: '', account: '' });
+  const [checkData, setCheckData] = useState({ number: '', amount: '' });
+
+  const isFormValid = () => {
+    if (paymentType === 'card') return cardData.number.length > 0 && cardData.exp.length > 0 && cardData.cvv.length > 0;
+    if (paymentType === 'bank') return bankData.name.length > 0 && bankData.account.length > 0;
+    if (paymentType === 'check') return checkData.number.length > 0 && checkData.amount.length > 0;
+    return false;
+  };
 
   const paymentMethods = [
     { id: 1, type: "card", name: "Visa **** 4532", status: "verified", details: "Vence 08/2027", icon: CreditCard },
@@ -146,16 +156,34 @@ export default function PaymentMethods() {
                 <View className="space-y-4">
                   <View>
                     <Text className="text-sm text-[#333F48] mb-2">Número de Tarjeta</Text>
-                    <TextInput placeholder="1234 5678 9012 3456" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" keyboardType="numeric" />
+                    <TextInput 
+                      placeholder="1234 5678 9012 3456" 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
+                      keyboardType="numeric" 
+                      value={cardData.number}
+                      onChangeText={(t) => setCardData({...cardData, number: t})}
+                    />
                   </View>
                   <View className="flex-row gap-4">
                     <View className="flex-1">
                       <Text className="text-sm text-[#333F48] mb-2">Vencimiento</Text>
-                      <TextInput placeholder="MM/AA" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" />
+                      <TextInput 
+                        placeholder="MM/AA" 
+                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
+                        value={cardData.exp}
+                        onChangeText={(t) => setCardData({...cardData, exp: t})}
+                      />
                     </View>
                     <View className="flex-1">
                       <Text className="text-sm text-[#333F48] mb-2">CVV</Text>
-                      <TextInput placeholder="123" secureTextEntry className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" keyboardType="numeric" />
+                      <TextInput 
+                        placeholder="123" 
+                        secureTextEntry 
+                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
+                        keyboardType="numeric" 
+                        value={cardData.cvv}
+                        onChangeText={(t) => setCardData({...cardData, cvv: t})}
+                      />
                     </View>
                   </View>
                 </View>
@@ -165,11 +193,22 @@ export default function PaymentMethods() {
                 <View className="space-y-4">
                   <View>
                     <Text className="text-sm text-[#333F48] mb-2">Nombre del Banco</Text>
-                    <TextInput placeholder="Ej: Banco Santander" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" />
+                    <TextInput 
+                      placeholder="Ej: Banco Santander" 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
+                      value={bankData.name}
+                      onChangeText={(t) => setBankData({...bankData, name: t})}
+                    />
                   </View>
                   <View>
                     <Text className="text-sm text-[#333F48] mb-2">Número de Cuenta</Text>
-                    <TextInput placeholder="1234567890" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" keyboardType="numeric" />
+                    <TextInput 
+                      placeholder="1234567890" 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
+                      keyboardType="numeric" 
+                      value={bankData.account}
+                      onChangeText={(t) => setBankData({...bankData, account: t})}
+                    />
                   </View>
                 </View>
               )}
@@ -177,11 +216,22 @@ export default function PaymentMethods() {
                 <View className="space-y-4">
                   <View>
                     <Text className="text-sm text-[#333F48] mb-2">Número de Cheque</Text>
-                    <TextInput placeholder="CH-123456" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" />
+                    <TextInput 
+                      placeholder="CH-123456" 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
+                      value={checkData.number}
+                      onChangeText={(t) => setCheckData({...checkData, number: t})}
+                    />
                   </View>
                   <View>
                     <Text className="text-sm text-[#333F48] mb-2">Monto (USD)</Text>
-                    <TextInput placeholder="50000" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" keyboardType="numeric" />
+                    <TextInput 
+                      placeholder="50000" 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
+                      keyboardType="numeric" 
+                      value={checkData.amount}
+                      onChangeText={(t) => setCheckData({...checkData, amount: t})}
+                    />
                   </View>
                   <Text className="text-xs text-[#A08C79] mt-2">El cheque debe entregarse físicamente antes de la subasta.</Text>
                 </View>
@@ -190,7 +240,13 @@ export default function PaymentMethods() {
 
             <View className="flex-row gap-3">
               <Button variant="secondary" onPress={() => setShowAddModal(false)} className="flex-1 h-12 rounded-xl">Cancelar</Button>
-              <Button onPress={() => setShowConfirmModal(true)} className="flex-1 bg-[#6A4F99] h-12 rounded-xl">Agregar</Button>
+              <Button 
+                onPress={() => setShowConfirmModal(true)} 
+                className={`flex-1 h-12 rounded-xl ${isFormValid() ? 'bg-[#6A4F99]' : 'bg-gray-400'}`}
+                disabled={!isFormValid()}
+              >
+                Agregar
+              </Button>
             </View>
           </View>
         </View>

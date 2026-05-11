@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TextInput, TouchableOpacity, Modal, Alert } fro
 import { useRouter } from 'expo-router';
 import { Upload, X, CheckCircle, Info, ChevronDown, ChevronUp, ChevronLeft } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function SellItem() {
   const router = useRouter();
@@ -42,9 +43,17 @@ export default function SellItem() {
     setStep(2);
   };
 
-  const handleImageUpload = () => {
+  const handleImageUpload = async () => {
     if (uploadedImages.length < 10) {
-      setUploadedImages([...uploadedImages, `imagen-${uploadedImages.length + 1}.jpg`]);
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+      if (!result.canceled) {
+        setUploadedImages([...uploadedImages, result.assets[0].uri]);
+      }
     }
   };
 
@@ -155,8 +164,12 @@ export default function SellItem() {
                 {uploadedImages.length > 0 && (
                   <View className="flex-row flex-wrap gap-2 mb-3">
                     {uploadedImages.map((img, i) => (
-                      <View key={i} className="bg-gray-100 rounded-md p-2 flex-row items-center border border-gray-200">
-                        <Text className="text-xs text-gray-600 mr-2">{img}</Text>
+                      <View key={i} className="bg-gray-100 rounded-md p-1 flex-row items-center border border-gray-200">
+                        <View className="w-10 h-10 bg-gray-200 rounded mr-2 overflow-hidden">
+                          {/* Muestra un preview */}
+                          <View className="w-full h-full bg-[#A08C79]/20" />
+                        </View>
+                        <Text className="text-xs text-gray-600 mr-2 max-w-[80px]" numberOfLines={1}>img-{i+1}</Text>
                         <TouchableOpacity onPress={() => removeImage(i)}>
                           <X color="#ef4444" size={14} />
                         </TouchableOpacity>
@@ -188,7 +201,11 @@ export default function SellItem() {
                 </Text>
               </View>
 
-              <Button onPress={handleStep1Submit} className="w-full mt-6 bg-[#6A4F99] h-12 rounded-xl">
+              <Button 
+                onPress={handleStep1Submit} 
+                className={`w-full mt-6 h-12 rounded-xl ${(!formData.title || !formData.description || !formData.agreedToTerms || uploadedImages.length < 6) ? 'bg-gray-400' : 'bg-[#6A4F99]'}`}
+                disabled={!formData.title || !formData.description || !formData.agreedToTerms || uploadedImages.length < 6}
+              >
                 Continuar
               </Button>
             </View>

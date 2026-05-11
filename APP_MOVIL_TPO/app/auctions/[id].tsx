@@ -82,11 +82,15 @@ export default function AuctionDetail() {
           </View>
         </View>
 
-        {auction.status === "live" && (
-          <TouchableOpacity className="flex-row items-center justify-center gap-2 bg-red-500 py-4 rounded-xl">
-            <Play color="white" size={20} />
-            <Text className="text-white font-bold text-lg">Unirse a la Subasta EN VIVO</Text>
-          </TouchableOpacity>
+        {isAuthenticated && (
+          <Link href={`/auctions/live/${auction.id}`} asChild>
+            <TouchableOpacity className={`flex-row items-center justify-center gap-2 py-4 rounded-xl mt-4 ${auction.status === "live" ? 'bg-red-500' : 'bg-[#6A4F99] border-2 border-white'}`}>
+              <Play color="white" size={20} />
+              <Text className="text-white font-bold text-lg">
+                {auction.status === "live" ? 'Unirse a la Subasta EN VIVO' : 'Participar en Subasta'}
+              </Text>
+            </TouchableOpacity>
+          </Link>
         )}
       </View>
 
@@ -109,7 +113,7 @@ export default function AuctionDetail() {
         <View className="gap-6">
           {catalogItems.map((item) => (
             <Card key={item.id} className="overflow-hidden border-gray-200">
-              <Image source={item.images[0]} className="w-full h-56" contentFit="cover" />
+              <Image source={{ uri: item.images[0] }} className="w-full h-56" contentFit="cover" />
               <View className="p-5">
                 <Text className="text-xl font-bold text-[#333F48] mb-1">{item.title}</Text>
                 

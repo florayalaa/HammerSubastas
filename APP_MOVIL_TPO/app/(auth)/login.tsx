@@ -69,7 +69,7 @@ export default function Login() {
           </View>
 
           <View className="flex-row items-center justify-end mb-6 mt-2">
-            <Link href="/(auth)/register" asChild>
+            <Link href="/(auth)/forgot-password" asChild>
               <Text className="text-sm text-[#6A4F99] font-medium">¿Olvidaste tu contraseña?</Text>
             </Link>
           </View>
