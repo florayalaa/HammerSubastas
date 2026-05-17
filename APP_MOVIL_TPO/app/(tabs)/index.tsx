@@ -121,7 +121,7 @@ export default function Dashboard() {
       <View className="mb-8">
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-xl font-bold text-[#333F48]">Pujas Recientes</Text>
-          <Link href="/(tabs)/auctions" asChild>
+          <Link href="/(tabs)/bids" asChild>
             <TouchableOpacity className="flex-row items-center">
               <Text className="text-[#6A4F99] mr-1 font-medium">Historial</Text>
               <ChevronRight color="#6A4F99" size={16} />

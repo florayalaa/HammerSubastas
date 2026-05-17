@@ -1,16 +1,17 @@
-import { Tabs } from 'expo-router';
-import { Home, Gavel, User, Tag, Menu, HandCoins } from 'lucide-react-native';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { Home, Gavel, User, Tag, Bell, HandCoins } from 'lucide-react-native';
+import { View, TouchableOpacity } from 'react-native';
 
 export default function TabLayout() {
+  const router = useRouter();
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#6A4F99',
         headerShown: true,
         headerRight: () => (
-          <TouchableOpacity onPress={() => Alert.alert('Notificaciones', 'Aquí verás tus notificaciones.')} style={{ marginRight: 15 }}>
-            <Menu color="#333F48" size={24} />
+          <TouchableOpacity onPress={() => router.push('/notifications')} style={{ marginRight: 15 }}>
+            <Bell color="#333F48" size={24} />
           </TouchableOpacity>
         ),
       }}>

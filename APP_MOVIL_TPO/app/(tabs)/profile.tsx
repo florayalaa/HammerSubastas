@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
-import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut } from 'lucide-react-native';
+import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut, BarChart3 } from 'lucide-react-native';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 
@@ -158,9 +158,16 @@ export default function Profile() {
         </Link>
 
         <Link href="/profile/my-documents" asChild>
-          <TouchableOpacity className="flex-row items-center gap-3 p-3">
+          <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
             <FileText color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Mis Documentos</Text>
+          </TouchableOpacity>
+        </Link>
+
+        <Link href="/profile/metrics" asChild>
+          <TouchableOpacity className="flex-row items-center gap-3 p-3">
+            <BarChart3 color="#6A4F99" size={20} />
+            <Text className="text-[#333F48] font-medium">Mis Métricas</Text>
           </TouchableOpacity>
         </Link>
       </Card>

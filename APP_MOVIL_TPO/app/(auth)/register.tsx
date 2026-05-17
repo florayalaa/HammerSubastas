@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { User, Mail, MapPin, FileText, Upload, X } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
@@ -191,8 +191,13 @@ export default function Register() {
                 <Button
                   onPress={() => {
                     setShowConfirmModal(false);
-                    // navigate to validation? Or login for now
-                    router.push('/(auth)/login');
+                    Alert.alert(
+                      "Investigación en Proceso",
+                      "Tus datos han sido enviados. Cuando seas aprobado, recibirás un correo para crear tu clave.",
+                      [
+                        { text: "Simular recepción de correo", onPress: () => router.push('/(auth)/complete-registration') }
+                      ]
+                    );
                   }}
                   className="flex-1 h-12 bg-[#6A4F99]"
                 >

@@ -9,8 +9,15 @@ import { Card } from '@/components/ui/Card';
 export default function AuctionDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
+  const categoryRank: Record<string, number> = {
+    "Común": 1,
+    "Especial": 2,
+    "Plata": 3,
+    "Oro": 4,
+    "Platino": 5
+  };
   const auction = {
     id: Number(id),
     title: "Subasta de Arte Contemporáneo",
@@ -83,14 +90,28 @@ export default function AuctionDetail() {
         </View>
 
         {isAuthenticated && (
-          <Link href={`/auctions/live/${auction.id}`} asChild>
-            <TouchableOpacity className={`flex-row items-center justify-center gap-2 py-4 rounded-xl mt-4 ${auction.status === "live" ? 'bg-red-500' : 'bg-[#6A4F99] border-2 border-white'}`}>
-              <Play color="white" size={20} />
-              <Text className="text-white font-bold text-lg">
-                {auction.status === "live" ? 'Unirse a la Subasta EN VIVO' : 'Participar en Subasta'}
-              </Text>
-            </TouchableOpacity>
-          </Link>
+          <View className="mt-4">
+            {(!user?.hasPaymentMethods || categoryRank[auction.category] > categoryRank[user?.category || "Común"]) ? (
+              <View className="bg-red-50 p-4 rounded-xl border border-red-200">
+                <Text className="text-red-800 text-sm font-semibold mb-1">No puedes participar en esta subasta</Text>
+                {categoryRank[auction.category] > categoryRank[user?.category || "Común"] && (
+                  <Text className="text-red-700 text-xs">• Requieres nivel {auction.category} o superior (Tienes {user?.category}).</Text>
+                )}
+                {!user?.hasPaymentMethods && (
+                  <Text className="text-red-700 text-xs">• Necesitas al menos un medio de pago verificado.</Text>
+                )}
+              </View>
+            ) : (
+              <Link href={`/auctions/live/${auction.id}`} asChild>
+                <TouchableOpacity className={`flex-row items-center justify-center gap-2 py-4 rounded-xl ${auction.status === "live" ? 'bg-red-500' : 'bg-[#6A4F99] border-2 border-white'}`}>
+                  <Play color="white" size={20} />
+                  <Text className="text-white font-bold text-lg">
+                    {auction.status === "live" ? 'Unirse a la Subasta EN VIVO' : 'Participar en Subasta'}
+                  </Text>
+                </TouchableOpacity>
+              </Link>
+            )}
+          </View>
         )}
       </View>
 

@@ -1,21 +1,60 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Send, Users, HandCoins } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LiveAuction() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
+  
   const [bidAmount, setBidAmount] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const currentItem = {
     title: "Anillo de Diamantes Art Déco",
     currentBid: 45000,
+    basePrice: 40000,
     highestBidder: "User***89",
     image: "https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=800&q=80",
     timeRemaining: "00:02:45"
+  };
+
+  const isExempt = user?.category === 'Oro' || user?.category === 'Platino';
+  const minBid = currentItem.currentBid + (currentItem.basePrice * 0.01);
+  const maxBid = currentItem.currentBid + (currentItem.basePrice * 0.20);
+
+  const handleBid = () => {
+    const amount = Number(bidAmount);
+    if (!amount || amount <= currentItem.currentBid) {
+      setErrorMsg("La puja debe ser mayor a la actual.");
+      return;
+    }
+    
+    if (!isExempt) {
+      if (amount < minBid) {
+        setErrorMsg(`Mínimo permitido: $${minBid}`);
+        return;
+      }
+      if (amount > maxBid) {
+        setErrorMsg(`Máximo permitido: $${maxBid}`);
+        return;
+      }
+    }
+
+    setErrorMsg('');
+    setIsSubmitting(true);
+    
+    // Simular envío a la red
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setBidAmount('');
+      Alert.alert("Éxito", "Puja enviada correctamente.");
+    }, 1500);
   };
 
   return (
@@ -46,7 +85,8 @@ export default function LiveAuction() {
           
           <View className="bg-gray-800 rounded-2xl p-6 mb-6 items-center">
             <Text className="text-gray-400 mb-2">Puja Actual</Text>
-            <Text className="text-5xl font-bold text-green-400 mb-2">${currentItem.currentBid}</Text>
+            <Text className="text-5xl font-bold text-green-400 mb-1">${currentItem.currentBid}</Text>
+            <Text className="text-gray-500 text-xs mb-3">Precio Base: ${currentItem.basePrice}</Text>
             <Text className="text-gray-400">Por: <Text className="font-bold text-white">{currentItem.highestBidder}</Text></Text>
           </View>
 
@@ -75,11 +115,26 @@ export default function LiveAuction() {
 
       {/* Bid Actions */}
       <View className="absolute bottom-0 w-full bg-gray-900 border-t border-gray-800 p-4 pb-8">
+        {!isExempt && (
+          <Text className="text-gray-400 text-xs mb-3 text-center">
+            Límites de puja para tu categoría: ${minBid} - ${maxBid}
+          </Text>
+        )}
         <View className="flex-row gap-3 mb-4">
-          <Button variant="secondary" className="flex-1 bg-gray-800 border-gray-700 h-12">
+          <Button 
+            variant="secondary" 
+            className="flex-1 bg-gray-800 border-gray-700 h-12"
+            disabled={isSubmitting}
+            onPress={() => setBidAmount((currentItem.currentBid + 500).toString())}
+          >
             <Text className="text-white font-bold">+ $500</Text>
           </Button>
-          <Button variant="secondary" className="flex-1 bg-gray-800 border-gray-700 h-12">
+          <Button 
+            variant="secondary" 
+            className="flex-1 bg-gray-800 border-gray-700 h-12"
+            disabled={isSubmitting}
+            onPress={() => setBidAmount((currentItem.currentBid + 1000).toString())}
+          >
             <Text className="text-white font-bold">+ $1000</Text>
           </Button>
         </View>
@@ -88,17 +143,23 @@ export default function LiveAuction() {
             <Text className="text-gray-400 text-lg mr-2">$</Text>
             <TextInput
               value={bidAmount}
-              onChangeText={setBidAmount}
+              onChangeText={(t) => { setBidAmount(t); setErrorMsg(''); }}
               placeholder="Monto a pujar"
               placeholderTextColor="#9CA3AF"
               keyboardType="numeric"
               className="flex-1 text-white text-lg h-full"
+              editable={!isSubmitting}
             />
           </View>
-          <TouchableOpacity className="w-14 h-14 bg-[#6A4F99] rounded-xl items-center justify-center">
-            <HandCoins color="white" size={24} />
+          <TouchableOpacity 
+            onPress={handleBid}
+            disabled={isSubmitting}
+            className={`w-14 h-14 rounded-xl items-center justify-center ${isSubmitting ? 'bg-gray-600' : 'bg-[#6A4F99]'}`}
+          >
+            {isSubmitting ? <ActivityIndicator color="white" /> : <HandCoins color="white" size={24} />}
           </TouchableOpacity>
         </View>
+        {errorMsg ? <Text className="text-red-400 text-xs mt-2 text-center">{errorMsg}</Text> : null}
       </View>
     </View>
   );

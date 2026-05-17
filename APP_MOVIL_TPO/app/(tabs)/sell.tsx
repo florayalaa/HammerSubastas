@@ -250,6 +250,18 @@ export default function SellItem() {
                 />
               </View>
 
+              <View className="mt-4">
+                <Text className="text-sm font-medium text-[#333F48] mb-2">Comprobante de Origen Lícito (Opcional)</Text>
+                <Text className="text-xs text-[#A08C79] mb-3">Requerido por la empresa para sumas altas.</Text>
+                <TouchableOpacity 
+                  onPress={() => Alert.alert("Cargar Documento", "Funcionalidad simulada: documento subido exitosamente.")}
+                  className="border-2 border-dashed border-[#6A4F99]/50 rounded-lg p-4 items-center justify-center bg-[#6A4F99]/5 flex-row"
+                >
+                  <Upload color="#6A4F99" size={20} className="mr-2" />
+                  <Text className="text-sm text-[#6A4F99] font-medium">Adjuntar Archivo o Foto</Text>
+                </TouchableOpacity>
+              </View>
+
               <View className="flex-row gap-3 mt-6">
                 <Button 
                   variant="secondary"

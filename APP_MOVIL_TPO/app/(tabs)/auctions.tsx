@@ -131,7 +131,7 @@ export default function Auctions() {
                   </TouchableOpacity>
                 </Link>
                 {auction.status === "live" && (
-                  <Link href={`/auctions/${auction.id}/live`} asChild>
+                  <Link href={`/auctions/live/${auction.id}`} asChild>
                     <TouchableOpacity className="flex-1 bg-red-500 py-3 rounded-lg flex-row justify-center items-center gap-2">
                       <Play size={16} color="white" />
                       <Text className="text-white font-semibold">Participar</Text>

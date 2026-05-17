@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, FileText, Upload } from 'lucide-react-native';
+import { Alert } from 'react-native';
 import { Button } from '@/components/ui/Button';
 
 export default function MyDocuments() {
@@ -34,7 +35,10 @@ export default function MyDocuments() {
           </Text>
         </View>
 
-        <Button className="w-full bg-[#6A4F99] h-12 rounded-xl flex-row items-center justify-center">
+        <Button 
+          onPress={() => Alert.alert('Actualizar', 'Funcionalidad para adjuntar nuevos documentos en proceso de habilitación.')}
+          className="w-full bg-[#6A4F99] h-12 rounded-xl flex-row items-center justify-center"
+        >
           <Upload color="white" size={20} className="mr-2" />
           <Text className="text-white font-bold">Actualizar Documentos</Text>
         </Button>
