@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiPost } from '@/lib/api';
 
 interface User {
   id: number;
@@ -53,23 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Mock login
-    const mockUser: User = {
-      id: 1,
-      firstName: "Juan",
-      lastName: "Pérez",
-      email: email,
-      category: "Oro",
-      verified: true,
-      hasPaymentMethods: true,
-    };
-    setUser(mockUser);
-    await AsyncStorage.setItem("user", JSON.stringify(mockUser));
+    // Call backend login
+    const resp = await apiPost('/auth/login', { email, password });
+    const { user, token } = resp;
+    setUser(user);
+    await AsyncStorage.setItem('user', JSON.stringify(user));
+    if (token) await AsyncStorage.setItem('token', token);
   };
 
   const logout = async () => {
     setUser(null);
-    await AsyncStorage.removeItem("user");
+    await AsyncStorage.removeItem('user');
+    await AsyncStorage.removeItem('token');
   };
 
   return (
