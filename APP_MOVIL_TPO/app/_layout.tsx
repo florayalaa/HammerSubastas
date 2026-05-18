@@ -3,7 +3,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import '../global.css';
-
+import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -34,12 +34,29 @@ function RootLayoutNav() {
 
   if (!isReady || showSplash) {
     return (
-      <View className="flex-1 bg-[#6A4F99] items-center justify-center">
-        <Text className="text-4xl font-bold text-white mb-3">HAMMER</Text>
-        <Text className="text-xl text-white/90">Tu plataforma de subastas</Text>
-      </View>
+      <LinearGradient
+        colors={['#6B21A8', '#B8860B']} // morado → dorado
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Text className="text-5xl font-bold text-white mb-2">
+          HAMMER
+        </Text>
+        <Text className="text-base italic text-white mb-6">
+          Tu plataforma de subastas de confianza
+        </Text>
+
+        {/* Puntos del carrusel */}
+        <View className="flex-row space-x-2">
+          <View className="w-2 h-2 rounded-full bg-white" />
+          <View className="w-2 h-2 rounded-full bg-white" />
+          <View className="w-2 h-2 rounded-full bg-white" />
+        </View>
+      </LinearGradient>
     );
   }
+
 
   return (
     <Stack>
