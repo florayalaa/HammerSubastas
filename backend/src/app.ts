@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import authRoutes from './routes/auth';
+import authRoutes from './modules/auth/auth.routes';
 import auctionsRoutes from './routes/auctions';
-import usersRoutes from './routes/users';
+import usersRoutes from './modules/users/users.routes';
 
 const app = express();
 
@@ -13,8 +13,8 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/auctions', auctionsRoutes);
-app.use('/users', usersRoutes);
+app.use('/api/users', usersRoutes);
 
 export default app;
