@@ -42,8 +42,34 @@ enum UserCategory {
 // Modelos dummy para las relaciones, serán completados por las otras Personas
 model Bid {
   id         String   @id @default(uuid())
+  amount     Float
+  auctionId  String
+  auction    Auction  @relation(fields: [auctionId], references: [id])
   userId     String
   user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+enum AuctionStatus {
+  PENDING
+  ACTIVE
+  FINISHED
+  CANCELED
+}
+
+model Auction {
+  id            String        @id @default(uuid())
+  title         String
+  description   String
+  startingPrice Float
+  currentPrice  Float
+  startDate     DateTime
+  endDate       DateTime
+  status        AuctionStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  bids          Bid[]
 }
 
 model PaymentMethod {

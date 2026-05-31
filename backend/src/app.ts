@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './modules/auth/auth.routes';
-import auctionsRoutes from './routes/auctions';
 import usersRoutes from './modules/users/users.routes';
+import auctionsRoutes from './modules/auctions/auctions.routes';
+import bidsRoutes from './modules/bids/bids.routes';
 
 const app = express();
 
@@ -14,7 +15,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/auctions', auctionsRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/auctions', auctionsRoutes);
+app.use('/api/bids', bidsRoutes);
 
 export default app;
