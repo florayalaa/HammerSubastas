@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Lock, ChevronLeft, Key } from 'lucide-react-native';
+import { Lock, ChevronLeft, Key, Mail, Hash } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { apiPost } from '@/app/lib/api';
 
 export default function CompleteRegistration() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleComplete = () => {
-    if (!password || !confirmPassword) {
-      Alert.alert("Error", "Por favor ingresa tu contraseña");
+  const handleComplete = async () => {
+    if (!email || !code || !password || !confirmPassword) {
+      Alert.alert("Error", "Por favor completa todos los campos");
       return;
     }
     if (password !== confirmPassword) {
@@ -20,13 +23,18 @@ export default function CompleteRegistration() {
       return;
     }
     
-    Alert.alert(
-      "¡Registro Completado!",
-      "Tu cuenta ha sido activada exitosamente. Ahora puedes iniciar sesión.",
-      [
-        { text: "Ir al Login", onPress: () => router.push('/(auth)/login') }
-      ]
-    );
+    try {
+      await apiPost('/auth/complete-registration', { email, code, newPassword: password });
+      Alert.alert(
+        "¡Registro Completado!",
+        "Tu cuenta ha sido activada exitosamente. Ahora puedes iniciar sesión.",
+        [
+          { text: "Ir al Login", onPress: () => router.push('/(auth)/login') }
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Código inválido o error al completar el registro");
+    }
   };
 
   return (
@@ -50,6 +58,30 @@ export default function CompleteRegistration() {
       </View>
 
       <View className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+        <View className="mb-4">
+          <Text className="text-sm font-medium text-slate-700 mb-2">Correo Electrónico</Text>
+          <View className="relative justify-center">
+            <View className="absolute left-3 z-10"><Mail color="#A08C79" size={18} /></View>
+            <Input
+              className="pl-9" containerClassName="mb-0"
+              value={email} onChangeText={setEmail}
+              placeholder="tu@email.com" keyboardType="email-address" autoCapitalize="none"
+            />
+          </View>
+        </View>
+
+        <View className="mb-4">
+          <Text className="text-sm font-medium text-slate-700 mb-2">Código Temporal</Text>
+          <View className="relative justify-center">
+            <View className="absolute left-3 z-10"><Hash color="#A08C79" size={18} /></View>
+            <Input
+              className="pl-9" containerClassName="mb-0"
+              value={code} onChangeText={setCode}
+              placeholder="Ej: A1B2C3" autoCapitalize="characters"
+            />
+          </View>
+        </View>
+
         <View className="mb-4">
           <Text className="text-sm font-medium text-slate-700 mb-2">Crear Contraseña</Text>
           <View className="relative justify-center">

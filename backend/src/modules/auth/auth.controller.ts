@@ -20,6 +20,15 @@ export class AuthController {
     }
   }
 
+  async completeRegistration(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await authService.completeRegistration(req.body);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  }
+
   async forgotPassword(req: Request, res: Response, next: NextFunction) {
     try {
       // Por el momento, es solo un mock

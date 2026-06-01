@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { User, Mail, MapPin, FileText, Upload, X } from 'lucide-react-native';
+import { apiPost } from '@/app/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import * as ImagePicker from 'expo-image-picker';
@@ -189,15 +190,20 @@ export default function Register() {
                   Revisar
                 </Button>
                 <Button
-                  onPress={() => {
+                  onPress={async () => {
                     setShowConfirmModal(false);
-                    Alert.alert(
-                      "Investigación en Proceso",
-                      "Tus datos han sido enviados. Cuando seas aprobado, recibirás un correo para crear tu clave.",
-                      [
-                        { text: "Simular recepción de correo", onPress: () => router.push('/(auth)/complete-registration') }
-                      ]
-                    );
+                    try {
+                      await apiPost('/auth/register', formData);
+                      Alert.alert(
+                        "Registro Exitoso",
+                        "Tus datos han sido enviados. Hemos simulado el envío de un correo con un código temporal. Revisa la consola del backend.",
+                        [
+                          { text: "Completar Registro", onPress: () => router.push('/(auth)/complete-registration') }
+                        ]
+                      );
+                    } catch (error: any) {
+                      Alert.alert("Error en el registro", error.message || "Ocurrió un error al registrarse");
+                    }
                   }}
                   className="flex-1 h-12 bg-[#6A4F99]"
                 >

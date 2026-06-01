@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlserver"
   url      = env("DATABASE_URL")
 }
 
@@ -18,8 +18,9 @@ model User {
   passwordHash    String
   country         String
   address         String
-  category        UserCategory @default(COMUN)
+  category        String       @default("COMUN")
   isApproved      Boolean      @default(false)
+  mustChangePassword Boolean   @default(true)
   documentFront   String?
   documentBack    String?
   createdAt       DateTime     @default(now())
@@ -29,14 +30,6 @@ model User {
   paymentMethods  PaymentMethod[]
   itemSubmissions ItemSubmission[]
   notifications   Notification[]
-}
-
-enum UserCategory {
-  COMUN
-  ESPECIAL
-  PLATA
-  ORO
-  PLATINO
 }
 
 // Modelos dummy para las relaciones, serán completados por las otras Personas
@@ -50,12 +43,6 @@ model Bid {
   createdAt  DateTime @default(now())
 }
 
-enum AuctionStatus {
-  PENDING
-  ACTIVE
-  FINISHED
-  CANCELED
-}
 
 model Auction {
   id            String        @id @default(uuid())
@@ -65,7 +52,7 @@ model Auction {
   currentPrice  Float
   startDate     DateTime
   endDate       DateTime
-  status        AuctionStatus @default(PENDING)
+  status        String        @default("PENDING")
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -88,4 +75,207 @@ model Notification {
   id       String   @id @default(uuid())
   userId   String
   user     User     @relation(fields: [userId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// LEGACY TABLES FOR SQL SERVER (Based on schema_base_datos.sql)
+// -----------------------------------------------------------------------------
+
+model paises {
+  numero       Int        @id
+  nombre       String     @db.VarChar(250)
+  nombreCorto  String?    @db.VarChar(250)
+  capital      String     @db.VarChar(250)
+  nacionalidad String     @db.VarChar(250)
+  idiomas      String     @db.VarChar(150)
+  clientes     clientes[]
+}
+
+model personas {
+  identificador Int            @id @default(autoincrement())
+  documento     String         @db.VarChar(20)
+  nombre        String         @db.VarChar(150)
+  direccion     String?        @db.VarChar(250)
+  estado        String?        @db.VarChar(15) // 'activo', 'incativo'
+  foto          Bytes?         // varbinary(max)
+  clientes      clientes?
+  duenios       duenios?
+  subastadores  subastadores?
+  credenciales  credenciales_web?
+  notificaciones notificaciones_web[]
+}
+
+model empleados {
+  identificador  Int         @id
+  cargo          String?     @db.VarChar(100)
+  sector         Int?
+  sectores       sectores[]
+  clientes       clientes[]
+  duenios        duenios[]
+  productos      productos[]
+  catalogos      catalogos[]
+}
+
+model sectores {
+  identificador     Int        @id @default(autoincrement())
+  nombreSector      String     @db.VarChar(150)
+  codigoSector      String?    @db.VarChar(10)
+  responsableSector Int?
+  empleados         empleados? @relation(fields: [responsableSector], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+}
+
+model seguros {
+  nroPoliza       String      @id @db.VarChar(30)
+  compania        String      @db.VarChar(150)
+  polizaCombinada String?     @db.VarChar(2) // 'si', 'no'
+  importe         Decimal     @db.Decimal(18,2)
+  productos       productos[]
+}
+
+model clientes {
+  identificador     Int                 @id
+  numeroPais        Int?
+  admitido          String?             @db.VarChar(2) // 'si', 'no'
+  categoria         String?             @db.VarChar(10) // comun, especial, plata, oro, platino
+  verificador       Int
+  personas          personas            @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  paises            paises?             @relation(fields: [numeroPais], references: [numero], onUpdate: NoAction, onDelete: NoAction)
+  empleados         empleados           @relation(fields: [verificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  asistentes        asistentes[]
+  registroDeSubasta registroDeSubasta[]
+}
+
+model duenios {
+  identificador          Int                 @id
+  numeroPais             Int?
+  verificacionFinanciera String?             @map("verificaciónFinanciera") @db.VarChar(2)
+  verificacionJudicial   String?             @map("verificaciónJudicial") @db.VarChar(2)
+  calificacionRiesgo     Int?
+  verificador            Int
+  personas               personas            @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  empleados              empleados           @relation(fields: [verificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  productos              productos[]
+  registroDeSubasta      registroDeSubasta[]
+}
+
+model subastadores {
+  identificador Int        @id
+  matricula     String?    @db.VarChar(15)
+  region        String?    @db.VarChar(50)
+  personas      personas   @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  subastas      subastas[]
+}
+
+model subastas {
+  identificador       Int                 @id @default(autoincrement())
+  fecha               DateTime            @db.Date
+  hora                DateTime            @db.Time
+  estado              String?             @db.VarChar(10) // abierta, carrada
+  subastador          Int?
+  ubicacion           String?             @db.VarChar(350)
+  capacidadAsistentes Int?
+  tieneDeposito       String?             @db.VarChar(2)
+  seguridadPropia     String?             @db.VarChar(2)
+  categoria           String?             @db.VarChar(10)
+  subastadores        subastadores?       @relation(fields: [subastador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  catalogos           catalogos[]
+  asistentes          asistentes[]
+  registroDeSubasta   registroDeSubasta[]
+}
+
+model productos {
+  identificador       Int                 @id @default(autoincrement())
+  fecha               DateTime?           @db.Date
+  disponible          String?             @db.VarChar(2)
+  descripcionCatalogo String?             @default("No Posee") @db.VarChar(500)
+  descripcionCompleta String              @db.VarChar(300)
+  revisor             Int
+  duenio              Int
+  seguro              String?             @db.VarChar(30)
+  empleados           empleados           @relation(fields: [revisor], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  duenios             duenios             @relation(fields: [duenio], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  seguros             seguros?            @relation(fields: [seguro], references: [nroPoliza], onUpdate: NoAction, onDelete: NoAction)
+  fotos               fotos[]
+  itemsCatalogo       itemsCatalogo[]
+  registroDeSubasta   registroDeSubasta[]
+}
+
+model fotos {
+  identificador Int       @id @default(autoincrement())
+  producto      Int
+  foto          Bytes     // varbinary(max)
+  productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+}
+
+model catalogos {
+  identificador Int             @id @default(autoincrement())
+  descripcion   String          @db.VarChar(250)
+  subasta       Int?
+  responsable   Int
+  empleados     empleados       @relation(fields: [responsable], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  subastas      subastas?       @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  itemsCatalogo itemsCatalogo[]
+}
+
+model itemsCatalogo {
+  identificador Int       @id @default(autoincrement())
+  catalogo      Int
+  producto      Int
+  precioBase    Decimal   @db.Decimal(18,2)
+  comision      Decimal   @db.Decimal(18,2)
+  subastado     String?   @db.VarChar(2)
+  catalogos     catalogos @relation(fields: [catalogo], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  pujos         pujos[]
+}
+
+model asistentes {
+  identificador Int      @id @default(autoincrement())
+  numeroPostor  Int
+  cliente       Int
+  subasta       Int
+  clientes      clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  subastas      subastas @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  pujos         pujos[]
+}
+
+model pujos {
+  identificador Int           @id @default(autoincrement())
+  asistente     Int
+  item          Int
+  importe       Decimal       @db.Decimal(18,2)
+  ganador       String?       @default("no") @db.VarChar(2)
+  asistentes    asistentes    @relation(fields: [asistente], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  itemsCatalogo itemsCatalogo @relation(fields: [item], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+}
+
+model registroDeSubasta {
+  identificador Int       @id @default(autoincrement())
+  subasta       Int
+  duenio        Int
+  producto      Int
+  cliente       Int
+  importe       Decimal   @db.Decimal(18,2)
+  comision      Decimal   @db.Decimal(18,2)
+  subastas      subastas  @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  duenios       duenios   @relation(fields: [duenio], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  clientes      clientes  @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+}
+
+model credenciales_web {
+  identificador      Int      @id
+  email              String   @unique @db.VarChar(255)
+  passwordHash       String   @db.VarChar(255)
+  mustChangePassword Boolean  @default(true)
+  personas           personas @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+}
+
+model notificaciones_web {
+  id                   Int      @id @default(autoincrement())
+  identificadorPersona Int
+  mensaje              String   @db.VarChar(500)
+  leido                Boolean  @default(false)
+  fecha                DateTime @default(now()) @db.DateTime2
+  personas             personas @relation(fields: [identificadorPersona], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
 }
