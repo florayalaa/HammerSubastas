@@ -28,19 +28,16 @@ export default function Register() {
 
   const handleDocumentPick = async (side: 'front' | 'back') => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
+      // Use MediaTypeOptions for cross‑platform compatibility (works on web and native)
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
-    if (!result.canceled) {
-      if (side === 'front') {
-        setDocumentFront(result.assets[0].uri);
-      } else {
-        setDocumentBack(result.assets[0].uri);
+    if (result && !result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        side === 'front' ? setDocumentFront(uri) : setDocumentBack(uri);
       }
-    }
   };
 
   return (
