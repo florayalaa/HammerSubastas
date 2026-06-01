@@ -1,83 +1,91 @@
 import { prisma } from '../../config/database';
-import { UserCategory } from '@prisma/client';
 
 export class UsersService {
   async getUserProfile(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        country: true,
-        address: true,
-        category: true,
-        isApproved: true,
-        documentFront: true,
-        documentBack: true,
-        createdAt: true,
-      },
+    const id = parseInt(userId, 10);
+    const persona = await prisma.personas.findUnique({
+      where: { identificador: id },
+      include: {
+        credenciales: true,
+        clientes: true,
+      }
     });
 
-    if (!user) {
+    if (!persona) {
       throw new Error('Usuario no encontrado');
     }
 
-    return user;
-  }
-
-  async updateProfile(userId: string, data: any) {
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        country: data.country,
-        address: data.address,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        country: true,
-        address: true,
-        category: true,
-      },
-    });
-
-    return user;
-  }
-
-  async uploadDocuments(userId: string, frontUrl: string, backUrl: string) {
-    return prisma.user.update({
-      where: { id: userId },
-      data: {
-        documentFront: frontUrl,
-        documentBack: backUrl,
-      },
-    });
-  }
-
-  async getUserStats(userId: string) {
-    // Mock temporal, esto dependerá de módulos "auctions" y "items"
     return {
-      totalBids: 15,
-      auctionsWon: 3,
-      itemsSold: 1,
+      id: persona.identificador.toString(),
+      firstName: persona.nombre.split(' ')[0] || '',
+      lastName: persona.nombre.split(' ').slice(1).join(' ') || '',
+      email: persona.credenciales?.email || '',
+      country: '',
+      address: persona.direccion || '',
+      category: persona.clientes?.categoria || 'comun',
+      isApproved: persona.clientes?.admitido === 'si',
+      documentFront: persona.foto ? 'base64-image' : null,
+      documentBack: null,
+      createdAt: new Date(),
     };
   }
 
-  // Funciones exportadas según el BACKEND_PLAN.md
-  async getUserById(id: string) {
-    return prisma.user.findUnique({ where: { id } });
+  async updateProfile(userId: string, data: any) {
+    const id = parseInt(userId, 10);
+    const persona = await prisma.personas.update({
+      where: { identificador: id },
+      data: {
+        nombre: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+        direccion: `${data.address || ''}, ${data.country || ''}`.trim(),
+      },
+      include: {
+        credenciales: true,
+        clientes: true,
+      }
+    });
+
+    return {
+      id: persona.identificador.toString(),
+      firstName: persona.nombre.split(' ')[0] || '',
+      lastName: persona.nombre.split(' ').slice(1).join(' ') || '',
+      email: persona.credenciales?.email || '',
+      country: data.country || '',
+      address: data.address || '',
+      category: persona.clientes?.categoria || 'comun',
+    };
   }
 
-  async getUserCategory(id: string): Promise<UserCategory> {
-    const user = await prisma.user.findUnique({ where: { id }, select: { category: true } });
-    if (!user) throw new Error('Usuario no encontrado');
-    return user.category;
+  async uploadDocuments(userId: string, frontUrl: string, backUrl: string) {
+    return { message: "Simulación de subida de documento completa." };
+  }
+
+  async getUserStats(userId: string) {
+    const id = parseInt(userId, 10);
+    
+    // Contar subastas donde este usuario participó (bids / pujos)
+    const pujos = await prisma.pujos.count({
+      where: { asistentes: { cliente: id } }
+    });
+
+    const ganadas = await prisma.pujos.count({
+      where: { asistentes: { cliente: id }, ganador: 'si' }
+    });
+
+    return {
+      totalBids: pujos,
+      auctionsWon: ganadas,
+      itemsSold: 0,
+    };
+  }
+
+  async getUserById(id: string) {
+    return prisma.personas.findUnique({ where: { identificador: parseInt(id, 10) } });
+  }
+
+  async getUserCategory(id: string): Promise<string> {
+    const cliente = await prisma.clientes.findUnique({ where: { identificador: parseInt(id, 10) }, select: { categoria: true } });
+    if (!cliente) return 'comun';
+    return cliente.categoria || 'comun';
   }
 }
 
