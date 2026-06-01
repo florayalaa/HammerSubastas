@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:4000';
+export const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:4000/api';
 
 async function request(path: string, init: RequestInit = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, init);
