@@ -9,7 +9,10 @@ async function request(path: string, init: RequestInit = {}) {
     // ignore json parse errors
   }
   if (!res.ok) {
-    const message = json?.message ?? `HTTP ${res.status}`;
+    let message = json?.message ?? `HTTP ${res.status}`;
+    if (json?.errors && Array.isArray(json.errors)) {
+      message += ' - ' + json.errors.map((e: any) => e.message).join(', ');
+    }
     const err: any = new Error(message);
     err.status = res.status;
     err.body = json;

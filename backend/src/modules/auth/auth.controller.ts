@@ -7,6 +7,7 @@ export class AuthController {
       const result = await authService.register(req.body);
       res.status(201).json(result);
     } catch (error: any) {
+      console.error("[REGISTER ERROR]:", error);
       res.status(400).json({ status: 'error', message: error.message });
     }
   }
