@@ -24,16 +24,21 @@ export default function CompleteRegistration() {
     }
     
     try {
-      await apiPost('/auth/complete-registration', { email, code, newPassword: password });
-      Alert.alert(
-        "¡Registro Completado!",
-        "Tu cuenta ha sido activada exitosamente. Ahora puedes iniciar sesión.",
-        [
-          { text: "Ir al Login", onPress: () => router.push('/(auth)/login') }
-        ]
-      );
+      const response = await apiPost('/auth/complete-registration', { email, code, newPassword: password });
+      if (typeof window !== 'undefined') {
+        window.alert("¡Registro Completado! Tu cuenta ha sido activada exitosamente. Ahora puedes iniciar sesión.");
+      } else {
+        Alert.alert("¡Registro Completado!", "Tu cuenta ha sido activada exitosamente. Ahora puedes iniciar sesión.");
+      }
+      router.push('/(auth)/login');
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Código inválido o error al completar el registro");
+      const errorMsg = error.message || "Código inválido o error al completar el registro";
+      console.error("Error backend:", errorMsg);
+      if (typeof window !== 'undefined') {
+        window.alert("Error: " + errorMsg);
+      } else {
+        Alert.alert("Error", errorMsg);
+      }
     }
   };
 

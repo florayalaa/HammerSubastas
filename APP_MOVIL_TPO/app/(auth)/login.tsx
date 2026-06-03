@@ -20,8 +20,18 @@ export default function Login() {
     try {
       await login(email, password);
       router.replace('/(tabs)');
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo iniciar sesión');
+    } catch (error: any) {
+      if (error.message?.includes('completar el registro')) {
+        Alert.alert(
+          'Registro incompleto', 
+          error.message,
+          [
+            { text: 'Ir a completar registro', onPress: () => router.push('/(auth)/complete-registration') }
+          ]
+        );
+      } else {
+        Alert.alert('Error', error.message || 'No se pudo iniciar sesión');
+      }
     }
   };
 
@@ -82,6 +92,13 @@ export default function Login() {
             <Text className="text-[#A08C79]">¿No tienes una cuenta? </Text>
             <Link href="/(auth)/register" asChild>
               <Text className="text-[#6A4F99] font-semibold">Regístrate aquí</Text>
+            </Link>
+          </View>
+          
+          <View className="mt-3 flex-row justify-center">
+            <Text className="text-[#A08C79]">¿Ya te registraste? </Text>
+            <Link href="/(auth)/complete-registration" asChild>
+              <Text className="text-[#6A4F99] font-semibold">Verifica tu código</Text>
             </Link>
           </View>
         </View>

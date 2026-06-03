@@ -191,15 +191,19 @@ export default function Register() {
                     setShowConfirmModal(false);
                     try {
                       await apiPost('/auth/register', formData);
-                      Alert.alert(
-                        "Registro Exitoso",
-                        "Tus datos han sido enviados. Hemos simulado el envío de un correo con un código temporal. Revisa la consola del backend.",
-                        [
-                          { text: "Completar Registro", onPress: () => router.push('/(auth)/complete-registration') }
-                        ]
-                      );
+                      if (typeof window !== 'undefined') {
+                        window.alert("Registro Exitoso. Tus datos han sido enviados. Busca el código temporal en la consola del backend.");
+                      } else {
+                        Alert.alert("Registro Exitoso", "Tus datos han sido enviados. Busca el código temporal en la consola del backend.");
+                      }
+                      router.push('/(auth)/complete-registration');
                     } catch (error: any) {
-                      Alert.alert("Error en el registro", error.message || "Ocurrió un error al registrarse");
+                      const errorMsg = error.message || "Ocurrió un error al registrarse";
+                      if (typeof window !== 'undefined') {
+                        window.alert("Error en el registro: " + errorMsg);
+                      } else {
+                        Alert.alert("Error en el registro", errorMsg);
+                      }
                     }
                   }}
                   className="flex-1 h-12 bg-[#6A4F99]"

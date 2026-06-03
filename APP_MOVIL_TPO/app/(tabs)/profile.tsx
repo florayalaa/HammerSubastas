@@ -1,27 +1,73 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
 import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut, BarChart3 } from 'lucide-react-native';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
+import { apiGet } from '@/app/lib/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Profile() {
-  const { logout } = useAuth();
-  
-  const userProfile = {
-    firstName: "Juan",
-    lastName: "Pérez",
-    email: "juan.perez@email.com",
-    address: "Av. Libertador 5432, Buenos Aires",
-    country: "Argentina",
-    category: "Oro",
-    verified: true,
-    memberSince: "Enero 2024",
-    paymentMethods: 3,
-    totalBids: 45,
-    wonAuctions: 8,
-    totalSpent: "$125,400",
-  };
+  const { logout, user } = useAuth();
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) throw new Error('No token');
+        const res = await apiGet('/users/me', token);
+        if (res && res.user) {
+          setProfileData({
+            firstName: res.user.firstName,
+            lastName: res.user.lastName,
+            email: res.user.email,
+            address: res.user.address || "No especificado",
+            country: res.user.country || "No especificado",
+            category: res.user.category ? res.user.category.charAt(0).toUpperCase() + res.user.category.slice(1).toLowerCase() : "Común",
+            verified: res.user.isApproved,
+            memberSince: new Date(res.user.createdAt).toLocaleDateString(),
+            paymentMethods: 0,
+            totalBids: 0,
+            wonAuctions: 0,
+            totalSpent: "$0",
+          });
+        }
+      } catch (e) {
+        console.error('Error fetching profile', e);
+        // Fallback al user del context si la API falla
+        if (user) {
+          setProfileData({
+            firstName: user.firstName || user.name?.split(' ')[0] || '',
+            lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
+            email: user.email,
+            address: "No especificado",
+            country: "No especificado",
+            category: user.category || "Común",
+            verified: user.verified || false,
+            memberSince: "Reciente",
+            paymentMethods: 0,
+            totalBids: 0,
+            wonAuctions: 0,
+            totalSpent: "$0",
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#6A4F99" />
+      </View>
+    );
+  }
 
   const categoryColors: Record<string, string> = {
     "Común": "#A08C79",
@@ -31,12 +77,15 @@ export default function Profile() {
     "Platino": "#E2C3BC",
   };
 
+  const currentCategory = profileData?.category || "Común";
+  const catColor = categoryColors[currentCategory] || categoryColors["Común"];
+
   const stats = [
-    { label: "Miembro Desde", value: userProfile.memberSince },
-    { label: "Métodos de Pago", value: userProfile.paymentMethods },
-    { label: "Pujas Totales", value: userProfile.totalBids },
-    { label: "Subastas Ganadas", value: userProfile.wonAuctions },
-    { label: "Total Invertido", value: userProfile.totalSpent, highlight: true },
+    { label: "Miembro Desde", value: profileData?.memberSince },
+    { label: "Métodos de Pago", value: profileData?.paymentMethods },
+    { label: "Pujas Totales", value: profileData?.totalBids },
+    { label: "Subastas Ganadas", value: profileData?.wonAuctions },
+    { label: "Total Invertido", value: profileData?.totalSpent, highlight: true },
   ];
 
   return (
@@ -56,12 +105,12 @@ export default function Profile() {
         <View className="items-center mb-6">
           <View 
             className="w-20 h-20 rounded-full mb-3 items-center justify-center border-4 border-white"
-            style={{ backgroundColor: categoryColors[userProfile.category] }}
+            style={{ backgroundColor: catColor }}
           >
             <Award color="white" size={36} />
           </View>
-          <Text className="text-2xl font-bold text-white mb-1">Categoría {userProfile.category}</Text>
-          {userProfile.verified && (
+          <Text className="text-2xl font-bold text-white mb-1">Categoría {currentCategory}</Text>
+          {profileData?.verified && (
             <View className="flex-row items-center gap-1 px-3 py-1 bg-white/20 rounded-full">
               <Shield color="white" size={14} />
               <Text className="text-white text-xs">Cuenta Verificada</Text>
@@ -86,7 +135,7 @@ export default function Profile() {
             <User color="#A08C79" size={20} />
             <View>
               <Text className="text-xs text-[#A08C79] mb-0.5">Nombre Completo</Text>
-              <Text className="font-semibold text-[#333F48]">{userProfile.firstName} {userProfile.lastName}</Text>
+              <Text className="font-semibold text-[#333F48]">{profileData?.firstName} {profileData?.lastName}</Text>
             </View>
           </View>
 
@@ -94,7 +143,7 @@ export default function Profile() {
             <Mail color="#A08C79" size={20} />
             <View>
               <Text className="text-xs text-[#A08C79] mb-0.5">Correo Electrónico</Text>
-              <Text className="font-semibold text-[#333F48]">{userProfile.email}</Text>
+              <Text className="font-semibold text-[#333F48]">{profileData?.email}</Text>
             </View>
           </View>
 
@@ -102,7 +151,7 @@ export default function Profile() {
             <MapPin color="#A08C79" size={20} />
             <View>
               <Text className="text-xs text-[#A08C79] mb-0.5">Domicilio Legal</Text>
-              <Text className="font-semibold text-[#333F48]">{userProfile.address}</Text>
+              <Text className="font-semibold text-[#333F48]">{profileData?.address}</Text>
             </View>
           </View>
 
@@ -110,7 +159,7 @@ export default function Profile() {
             <Globe color="#A08C79" size={20} />
             <View>
               <Text className="text-xs text-[#A08C79] mb-0.5">País de Origen</Text>
-              <Text className="font-semibold text-[#333F48]">{userProfile.country}</Text>
+              <Text className="font-semibold text-[#333F48]">{profileData?.country}</Text>
             </View>
           </View>
         </View>
