@@ -34,7 +34,7 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
         data: {
           amount: parseFloat(amount),
           auctionId,
-          userId
+          userId: userId.toString()
         },
         include: {
           user: { select: { id: true, firstName: true, lastName: true } }

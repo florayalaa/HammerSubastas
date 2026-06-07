@@ -5,6 +5,8 @@ import usersRoutes from './modules/users/users.routes';
 import auctionsRoutes from './modules/auctions/auctions.routes';
 import bidsRoutes from './modules/bids/bids.routes';
 import countriesRoutes from './modules/countries/countries.routes';
+import { articlesRoutes } from './modules/articles/articles.routes';
+import { paymentsRoutes } from './modules/payments/payments.routes';
 
 const app = express();
 
@@ -20,5 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/auctions', auctionsRoutes);
 app.use('/api/bids', bidsRoutes);
+app.use('/api/articles', articlesRoutes);
+app.use('/api/payments', paymentsRoutes);
 
 export default app;

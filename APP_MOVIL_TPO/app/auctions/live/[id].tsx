@@ -1,34 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Send, Users, HandCoins } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { socketService } from '@/services/socket';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 export default function LiveAuction() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   
   const [bidAmount, setBidAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [recentBids, setRecentBids] = useState<{user: string, amount: number, id: string}[]>([
+    { user: 'User***89', amount: 45000, id: '1' },
+    { user: 'User***21', amount: 44500, id: '2' },
+    { user: 'User***55', amount: 43000, id: '3' },
+  ]);
 
-  const currentItem = {
+  const [currentItem, setCurrentItem] = useState({
     title: "Anillo de Diamantes Art Déco",
     currentBid: 45000,
     basePrice: 40000,
     highestBidder: "User***89",
     image: "https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=800&q=80",
     timeRemaining: "00:02:45"
-  };
+  });
+
+  useEffect(() => {
+    const fetchAuction = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/auctions/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentItem(prev => ({
+            ...prev,
+            title: data.title,
+            currentBid: data.currentPrice,
+            basePrice: data.startingPrice,
+          }));
+        }
+
+        const bidsRes = await fetch(`${API_URL}/api/bids/auction/${id}`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (bidsRes.ok) {
+          const bidsData = await bidsRes.json();
+          if (bidsData.length > 0) {
+            setCurrentItem(prev => ({
+              ...prev,
+              highestBidder: bidsData[0].user?.firstName ? `${bidsData[0].user.firstName}***` : 'Unknown',
+            }));
+            setRecentBids(bidsData.slice(0, 5).map((b: any) => ({
+              user: b.user?.firstName ? `${b.user.firstName}***` : 'Unknown',
+              amount: b.amount,
+              id: b.id
+            })));
+          } else {
+             setRecentBids([]);
+             setCurrentItem(prev => ({ ...prev, highestBidder: 'Nadie (Sé el primero)' }));
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching auction", e);
+      }
+    };
+    if (id) fetchAuction();
+
+    socketService.connect();
+    if (id) {
+      socketService.joinAuction(id as string);
+    }
+
+    const handleNewBid = (bid: any) => {
+      // Update the current item with the new highest bid
+      setCurrentItem(prev => ({
+        ...prev,
+        currentBid: bid.amount,
+        highestBidder: bid.user?.firstName ? `${bid.user.firstName}***` : 'Unknown'
+      }));
+
+      // Add to recent bids list
+      setRecentBids(prev => {
+        const newBids = [
+          { 
+            user: bid.user?.firstName ? `${bid.user.firstName}***` : 'Unknown', 
+            amount: bid.amount,
+            id: bid.id || Date.now().toString()
+          },
+          ...prev
+        ];
+        return newBids.slice(0, 5); // Keep only the latest 5
+      });
+    };
+
+    socketService.onNewBid(handleNewBid);
+
+    return () => {
+      socketService.offNewBid(handleNewBid);
+      if (id) {
+        socketService.leaveAuction(id as string);
+      }
+      socketService.disconnect();
+    };
+  }, [id]);
 
   const isExempt = user?.category === 'Oro' || user?.category === 'Platino';
   const minBid = currentItem.currentBid + (currentItem.basePrice * 0.01);
   const maxBid = currentItem.currentBid + (currentItem.basePrice * 0.20);
 
-  const handleBid = () => {
+  const handleBid = async () => {
     const amount = Number(bidAmount);
     if (!amount || amount <= currentItem.currentBid) {
       setErrorMsg("La puja debe ser mayor a la actual.");
@@ -49,12 +135,28 @@ export default function LiveAuction() {
     setErrorMsg('');
     setIsSubmitting(true);
     
-    // Simular envío a la red
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const response = await fetch(`${API_URL}/api/bids/auction/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al enviar puja');
+      }
+
       setBidAmount('');
-      Alert.alert("Éxito", "Puja enviada correctamente.");
-    }, 1500);
+      // Alert.alert("Éxito", "Puja enviada correctamente."); // Socket will handle UI update
+    } catch (error: any) {
+      setErrorMsg(error.message || "Error de red al pujar");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -97,18 +199,12 @@ export default function LiveAuction() {
 
           <Text className="text-white font-bold mb-4">Actividad Reciente</Text>
           <View className="space-y-3 mb-8">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-gray-300">User***89</Text>
-              <Text className="text-green-400 font-bold">$45,000</Text>
-            </View>
-            <View className="flex-row items-center justify-between">
-              <Text className="text-gray-400">User***21</Text>
-              <Text className="text-gray-400">$44,500</Text>
-            </View>
-            <View className="flex-row items-center justify-between">
-              <Text className="text-gray-400">User***55</Text>
-              <Text className="text-gray-400">$43,000</Text>
-            </View>
+            {recentBids.map((bid) => (
+              <View key={bid.id} className="flex-row items-center justify-between">
+                <Text className="text-gray-300">{bid.user}</Text>
+                <Text className="text-green-400 font-bold">${bid.amount}</Text>
+              </View>
+            ))}
           </View>
         </View>
       </ScrollView>

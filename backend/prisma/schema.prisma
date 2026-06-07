@@ -6,25 +6,25 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id              String       @id @default(uuid())
-  firstName       String
-  lastName        String
-  email           String       @unique
-  passwordHash    String
-  country         String
-  address         String
-  category        String       @default("COMUN")
-  isApproved      Boolean      @default(false)
-  mustChangePassword Boolean   @default(true)
-  documentFront   String?
-  documentBack    String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id                 String   @id @default(uuid())
+  firstName          String
+  lastName           String
+  email              String   @unique
+  passwordHash       String
+  country            String
+  address            String
+  category           String   @default("COMUN")
+  isApproved         Boolean  @default(false)
+  mustChangePassword Boolean  @default(true)
+  documentFront      String?
+  documentBack       String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   bids            Bid[]
   paymentMethods  PaymentMethod[]
@@ -34,47 +34,46 @@ model User {
 
 // Modelos dummy para las relaciones, serán completados por las otras Personas
 model Bid {
-  id         String   @id @default(uuid())
-  amount     Float
-  auctionId  String
-  auction    Auction  @relation(fields: [auctionId], references: [id])
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  amount    Float
+  auctionId String
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }
 
-
 model Auction {
-  id            String        @id @default(uuid())
+  id            String   @id @default(uuid())
   title         String
   description   String
   startingPrice Float
   currentPrice  Float
   startDate     DateTime
   endDate       DateTime
-  status        String        @default("PENDING")
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  bids          Bid[]
+  bids Bid[]
 }
 
 model PaymentMethod {
-  id       String   @id @default(uuid())
-  userId   String
-  user     User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model ItemSubmission {
-  id       String   @id @default(uuid())
-  userId   String
-  user     User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Notification {
-  id       String   @id @default(uuid())
-  userId   String
-  user     User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 // -----------------------------------------------------------------------------
@@ -92,28 +91,28 @@ model paises {
 }
 
 model personas {
-  identificador Int            @id @default(autoincrement())
-  documento     String         @db.VarChar(20)
-  nombre        String         @db.VarChar(150)
-  direccion     String?        @db.VarChar(250)
-  estado        String?        @db.VarChar(15) // 'activo', 'incativo'
-  foto          Bytes?         // varbinary(max)
-  clientes      clientes?
-  duenios       duenios?
-  subastadores  subastadores?
-  credenciales  credenciales_web?
+  identificador  Int                  @id @default(autoincrement())
+  documento      String               @db.VarChar(20)
+  nombre         String               @db.VarChar(150)
+  direccion      String?              @db.VarChar(250)
+  estado         String?              @db.VarChar(15) // 'activo', 'incativo'
+  foto           Bytes? // varbinary(max)
+  clientes       clientes?
+  duenios        duenios?
+  subastadores   subastadores?
+  credenciales   credenciales_web?
   notificaciones notificaciones_web[]
 }
 
 model empleados {
-  identificador  Int         @id
-  cargo          String?     @db.VarChar(100)
-  sector         Int?
-  sectores       sectores[]
-  clientes       clientes[]
-  duenios        duenios[]
-  productos      productos[]
-  catalogos      catalogos[]
+  identificador Int         @id
+  cargo         String?     @db.VarChar(100)
+  sector        Int?
+  sectores      sectores[]
+  clientes      clientes[]
+  duenios       duenios[]
+  productos     productos[]
+  catalogos     catalogos[]
 }
 
 model sectores {
@@ -128,7 +127,7 @@ model seguros {
   nroPoliza       String      @id @db.VarChar(30)
   compania        String      @db.VarChar(150)
   polizaCombinada String?     @db.VarChar(2) // 'si', 'no'
-  importe         Decimal     @db.Decimal(18,2)
+  importe         Decimal     @db.Decimal(18, 2)
   productos       productos[]
 }
 
@@ -203,7 +202,7 @@ model productos {
 model fotos {
   identificador Int       @id @default(autoincrement())
   producto      Int
-  foto          Bytes     // varbinary(max)
+  foto          Bytes
   productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
 }
 
@@ -221,8 +220,8 @@ model itemsCatalogo {
   identificador Int       @id @default(autoincrement())
   catalogo      Int
   producto      Int
-  precioBase    Decimal   @db.Decimal(18,2)
-  comision      Decimal   @db.Decimal(18,2)
+  precioBase    Decimal   @db.Decimal(18, 2)
+  comision      Decimal   @db.Decimal(18, 2)
   subastado     String?   @db.VarChar(2)
   catalogos     catalogos @relation(fields: [catalogo], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
   productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
@@ -243,7 +242,7 @@ model pujos {
   identificador Int           @id @default(autoincrement())
   asistente     Int
   item          Int
-  importe       Decimal       @db.Decimal(18,2)
+  importe       Decimal       @db.Decimal(18, 2)
   ganador       String?       @default("no") @db.VarChar(2)
   asistentes    asistentes    @relation(fields: [asistente], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
   itemsCatalogo itemsCatalogo @relation(fields: [item], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
@@ -255,8 +254,8 @@ model registroDeSubasta {
   duenio        Int
   producto      Int
   cliente       Int
-  importe       Decimal   @db.Decimal(18,2)
-  comision      Decimal   @db.Decimal(18,2)
+  importe       Decimal   @db.Decimal(18, 2)
+  comision      Decimal   @db.Decimal(18, 2)
   subastas      subastas  @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
   duenios       duenios   @relation(fields: [duenio], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
   productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
@@ -276,6 +275,6 @@ model notificaciones_web {
   identificadorPersona Int
   mensaje              String   @db.VarChar(500)
   leido                Boolean  @default(false)
-  fecha                DateTime @default(now()) @db.DateTime2
+  fecha                DateTime @default(now()) @db.Timestamp(3)
   personas             personas @relation(fields: [identificadorPersona], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
 }

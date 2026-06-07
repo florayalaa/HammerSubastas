@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Link } from 'expo-router';
-import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut, BarChart3 } from 'lucide-react-native';
+import { Link, useRouter } from 'expo-router';
+import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut, BarChart3, UploadCloud } from 'lucide-react-native';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Profile() {
+  const router = useRouter();
   const { logout, user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -95,7 +96,13 @@ export default function Profile() {
           <Text className="text-3xl font-bold text-[#333F48] mb-1">Mi Perfil</Text>
           <Text className="text-[#A08C79]">Información de tu cuenta</Text>
         </View>
-        <TouchableOpacity onPress={logout} className="p-2 bg-red-100 rounded-full">
+        <TouchableOpacity 
+          onPress={async () => {
+            await logout();
+            router.replace('/(auth)/login');
+          }} 
+          className="p-2 bg-red-100 rounded-full"
+        >
           <LogOut color="#ef4444" size={20} />
         </TouchableOpacity>
       </View>
@@ -189,6 +196,13 @@ export default function Profile() {
           <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
             <CreditCard color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Medios de Pago</Text>
+          </TouchableOpacity>
+        </Link>
+        
+        <Link href="/profile/upload-article" asChild>
+          <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
+            <UploadCloud color="#6A4F99" size={20} />
+            <Text className="text-[#333F48] font-medium">Subir Artículo (Consignar)</Text>
           </TouchableOpacity>
         </Link>
         

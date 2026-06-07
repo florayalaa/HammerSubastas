@@ -14,6 +14,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [isReady, setIsReady] = useState(false);
 
@@ -33,8 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadUser = async () => {
       try {
         const storedUser = await AsyncStorage.getItem("user");
+        const storedToken = await AsyncStorage.getItem("token");
         if (storedUser) {
           setUser(JSON.parse(storedUser));
+        }
+        if (storedToken) {
+          setToken(storedToken);
         }
       } catch (e) {
         console.error("Failed to load user", e);
@@ -58,12 +64,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const resp = await apiPost('/auth/login', { email, password });
     const { user, token } = resp;
     setUser(user);
+    setToken(token);
     await AsyncStorage.setItem('user', JSON.stringify(user));
     if (token) await AsyncStorage.setItem('token', token);
   };
 
   const logout = async () => {
     setUser(null);
+    setToken(null);
     await AsyncStorage.removeItem('user');
     await AsyncStorage.removeItem('token');
   };
@@ -72,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        token,
         isAuthenticated: !!user,
         login,
         logout,

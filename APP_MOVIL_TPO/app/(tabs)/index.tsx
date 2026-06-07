@@ -12,26 +12,35 @@ export default function Dashboard() {
     { label: "Total Gastado", value: "$125,400", color: "bg-[#A08C79]" },
   ];
 
-  const activeAuctions = [
-    {
-      id: 1,
-      title: "Subasta de Arte Contemporáneo",
-      date: "18 de Marzo, 2026 - 18:00",
-      category: "Oro",
-      items: 24,
-      status: "upcoming",
-      image: "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: 2,
-      title: "Colección de Relojes de Lujo",
-      date: "19 de Marzo, 2026 - 20:00",
-      category: "Platino",
-      items: 18,
-      status: "live",
-      image: "https://images.unsplash.com/photo-1759910546811-8d9df1501688?auto=format&fit=crop&w=800&q=80",
-    },
-  ];
+  const [activeAuctions, setActiveAuctions] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchAuctions = async () => {
+      try {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/auctions`);
+        if (res.ok) {
+          const data = await res.json();
+          // Map backend data to frontend format
+          const mapped = data.map((a: any) => ({
+            id: a.id,
+            title: a.title,
+            date: new Date(a.startDate).toLocaleDateString() + ' - ' + new Date(a.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            category: 'Oro', // Fallback as category might not be on auction directly
+            items: 1, // Fallback
+            status: a.status.toLowerCase(),
+            image: "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80",
+          }));
+          setActiveAuctions(mapped);
+        }
+      } catch (e) {
+        console.error("Error fetching auctions", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAuctions();
+  }, []);
 
   const recentBids = [
     { item: "Reloj Patek Philippe 1942", bid: "$45,000", status: "leading", time: "Hace 15 min" },

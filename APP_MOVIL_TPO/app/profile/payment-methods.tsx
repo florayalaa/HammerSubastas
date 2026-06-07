@@ -1,272 +1,174 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, CreditCard, Building2, FileCheck, Plus, Trash2, CheckCircle, Info, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ChevronLeft, CreditCard, Trash2, Plus } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
+import { apiGet, apiPost } from '@/app/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 export default function PaymentMethods() {
   const router = useRouter();
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [paymentType, setPaymentType] = useState<"card" | "bank" | "check">("card");
-  const [showInfoBanner, setShowInfoBanner] = useState(false);
-  const [cardData, setCardData] = useState({ number: '', exp: '', cvv: '' });
-  const [bankData, setBankData] = useState({ name: '', account: '' });
-  const [checkData, setCheckData] = useState({ number: '', amount: '' });
+  const { token } = useAuth();
+  
+  const [methods, setMethods] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvc, setCvc] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const isFormValid = () => {
-    if (paymentType === 'card') return cardData.number.length > 0 && cardData.exp.length > 0 && cardData.cvv.length > 0;
-    if (paymentType === 'bank') return bankData.name.length > 0 && bankData.account.length > 0;
-    if (paymentType === 'check') return checkData.number.length > 0 && checkData.amount.length > 0;
-    return false;
+  useEffect(() => {
+    fetchMethods();
+  }, [token]);
+
+  const fetchMethods = async () => {
+    try {
+      if (!token) return;
+      const res = await apiGet('/payments', token);
+      if (res && res.data) {
+        setMethods(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching payments', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const paymentMethods = [
-    { id: 1, type: "card", name: "Visa **** 4532", status: "verified", details: "Vence 08/2027", icon: CreditCard },
-    { id: 2, type: "bank", name: "Banco Santander", status: "verified", details: "Cuenta USD ****7890", icon: Building2 },
-    { id: 3, type: "check", name: "Cheque Certificado", status: "verified", details: "Monto: $50,000 USD", icon: FileCheck },
-    { id: 4, type: "card", name: "Mastercard **** 8821", status: "pending", details: "Verificación pendiente", icon: CreditCard },
-  ];
+  const handleAdd = async () => {
+    if (cardNumber.length < 13 || expiry.length < 4 || cvc.length < 3) {
+      Alert.alert('Error', 'Por favor, completa todos los campos correctamente.');
+      return;
+    }
 
-  const handleConfirmAdd = () => {
-    setShowConfirmModal(false);
-    setShowAddModal(false);
-    Alert.alert("Éxito", "Método de pago agregado. Será verificado en las próximas 24-48 horas.");
+    setSubmitting(true);
+    try {
+      await apiPost('/payments', { cardNumber, expiry, cvc }, token || '');
+      Alert.alert('Éxito', 'Método de pago añadido');
+      setShowAdd(false);
+      setCardNumber('');
+      setExpiry('');
+      setCvc('');
+      fetchMethods();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'No se pudo añadir el método de pago');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/payments/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error('Error al eliminar');
+      Alert.alert('Éxito', 'Método de pago eliminado');
+      fetchMethods();
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo eliminar el método de pago');
+    }
+  };
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#6A4F99" />
+      </View>
+    );
+  }
 
   return (
-    <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View className="bg-white pt-14 pb-4 px-4 border-b border-gray-200">
-        <TouchableOpacity onPress={() => router.back()} className="flex-row items-center mb-4">
-          <ChevronLeft color="#A08C79" size={24} />
-          <Text className="text-[#A08C79] ml-1 font-medium">Volver al Perfil</Text>
+    <View className="flex-1 bg-gray-50">
+      <View className="pt-12 pb-4 px-4 flex-row items-center border-b border-gray-200 bg-white">
+        <TouchableOpacity onPress={() => router.back()} className="mr-4">
+          <ChevronLeft color="#333F48" size={24} />
         </TouchableOpacity>
-        <Text className="text-3xl font-bold text-[#333F48] mb-1">Medios de Pago</Text>
-        <Text className="text-[#A08C79]">Gestiona tus métodos de pago para pujar</Text>
+        <Text className="text-xl font-bold text-[#333F48]">Medios de Pago</Text>
       </View>
 
-      <View className="px-4 py-6">
-        {/* Info Banner */}
-        <TouchableOpacity 
-          onPress={() => setShowInfoBanner(!showInfoBanner)}
-          className={`flex-row items-center justify-between p-4 bg-blue-50 border border-blue-200 ${showInfoBanner ? 'rounded-t-lg border-b-0' : 'rounded-lg mb-6'}`}
-        >
-          <View className="flex-row items-center gap-2">
-            <Info color="#2563eb" size={20} />
-            <Text className="font-semibold text-[#333F48]">Información Importante</Text>
+      <ScrollView className="flex-1 px-4 py-4">
+        {methods.length === 0 && !showAdd ? (
+          <View className="items-center justify-center py-10">
+            <CreditCard color="#A08C79" size={48} className="mb-4" />
+            <Text className="text-[#A08C79] text-center mb-6">No tienes medios de pago guardados.</Text>
           </View>
-          {showInfoBanner ? <ChevronUp color="#2563eb" size={20} /> : <ChevronDown color="#2563eb" size={20} />}
-        </TouchableOpacity>
-
-        {showInfoBanner && (
-          <View className="bg-blue-50 border border-blue-200 border-t-0 rounded-b-lg p-4 mb-6">
-            <Text className="text-sm text-blue-900 mb-2">• Necesitas un método verificado para pujar.</Text>
-            <Text className="text-sm text-blue-900 mb-2">• Aumentan tu categoría de usuario.</Text>
-            <Text className="text-sm text-blue-900 mb-2">• Verificaciones toman 24-48 horas.</Text>
-            <Text className="text-sm text-blue-900">• Cheques certificados se entregan físicamente.</Text>
-          </View>
-        )}
-
-        <Button 
-          onPress={() => setShowAddModal(true)}
-          className="w-full bg-[#6A4F99] h-14 rounded-xl flex-row items-center justify-center mb-6"
-        >
-          <Plus color="white" size={24} className="mr-2" />
-          <Text className="text-white font-bold text-lg">Agregar Método</Text>
-        </Button>
-
-        <View className="space-y-4">
-          {paymentMethods.map((method) => {
-            const Icon = method.icon;
-            return (
-              <View key={method.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex-row items-center justify-between">
-                <View className="flex-row items-center flex-1">
-                  <View className="w-12 h-12 bg-[#6A4F99]/10 rounded-lg items-center justify-center mr-4">
-                    <Icon color="#6A4F99" size={24} />
-                  </View>
-                  <View className="flex-1">
-                    <View className="flex-row items-center gap-1 mb-1">
-                      <Text className="font-bold text-[#333F48]">{method.name}</Text>
-                      {method.status === "verified" && <CheckCircle color="#16a34a" size={16} />}
-                    </View>
-                    <Text className="text-xs text-[#A08C79] mb-2">{method.details}</Text>
-                    {method.status === "verified" ? (
-                      <View className="self-start px-2 py-1 bg-green-100 rounded-md">
-                        <Text className="text-green-800 text-[10px] font-bold">Verificado</Text>
-                      </View>
-                    ) : (
-                      <View className="self-start px-2 py-1 bg-yellow-100 rounded-md">
-                        <Text className="text-yellow-800 text-[10px] font-bold">Pendiente</Text>
-                      </View>
-                    )}
-                  </View>
+        ) : (
+          methods.map((m) => (
+            <View key={m.id} className="bg-white p-4 rounded-xl border border-gray-200 mb-3 flex-row justify-between items-center shadow-sm">
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 bg-[#6A4F99]/10 rounded-full items-center justify-center mr-3">
+                  <CreditCard color="#6A4F99" size={20} />
                 </View>
-                <TouchableOpacity 
-                  onPress={() => {
-                    Alert.alert("Confirmar", "¿Eliminar método de pago?", [
-                      { text: "Cancelar", style: "cancel" },
-                      { text: "Eliminar", style: "destructive" }
-                    ])
-                  }}
-                  className="p-3"
-                >
-                  <Trash2 color="#ef4444" size={20} />
-                </TouchableOpacity>
+                <View>
+                  <Text className="font-bold text-[#333F48]">Tarjeta guardada</Text>
+                  <Text className="text-xs text-[#A08C79]">Termina en **** {m.id.substring(m.id.length - 4)}</Text>
+                </View>
               </View>
-            );
-          })}
-        </View>
-        <View className="h-10" />
-      </View>
-
-      {/* Modal Agregar Método */}
-      <Modal visible={showAddModal} transparent animationType="slide">
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 h-[85%]">
-            <Text className="text-2xl font-bold text-[#333F48] mb-6">Agregar Método</Text>
-            
-            <Text className="text-sm font-medium text-[#333F48] mb-3">Tipo de Método</Text>
-            <View className="flex-row gap-3 mb-6">
-              <TouchableOpacity 
-                onPress={() => setPaymentType("card")}
-                className={`flex-1 p-3 border-2 rounded-xl items-center ${paymentType === "card" ? "border-[#6A4F99] bg-[#6A4F99]/10" : "border-gray-200"}`}
-              >
-                <CreditCard color={paymentType === "card" ? "#6A4F99" : "#A08C79"} size={24} className="mb-2" />
-                <Text className={`text-xs font-medium ${paymentType === "card" ? "text-[#6A4F99]" : "text-[#A08C79]"}`}>Tarjeta</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={() => setPaymentType("bank")}
-                className={`flex-1 p-3 border-2 rounded-xl items-center ${paymentType === "bank" ? "border-[#6A4F99] bg-[#6A4F99]/10" : "border-gray-200"}`}
-              >
-                <Building2 color={paymentType === "bank" ? "#6A4F99" : "#A08C79"} size={24} className="mb-2" />
-                <Text className={`text-xs font-medium ${paymentType === "bank" ? "text-[#6A4F99]" : "text-[#A08C79]"}`}>Banco</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={() => setPaymentType("check")}
-                className={`flex-1 p-3 border-2 rounded-xl items-center ${paymentType === "check" ? "border-[#6A4F99] bg-[#6A4F99]/10" : "border-gray-200"}`}
-              >
-                <FileCheck color={paymentType === "check" ? "#6A4F99" : "#A08C79"} size={24} className="mb-2" />
-                <Text className={`text-xs font-medium ${paymentType === "check" ? "text-[#6A4F99]" : "text-[#A08C79]"}`}>Cheque</Text>
+              <TouchableOpacity onPress={() => handleDelete(m.id)} className="p-2 bg-red-50 rounded-full">
+                <Trash2 color="#ef4444" size={18} />
               </TouchableOpacity>
             </View>
+          ))
+        )}
 
-            <ScrollView showsVerticalScrollIndicator={false} className="mb-4">
-              {paymentType === "card" && (
-                <View className="space-y-4">
-                  <View>
-                    <Text className="text-sm text-[#333F48] mb-2">Número de Tarjeta</Text>
-                    <TextInput 
-                      placeholder="1234 5678 9012 3456" 
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
-                      keyboardType="numeric" 
-                      value={cardData.number}
-                      onChangeText={(t) => setCardData({...cardData, number: t})}
-                    />
-                  </View>
-                  <View className="flex-row gap-4">
-                    <View className="flex-1">
-                      <Text className="text-sm text-[#333F48] mb-2">Vencimiento</Text>
-                      <TextInput 
-                        placeholder="MM/AA" 
-                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
-                        value={cardData.exp}
-                        onChangeText={(t) => setCardData({...cardData, exp: t})}
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-sm text-[#333F48] mb-2">CVV</Text>
-                      <TextInput 
-                        placeholder="123" 
-                        secureTextEntry 
-                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
-                        keyboardType="numeric" 
-                        value={cardData.cvv}
-                        onChangeText={(t) => setCardData({...cardData, cvv: t})}
-                      />
-                    </View>
-                  </View>
-                </View>
-              )}
-              {/* Omitidos bank y check form por brevedad visual */}
-              {paymentType === "bank" && (
-                <View className="space-y-4">
-                  <View>
-                    <Text className="text-sm text-[#333F48] mb-2">Nombre del Banco</Text>
-                    <TextInput 
-                      placeholder="Ej: Banco Santander" 
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
-                      value={bankData.name}
-                      onChangeText={(t) => setBankData({...bankData, name: t})}
-                    />
-                  </View>
-                  <View>
-                    <Text className="text-sm text-[#333F48] mb-2">Número de Cuenta</Text>
-                    <TextInput 
-                      placeholder="1234567890" 
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
-                      keyboardType="numeric" 
-                      value={bankData.account}
-                      onChangeText={(t) => setBankData({...bankData, account: t})}
-                    />
-                  </View>
-                </View>
-              )}
-              {paymentType === "check" && (
-                <View className="space-y-4">
-                  <View>
-                    <Text className="text-sm text-[#333F48] mb-2">Número de Cheque</Text>
-                    <TextInput 
-                      placeholder="CH-123456" 
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
-                      value={checkData.number}
-                      onChangeText={(t) => setCheckData({...checkData, number: t})}
-                    />
-                  </View>
-                  <View>
-                    <Text className="text-sm text-[#333F48] mb-2">Monto (USD)</Text>
-                    <TextInput 
-                      placeholder="50000" 
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]" 
-                      keyboardType="numeric" 
-                      value={checkData.amount}
-                      onChangeText={(t) => setCheckData({...checkData, amount: t})}
-                    />
-                  </View>
-                  <Text className="text-xs text-[#A08C79] mt-2">El cheque debe entregarse físicamente antes de la subasta.</Text>
-                </View>
-              )}
-            </ScrollView>
+        {showAdd ? (
+          <View className="bg-white p-4 rounded-xl border border-gray-200 mt-4 shadow-sm">
+            <Text className="font-bold text-[#333F48] mb-4">Nueva Tarjeta</Text>
+            
+            <View className="mb-3">
+              <Text className="text-xs text-[#A08C79] mb-1">Número de Tarjeta</Text>
+              <TextInput 
+                value={cardNumber}
+                onChangeText={setCardNumber}
+                keyboardType="numeric"
+                placeholder="0000 0000 0000 0000"
+                className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
+              />
+            </View>
+
+            <View className="flex-row gap-3 mb-4">
+              <View className="flex-1">
+                <Text className="text-xs text-[#A08C79] mb-1">Vencimiento</Text>
+                <TextInput 
+                  value={expiry}
+                  onChangeText={setExpiry}
+                  placeholder="MM/AA"
+                  className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
+                />
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs text-[#A08C79] mb-1">CVC</Text>
+                <TextInput 
+                  value={cvc}
+                  onChangeText={setCvc}
+                  keyboardType="numeric"
+                  placeholder="123"
+                  className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
+                />
+              </View>
+            </View>
 
             <View className="flex-row gap-3">
-              <Button variant="secondary" onPress={() => setShowAddModal(false)} className="flex-1 h-12 rounded-xl">Cancelar</Button>
-              <Button 
-                onPress={() => setShowConfirmModal(true)} 
-                className={`flex-1 h-12 rounded-xl ${isFormValid() ? 'bg-[#6A4F99]' : 'bg-gray-400'}`}
-                disabled={!isFormValid()}
-              >
-                Agregar
+              <Button variant="secondary" className="flex-1" onPress={() => setShowAdd(false)}>
+                <Text>Cancelar</Text>
+              </Button>
+              <Button className="flex-1 bg-[#6A4F99]" onPress={handleAdd} disabled={submitting}>
+                <Text className="text-white font-bold">{submitting ? 'Guardando...' : 'Guardar'}</Text>
               </Button>
             </View>
           </View>
-        </View>
-      </Modal>
-
-      {/* Modal Confirmación */}
-      <Modal visible={showConfirmModal} transparent animationType="fade">
-        <View className="flex-1 bg-black/50 justify-center px-6">
-          <View className="bg-white rounded-2xl p-6 shadow-xl">
-            <Text className="text-xl font-bold text-[#333F48] mb-3">Confirmar Método</Text>
-            <Text className="text-sm text-[#A08C79] mb-6">
-              El método de pago será enviado para verificación (24-48 horas).
-            </Text>
-            <View className="flex-row gap-3">
-              <Button variant="secondary" onPress={() => setShowConfirmModal(false)} className="flex-1">Volver</Button>
-              <Button onPress={handleConfirmAdd} className="flex-1 bg-[#6A4F99]">Confirmar</Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </ScrollView>
+        ) : (
+          <Button className="mt-4 bg-[#C9A063] flex-row items-center justify-center gap-2" onPress={() => setShowAdd(true)}>
+            <Plus color="white" size={20} />
+            <Text className="text-white font-bold">Agregar Método de Pago</Text>
+          </Button>
+        )}
+      </ScrollView>
+    </View>
   );
 }
