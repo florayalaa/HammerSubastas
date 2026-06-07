@@ -8,6 +8,8 @@ async function main() {
 
   // Limpiar tablas modernas
   await prisma.bid.deleteMany();
+  await prisma.catalogItem.deleteMany();
+  await prisma.auctionAttendee.deleteMany();
   await prisma.auction.deleteMany();
   await prisma.paymentMethod.deleteMany();
   await prisma.itemSubmission.deleteMany();
@@ -238,6 +240,28 @@ async function main() {
       currentPrice: 1500.00,
       startDate: new Date(),
       endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // En 7 días
+      status: 'ACTIVE'
+    }
+  });
+
+  const modernCatalogItem1 = await prisma.catalogItem.create({
+    data: {
+      auctionId: modernAuction.id,
+      title: 'Cuadro Antiguo del Siglo XVIII',
+      description: 'Cuadro original restaurado con marco de roble.',
+      startingPrice: 1500.00,
+      currentPrice: 1500.00,
+      status: 'ACTIVE'
+    }
+  });
+
+  const modernCatalogItem2 = await prisma.catalogItem.create({
+    data: {
+      auctionId: modernAuction.id,
+      title: 'Reloj de Bolsillo de Oro',
+      description: 'Reloj marca Patek Philippe de 1920, bañado en oro.',
+      startingPrice: 3500.00,
+      currentPrice: 3500.00,
       status: 'ACTIVE'
     }
   });

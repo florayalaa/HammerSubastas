@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 export const placeBid = async (req: AuthRequest, res: Response) => {
   try {
-    const { auctionId } = req.params;
+    const { catalogItemId } = req.params;
     const { amount } = req.body;
     const userId = req.user?.id;
 
@@ -15,17 +15,30 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const auction = await prisma.auction.findUnique({ where: { id: auctionId } });
+    const item = await prisma.catalogItem.findUnique({ 
+      where: { id: catalogItemId },
+      include: { auction: true }
+    });
     
-    if (!auction) {
-      return res.status(404).json({ error: 'Auction not found' });
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found' });
     }
     
-    if (auction.status !== 'ACTIVE' && auction.status !== 'PENDING') {
+    // Validar si la subasta está activa
+    if (item.auction.status !== 'ACTIVE' && item.auction.status !== 'PENDING') {
       return res.status(400).json({ error: 'Auction is not active' });
     }
 
-    if (parseFloat(amount) <= auction.currentPrice) {
+    // Validar inscripción del asistente (si existe lógica de asistentes)
+    const attendee = await prisma.auctionAttendee.findUnique({
+      where: { auctionId_userId: { auctionId: item.auctionId, userId: userId.toString() } }
+    });
+
+    if (!attendee) {
+      return res.status(403).json({ error: 'Must be registered to bid' });
+    }
+
+    if (parseFloat(amount) <= item.currentPrice) {
       return res.status(400).json({ error: 'Bid amount must be greater than current price' });
     }
 
@@ -33,21 +46,21 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
       prisma.bid.create({
         data: {
           amount: parseFloat(amount),
-          auctionId,
+          catalogItemId,
           userId: userId.toString()
         },
         include: {
           user: { select: { id: true, firstName: true, lastName: true } }
         }
       }),
-      prisma.auction.update({
-        where: { id: auctionId },
+      prisma.catalogItem.update({
+        where: { id: catalogItemId },
         data: { currentPrice: parseFloat(amount) }
       })
     ]);
 
-    // Emit event to Socket.io room
-    io.to(`auction_${auctionId}`).emit('new_bid', bid);
+    // Emit event to Socket.io room specific to this item
+    io.to(`item_${catalogItemId}`).emit('new_bid', bid);
 
     res.status(201).json(bid);
   } catch (error) {
@@ -56,11 +69,11 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getBidsByAuction = async (req: AuthRequest, res: Response) => {
+export const getBidsByItem = async (req: AuthRequest, res: Response) => {
   try {
-    const { auctionId } = req.params;
+    const { catalogItemId } = req.params;
     const bids = await prisma.bid.findMany({
-      where: { auctionId },
+      where: { catalogItemId },
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { id: true, firstName: true, lastName: true } }

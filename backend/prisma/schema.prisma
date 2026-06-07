@@ -26,21 +26,22 @@ model User {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  bids            Bid[]
-  paymentMethods  PaymentMethod[]
-  itemSubmissions ItemSubmission[]
-  notifications   Notification[]
+  bids             Bid[]
+  paymentMethods   PaymentMethod[]
+  itemSubmissions  ItemSubmission[]
+  notifications    Notification[]
+  auctionAttendees AuctionAttendee[]
 }
 
 // Modelos dummy para las relaciones, serán completados por las otras Personas
 model Bid {
-  id        String   @id @default(uuid())
-  amount    Float
-  auctionId String
-  auction   Auction  @relation(fields: [auctionId], references: [id])
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  id            String      @id @default(uuid())
+  amount        Float
+  catalogItemId String
+  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  createdAt     DateTime    @default(now())
 }
 
 model Auction {
@@ -55,7 +56,8 @@ model Auction {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  bids Bid[]
+  catalogItems CatalogItem[]
+  attendees    AuctionAttendee[]
 }
 
 model PaymentMethod {
@@ -70,10 +72,40 @@ model ItemSubmission {
   user   User   @relation(fields: [userId], references: [id])
 }
 
+model CatalogItem {
+  id            String   @id @default(uuid())
+  auctionId     String
+  auction       Auction  @relation(fields: [auctionId], references: [id])
+  title         String
+  description   String
+  startingPrice Float
+  currentPrice  Float
+  winnerId      String?
+  status        String   @default("PENDING") // PENDING, ACTIVE, SOLD, UNSOLD
+  createdAt     DateTime @default(now())
+  
+  bids          Bid[]
+}
+
+model AuctionAttendee {
+  id        String   @id @default(uuid())
+  auctionId String
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  bidderNum Int      @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  @@unique([auctionId, userId])
+}
+
 model Notification {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 // -----------------------------------------------------------------------------

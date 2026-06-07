@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { placeBid, getBidsByAuction } from './bids.controller';
+import { placeBid, getBidsByItem } from './bids.controller';
 import { requireAuth } from '../../middlewares/auth';
 
 const router = Router();
 
-router.get('/auction/:auctionId', getBidsByAuction);
-router.post('/auction/:auctionId', requireAuth, placeBid);
+router.get('/item/:catalogItemId', getBidsByItem);
+router.post('/item/:catalogItemId', requireAuth, placeBid);
 
 export default router;

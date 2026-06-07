@@ -32,38 +32,51 @@ export default function LiveAuction() {
     timeRemaining: "00:02:45"
   });
 
+  const [activeItem, setActiveItem] = useState<any>(null);
+
   useEffect(() => {
     const fetchAuction = async () => {
       try {
         const res = await fetch(`${API_URL}/api/auctions/${id}`);
         if (res.ok) {
           const data = await res.json();
-          setCurrentItem(prev => ({
-            ...prev,
-            title: data.title,
-            currentBid: data.currentPrice,
-            basePrice: data.startingPrice,
-          }));
-        }
-
-        const bidsRes = await fetch(`${API_URL}/api/bids/auction/${id}`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
-        if (bidsRes.ok) {
-          const bidsData = await bidsRes.json();
-          if (bidsData.length > 0) {
+          if (data.catalogItems && data.catalogItems.length > 0) {
+            const firstItem = data.catalogItems[0];
+            setActiveItem(firstItem);
+            
             setCurrentItem(prev => ({
               ...prev,
-              highestBidder: bidsData[0].user?.firstName ? `${bidsData[0].user.firstName}***` : 'Unknown',
+              title: firstItem.title,
+              currentBid: firstItem.currentPrice,
+              basePrice: firstItem.startingPrice,
+              image: "https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=800&q=80"
             }));
-            setRecentBids(bidsData.slice(0, 5).map((b: any) => ({
-              user: b.user?.firstName ? `${b.user.firstName}***` : 'Unknown',
-              amount: b.amount,
-              id: b.id
-            })));
-          } else {
-             setRecentBids([]);
-             setCurrentItem(prev => ({ ...prev, highestBidder: 'Nadie (Sé el primero)' }));
+
+            // Fetch bids for THIS item
+            const bidsRes = await fetch(`${API_URL}/api/bids/item/${firstItem.id}`, {
+              headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            if (bidsRes.ok) {
+              const bidsData = await bidsRes.json();
+              if (bidsData.length > 0) {
+                setCurrentItem(prev => ({
+                  ...prev,
+                  highestBidder: bidsData[0].user?.firstName ? `${bidsData[0].user.firstName}***` : 'Unknown',
+                }));
+                setRecentBids(bidsData.slice(0, 5).map((b: any) => ({
+                  user: b.user?.firstName ? `${b.user.firstName}***` : 'Unknown',
+                  amount: b.amount,
+                  id: b.id
+                })));
+              } else {
+                 setRecentBids([]);
+                 setCurrentItem(prev => ({ ...prev, highestBidder: 'Nadie (Sé el primero)' }));
+              }
+            }
+
+            // Socket connect for this item
+            socketService.connect();
+            socketService.joinAuction(firstItem.id);
           }
         }
       } catch (e) {
@@ -71,11 +84,6 @@ export default function LiveAuction() {
       }
     };
     if (id) fetchAuction();
-
-    socketService.connect();
-    if (id) {
-      socketService.joinAuction(id as string);
-    }
 
     const handleNewBid = (bid: any) => {
       // Update the current item with the new highest bid
@@ -103,8 +111,8 @@ export default function LiveAuction() {
 
     return () => {
       socketService.offNewBid(handleNewBid);
-      if (id) {
-        socketService.leaveAuction(id as string);
+      if (activeItem) {
+        socketService.leaveAuction(activeItem.id);
       }
       socketService.disconnect();
     };
@@ -136,7 +144,8 @@ export default function LiveAuction() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`${API_URL}/api/bids/auction/${id}`, {
+      if (!activeItem) throw new Error("Item no cargado");
+      const response = await fetch(`${API_URL}/api/bids/item/${activeItem.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

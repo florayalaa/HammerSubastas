@@ -7,6 +7,7 @@ import bidsRoutes from './modules/bids/bids.routes';
 import countriesRoutes from './modules/countries/countries.routes';
 import { articlesRoutes } from './modules/articles/articles.routes';
 import { paymentsRoutes } from './modules/payments/payments.routes';
+import { notificationsRoutes } from './modules/notifications/notifications.routes';
 
 const app = express();
 
@@ -24,5 +25,6 @@ app.use('/api/auctions', auctionsRoutes);
 app.use('/api/bids', bidsRoutes);
 app.use('/api/articles', articlesRoutes);
 app.use('/api/payments', paymentsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 export default app;
