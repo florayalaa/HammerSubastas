@@ -6,8 +6,106 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  firstName          String
+  lastName           String
+  email              String   @unique
+  passwordHash       String
+  country            String
+  address            String
+  category           String   @default("COMUN")
+  isApproved         Boolean  @default(false)
+  mustChangePassword Boolean  @default(true)
+  documentFront      String?
+  documentBack       String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  bids             Bid[]
+  paymentMethods   PaymentMethod[]
+  itemSubmissions  ItemSubmission[]
+  notifications    Notification[]
+  auctionAttendees AuctionAttendee[]
+}
+
+// Modelos dummy para las relaciones, serán completados por las otras Personas
+model Bid {
+  id            String      @id @default(uuid())
+  amount        Float
+  catalogItemId String
+  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  createdAt     DateTime    @default(now())
+}
+
+model Auction {
+  id            String   @id @default(uuid())
+  title         String
+  description   String
+  startingPrice Float
+  currentPrice  Float
+  startDate     DateTime
+  endDate       DateTime
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  catalogItems CatalogItem[]
+  attendees    AuctionAttendee[]
+}
+
+model PaymentMethod {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model ItemSubmission {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model CatalogItem {
+  id            String   @id @default(uuid())
+  auctionId     String
+  auction       Auction  @relation(fields: [auctionId], references: [id])
+  title         String
+  description   String
+  startingPrice Float
+  currentPrice  Float
+  winnerId      String?
+  status        String   @default("PENDING") // PENDING, ACTIVE, SOLD, UNSOLD
+  createdAt     DateTime @default(now())
+  
+  bids          Bid[]
+}
+
+model AuctionAttendee {
+  id        String   @id @default(uuid())
+  auctionId String
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  bidderNum Int      @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  @@unique([auctionId, userId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 // -----------------------------------------------------------------------------
@@ -36,7 +134,6 @@ model personas {
   subastadores   subastadores?
   credenciales   credenciales_web?
   notificaciones notificaciones_web[]
-  documentos     documentos?
 }
 
 model empleados {
@@ -200,7 +297,7 @@ model registroDeSubasta {
 model credenciales_web {
   identificador      Int      @id
   email              String   @unique @db.VarChar(255)
-  passwordHash       String?   @db.VarChar(255)
+  passwordHash       String   @db.VarChar(255)
   mustChangePassword Boolean  @default(true)
   personas           personas @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
 }
@@ -210,13 +307,6 @@ model notificaciones_web {
   identificadorPersona Int
   mensaje              String   @db.VarChar(500)
   leido                Boolean  @default(false)
-  fecha                DateTime @default(now()) @db.DateTime2
+  fecha                DateTime @default(now()) @db.Timestamp(3)
   personas             personas @relation(fields: [identificadorPersona], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-}
-
-model documentos {
-  identificador Int      @id
-  frente        Bytes    // varbinary(max) como en fotos y personas
-  dorso         Bytes    // varbinary(max)
-  personas      personas @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
 }

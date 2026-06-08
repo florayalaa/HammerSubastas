@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
 
 export class AuthController {
-  async register(req: Request, res: Response) {
+  async register(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await authService.register(req.body);
       res.status(201).json(result);
@@ -12,7 +12,7 @@ export class AuthController {
     }
   }
 
-  async login(req: Request, res: Response) {
+  async login(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await authService.login(req.body);
       res.json(result);
@@ -21,7 +21,7 @@ export class AuthController {
     }
   }
 
-  async completeRegistration(req: Request, res: Response) {
+  async completeRegistration(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await authService.completeRegistration(req.body);
       res.json(result);
@@ -30,31 +30,21 @@ export class AuthController {
     }
   }
 
-  async approvePostor(req: Request, res: Response) {
+  async forgotPassword(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await authService.approvePostor(req.body);
-      return res.status(200).json({ status: 'success', data: result });
+      // Por el momento, es solo un mock
+      res.json({ message: `Se ha enviado un enlace de recuperación a ${req.body.email}` });
     } catch (error: any) {
-      return res.status(400).json({ status: 'error', message: error.message });
+      res.status(400).json({ status: 'error', message: error.message });
     }
   }
 
-  async forgotPassword(req: Request, res: Response) {
-    try {
-      const result = await authService.requestPasswordReset(req.body.email);
-      return res.status(200).json({ status: 'success', message: result.message });
-    } catch (error: any) {
-      return res.status(400).json({ status: 'error', message: error.message });
-    }
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
+    res.json({ message: 'Contraseña actualizada (Mock)' });
   }
 
-  async resetPassword(req: Request, res: Response) {
-    try {
-      const result = await authService.resetPassword(req.body);
-      return res.status(200).json({ status: 'success', data: result });
-    } catch (error: any) {
-      return res.status(400).json({ status: 'error', message: error.message });
-    }
+  async refreshToken(req: Request, res: Response, next: NextFunction) {
+    res.json({ message: 'Token renovado (Mock)' });
   }
 }
 
