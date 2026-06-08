@@ -2,21 +2,18 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiPost } from '@/app/lib/api';
 
-interface User {
+interface UserSession {
   id: number;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
-  category: "Común" | "Especial" | "Plata" | "Oro" | "Platino";
-  verified: boolean;
-  hasPaymentMethods: boolean;
+  category: "comun" | "especial" | "plata" | "oro" | "platino";
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: UserSession | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ mustChangePassword?: boolean; email?: string } | void>;
   logout: () => Promise<void>;
   showSplash: boolean;
   isReady: boolean;
@@ -25,13 +22,12 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserSession | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
     const loadUser = async () => {
       try {
         const storedUser = await AsyncStorage.getItem("user");
@@ -51,7 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     loadUser();
 
-    // Show splash screen for 3 seconds instead of 5 for mobile
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 3000);
@@ -60,13 +55,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Call backend login
     const resp = await apiPost('/auth/login', { email, password });
-    const { user, token } = resp;
-    setUser(user);
-    setToken(token);
-    await AsyncStorage.setItem('user', JSON.stringify(user));
-    if (token) await AsyncStorage.setItem('token', token);
+    
+    // CASO 1: Primer inicio de sesión detectado por el backend
+    if (resp && resp.mustChangePassword) {
+      // Retornamos la respuesta completa para que el componente Login sepa que debe redirigir
+      return { 
+        mustChangePassword: true, 
+        email: resp.email 
+      };
+    }
+
+    // CASO 2: Login común y corriente exitoso
+    const target = resp.data ? resp.data : resp;
+    const { user: loggedUser, token: loggedToken } = target;
+
+    if (!loggedUser || !loggedToken) {
+      throw new Error("La respuesta del servidor no es válida.");
+    }
+
+    setUser(loggedUser);
+    setToken(loggedToken);
+    
+    await AsyncStorage.setItem('user', JSON.stringify(loggedUser));
+    await AsyncStorage.setItem('token', loggedToken);
   };
 
   const logout = async () => {
@@ -81,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         token,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && !!token,
         login,
         logout,
         showSplash,
