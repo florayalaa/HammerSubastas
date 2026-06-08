@@ -12,7 +12,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 export default function LiveAuction() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { user, token } = useAuth();
+  const { user, token, isAuthenticated } = useAuth();
   
   const [bidAmount, setBidAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -253,10 +253,19 @@ export default function LiveAuction() {
           <Text className="text-2xl font-bold text-white mb-4">{currentItem.title}</Text>
           
           <View className="bg-gray-800 rounded-2xl p-6 mb-6 items-center">
-            <Text className="text-gray-400 mb-2">Puja Actual</Text>
-            <Text className="text-5xl font-bold text-green-400 mb-1">${currentItem.currentBid}</Text>
-            <Text className="text-gray-500 text-xs mb-3">Precio Base: ${currentItem.basePrice}</Text>
-            <Text className="text-gray-400">Por: <Text className="font-bold text-white">{currentItem.highestBidder}</Text></Text>
+            {isAuthenticated ? (
+              <>
+                <Text className="text-gray-400 mb-2">Puja Actual</Text>
+                <Text className="text-5xl font-bold text-green-400 mb-1">${currentItem.currentBid}</Text>
+                <Text className="text-gray-500 text-xs mb-3">Precio Base: ${currentItem.basePrice}</Text>
+                <Text className="text-gray-400">Por: <Text className="font-bold text-white">{currentItem.highestBidder}</Text></Text>
+              </>
+            ) : (
+              <View className="items-center py-2">
+                <Text className="text-gray-400 mb-2">Puja Oculta</Text>
+                <Text className="text-xl font-bold text-white mb-2 text-center">Iniciá sesión para ver los precios de esta subasta</Text>
+              </View>
+            )}
           </View>
 
           <View className="flex-row items-center justify-center gap-2 mb-6">
@@ -264,65 +273,79 @@ export default function LiveAuction() {
             <Text className="text-gray-400">restantes</Text>
           </View>
 
-          <Text className="text-white font-bold mb-4">Actividad Reciente</Text>
-          <View className="space-y-3 mb-8">
-            {recentBids.map((bid) => (
-              <View key={bid.id} className="flex-row items-center justify-between">
-                <Text className="text-gray-300">{bid.user}</Text>
-                <Text className="text-green-400 font-bold">${bid.amount}</Text>
+          {isAuthenticated && (
+            <>
+              <Text className="text-white font-bold mb-4">Actividad Reciente</Text>
+              <View className="space-y-3 mb-8">
+                {recentBids.map((bid) => (
+                  <View key={bid.id} className="flex-row items-center justify-between">
+                    <Text className="text-gray-300">{bid.user}</Text>
+                    <Text className="text-green-400 font-bold">${bid.amount}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
       {/* Bid Actions */}
       <View className="absolute bottom-0 w-full bg-gray-900 border-t border-gray-800 p-4 pb-8">
-        {!isExempt && (
-          <Text className="text-gray-400 text-xs mb-3 text-center">
-            Límites de puja para tu categoría: ${minBid} - ${maxBid}
-          </Text>
-        )}
-        <View className="flex-row gap-3 mb-4">
-          <Button 
-            variant="secondary" 
-            className="flex-1 bg-gray-800 border-gray-700 h-12"
-            disabled={isSubmitting}
-            onPress={() => setBidAmount((currentItem.currentBid + 500).toString())}
-          >
-            <Text className="text-white font-bold">+ $500</Text>
-          </Button>
-          <Button 
-            variant="secondary" 
-            className="flex-1 bg-gray-800 border-gray-700 h-12"
-            disabled={isSubmitting}
-            onPress={() => setBidAmount((currentItem.currentBid + 1000).toString())}
-          >
-            <Text className="text-white font-bold">+ $1000</Text>
-          </Button>
-        </View>
-        <View className="flex-row items-center gap-3">
-          <View className="flex-1 flex-row items-center bg-gray-800 rounded-xl px-4 h-14 border border-gray-700">
-            <Text className="text-gray-400 text-lg mr-2">$</Text>
-            <TextInput
-              value={bidAmount}
-              onChangeText={(t) => { setBidAmount(t); setErrorMsg(''); }}
-              placeholder="Monto a pujar"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="numeric"
-              className="flex-1 text-white text-lg h-full"
-              editable={!isSubmitting}
-            />
+        {isAuthenticated ? (
+          <>
+            {!isExempt && (
+              <Text className="text-gray-400 text-xs mb-3 text-center">
+                Límites de puja para tu categoría: ${minBid} - ${maxBid}
+              </Text>
+            )}
+            <View className="flex-row gap-3 mb-4">
+              <Button 
+                variant="secondary" 
+                className="flex-1 bg-gray-800 border-gray-700 h-12"
+                disabled={isSubmitting}
+                onPress={() => setBidAmount((currentItem.currentBid + 500).toString())}
+              >
+                <Text className="text-white font-bold">+ $500</Text>
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="flex-1 bg-gray-800 border-gray-700 h-12"
+                disabled={isSubmitting}
+                onPress={() => setBidAmount((currentItem.currentBid + 1000).toString())}
+              >
+                <Text className="text-white font-bold">+ $1000</Text>
+              </Button>
+            </View>
+            <View className="flex-row items-center gap-3">
+              <View className="flex-1 flex-row items-center bg-gray-800 rounded-xl px-4 h-14 border border-gray-700">
+                <Text className="text-gray-400 text-lg mr-2">$</Text>
+                <TextInput
+                  value={bidAmount}
+                  onChangeText={(t) => { setBidAmount(t); setErrorMsg(''); }}
+                  placeholder="Monto a pujar"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="numeric"
+                  className="flex-1 text-white text-lg h-full"
+                  editable={!isSubmitting}
+                />
+              </View>
+              <TouchableOpacity 
+                onPress={handleBid}
+                disabled={isSubmitting}
+                className={`w-14 h-14 rounded-xl items-center justify-center ${isSubmitting ? 'bg-gray-600' : 'bg-[#6A4F99]'}`}
+              >
+                {isSubmitting ? <ActivityIndicator color="white" /> : <HandCoins color="white" size={24} />}
+              </TouchableOpacity>
+            </View>
+            {errorMsg ? <Text className="text-red-400 text-xs mt-2 text-center">{errorMsg}</Text> : null}
+          </>
+        ) : (
+          <View className="items-center py-2">
+            <Button onPress={() => router.push('/(auth)/login')} className="w-full bg-[#6A4F99] h-12">
+              Iniciar Sesión para Pujar
+            </Button>
           </View>
-          <TouchableOpacity 
-            onPress={handleBid}
-            disabled={isSubmitting}
-            className={`w-14 h-14 rounded-xl items-center justify-center ${isSubmitting ? 'bg-gray-600' : 'bg-[#6A4F99]'}`}
-          >
-            {isSubmitting ? <ActivityIndicator color="white" /> : <HandCoins color="white" size={24} />}
-          </TouchableOpacity>
-        </View>
-        {errorMsg ? <Text className="text-red-400 text-xs mt-2 text-center">{errorMsg}</Text> : null}
+        )}
       </View>
     </View>
   );

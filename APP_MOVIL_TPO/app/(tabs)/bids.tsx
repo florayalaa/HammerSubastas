@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
 
 export default function Bids() {
-  const { token } = useAuth();
+  const { token, isAuthenticated } = useAuth();
   const [bids, setBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -101,11 +101,20 @@ export default function Bids() {
             </TouchableOpacity>
           </Link>
         ))}
-        {bids.length === 0 && (
+        {!isAuthenticated ? (
           <View className="items-center justify-center py-12">
-            <Text className="text-gray-500">No tienes pujas activas.</Text>
+            <Text className="text-gray-500 mb-4 text-center">Iniciá sesión para ver tu historial de pujas.</Text>
+            <Link href="/(auth)/login" asChild>
+              <TouchableOpacity className="bg-[#6A4F99] px-6 py-3 rounded-xl">
+                <Text className="text-white font-bold">Iniciar Sesión</Text>
+              </TouchableOpacity>
+            </Link>
           </View>
-        )}
+        ) : bids.length === 0 ? (
+          <View className="items-center justify-center py-12">
+            <Text className="text-gray-500">No tenés pujas activas.</Text>
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );

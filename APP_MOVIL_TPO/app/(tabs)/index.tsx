@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 import { TrendingUp, Gavel, DollarSign, Clock, ChevronRight } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Card, CardContent } from '@/components/ui/Card';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Dashboard() {
   const stats = [
@@ -11,6 +12,8 @@ export default function Dashboard() {
     { label: "Participaciones", value: "45", color: "bg-[#C9A063]" },
     { label: "Total Gastado", value: "$125,400", color: "bg-[#A08C79]" },
   ];
+
+  const { isAuthenticated } = useAuth();
 
   const [activeAuctions, setActiveAuctions] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -61,32 +64,36 @@ export default function Dashboard() {
       </View>
 
       {/* Stats Grid */}
-      <View className="flex-row gap-3 mb-6">
-        {stats.slice(0, 2).map((stat, idx) => (
-          <Card key={idx} className="flex-1 border-gray-200">
-            <CardContent className="p-4 pt-4">
-              <View className={`${stat.color} w-10 h-10 rounded-lg items-center justify-center mb-3`}>
-                <Gavel color="white" size={20} />
+      {isAuthenticated && (
+        <>
+          <View className="flex-row gap-3 mb-6">
+            {stats.slice(0, 2).map((stat, idx) => (
+              <Card key={idx} className="flex-1 border-gray-200">
+                <CardContent className="p-4 pt-4">
+                  <View className={`${stat.color} w-10 h-10 rounded-lg items-center justify-center mb-3`}>
+                    <Gavel color="white" size={20} />
+                  </View>
+                  <Text className="text-2xl font-bold text-[#333F48] mb-1">{stat.value}</Text>
+                  <Text className="text-xs text-[#A08C79]">{stat.label}</Text>
+                </CardContent>
+              </Card>
+            ))}
+          </View>
+
+          {/* Total Gastado */}
+          <Card className="mb-8 border-gray-200">
+            <CardContent className="p-4 pt-4 flex-row items-center">
+              <View className={`${stats[2].color} w-12 h-12 rounded-lg items-center justify-center mr-4`}>
+                <DollarSign color="white" size={24} />
               </View>
-              <Text className="text-2xl font-bold text-[#333F48] mb-1">{stat.value}</Text>
-              <Text className="text-xs text-[#A08C79]">{stat.label}</Text>
+              <View>
+                <Text className="text-2xl font-bold text-[#333F48]">{stats[2].value}</Text>
+                <Text className="text-sm text-[#A08C79]">{stats[2].label}</Text>
+              </View>
             </CardContent>
           </Card>
-        ))}
-      </View>
-
-      {/* Total Gastado */}
-      <Card className="mb-8 border-gray-200">
-        <CardContent className="p-4 pt-4 flex-row items-center">
-          <View className={`${stats[2].color} w-12 h-12 rounded-lg items-center justify-center mr-4`}>
-            <DollarSign color="white" size={24} />
-          </View>
-          <View>
-            <Text className="text-2xl font-bold text-[#333F48]">{stats[2].value}</Text>
-            <Text className="text-sm text-[#A08C79]">{stats[2].label}</Text>
-          </View>
-        </CardContent>
-      </Card>
+        </>
+      )}
 
       {/* Active Auctions */}
       <View className="mb-8">
@@ -127,36 +134,38 @@ export default function Dashboard() {
       </View>
 
       {/* Recent Bids */}
-      <View className="mb-8">
-        <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-xl font-bold text-[#333F48]">Pujas Recientes</Text>
-          <Link href="/(tabs)/bids" asChild>
-            <TouchableOpacity className="flex-row items-center">
-              <Text className="text-[#6A4F99] mr-1 font-medium">Historial</Text>
-              <ChevronRight color="#6A4F99" size={16} />
-            </TouchableOpacity>
-          </Link>
-        </View>
+      {isAuthenticated && (
+        <View className="mb-8">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-xl font-bold text-[#333F48]">Pujas Recientes</Text>
+            <Link href="/(tabs)/bids" asChild>
+              <TouchableOpacity className="flex-row items-center">
+                <Text className="text-[#6A4F99] mr-1 font-medium">Historial</Text>
+                <ChevronRight color="#6A4F99" size={16} />
+              </TouchableOpacity>
+            </Link>
+          </View>
 
-        <Card className="border-gray-200 divide-y divide-gray-100 overflow-hidden">
-          {recentBids.map((bid, index) => (
-            <View key={index} className="p-4 flex-row justify-between items-center">
-              <View className="flex-1 mr-4">
-                <Text className="text-sm font-medium text-[#333F48] mb-1" numberOfLines={1}>{bid.item}</Text>
-                <Text className="text-xs text-[#A08C79]">{bid.time}</Text>
-              </View>
-              <View className="items-end">
-                <Text className="text-sm font-bold text-[#333F48] mb-1">{bid.bid}</Text>
-                <View className={`px-2 py-0.5 rounded-full ${bid.status === 'leading' ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <Text className={`text-[10px] font-semibold ${bid.status === 'leading' ? 'text-green-800' : 'text-red-800'}`}>
-                    {bid.status === 'leading' ? 'Ganando' : 'Superado'}
-                  </Text>
+          <Card className="border-gray-200 divide-y divide-gray-100 overflow-hidden">
+            {recentBids.map((bid, index) => (
+              <View key={index} className="p-4 flex-row justify-between items-center">
+                <View className="flex-1 mr-4">
+                  <Text className="text-sm font-medium text-[#333F48] mb-1" numberOfLines={1}>{bid.item}</Text>
+                  <Text className="text-xs text-[#A08C79]">{bid.time}</Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-sm font-bold text-[#333F48] mb-1">{bid.bid}</Text>
+                  <View className={`px-2 py-0.5 rounded-full ${bid.status === 'leading' ? 'bg-green-100' : 'bg-red-100'}`}>
+                    <Text className={`text-[10px] font-semibold ${bid.status === 'leading' ? 'text-green-800' : 'text-red-800'}`}>
+                      {bid.status === 'leading' ? 'Ganando' : 'Superado'}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
-        </Card>
-      </View>
+            ))}
+          </Card>
+        </View>
+      )}
       <View className="h-10" />
     </ScrollView>
   );

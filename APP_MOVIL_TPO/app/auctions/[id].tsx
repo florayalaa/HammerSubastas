@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Calendar, MapPin, Users, Package, ChevronLeft, Play, Lock } from 'lucide-react-native';
@@ -109,7 +109,7 @@ export default function AuctionDetail() {
           </View>
         </View>
 
-        {isAuthenticated && (
+        {isAuthenticated ? (
           <View className="mt-4">
             {(!user?.hasPaymentMethods || categoryRank[auction.category] > categoryRank[user?.category || "Común"]) ? (
               <View className="bg-red-50 p-4 rounded-xl border border-red-200">
@@ -138,6 +138,17 @@ export default function AuctionDetail() {
                 )}
               </TouchableOpacity>
             )}
+          </View>
+        ) : (
+          <View className="mt-4">
+            <TouchableOpacity 
+              onPress={() => router.push(`/auctions/live/${auction.id}`)}
+              className="flex-row items-center justify-center gap-2 py-4 rounded-xl bg-gray-600/80 border border-gray-400"
+            >
+              <Play color="white" size={20} />
+              <Text className="text-white font-bold text-lg">Entrar como Espectador</Text>
+            </TouchableOpacity>
+            <Text className="text-white/70 text-xs text-center mt-2">No podrás ver precios ni pujar sin iniciar sesión.</Text>
           </View>
         )}
       </View>
