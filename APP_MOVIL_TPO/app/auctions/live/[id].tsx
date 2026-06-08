@@ -29,10 +29,40 @@ export default function LiveAuction() {
     basePrice: 40000,
     highestBidder: "User***89",
     image: "https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=800&q=80",
-    timeRemaining: "00:02:45"
+    timeRemaining: "03:00:00"
   });
 
   const [activeItem, setActiveItem] = useState<any>(null);
+
+  // Fecha de fin estática a 3 horas desde el momento en que se abre la app
+  const [endTime] = useState(() => new Date(Date.now() + 3 * 60 * 60 * 1000));
+
+  useEffect(() => {
+    // Cronómetro que actualiza el state cada 1 segundo
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = endTime.getTime() - now;
+
+      if (distance < 0) {
+        clearInterval(interval);
+        setCurrentItem(prev => ({ ...prev, timeRemaining: "00:00:00" }));
+        return;
+      }
+
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      const formatted = 
+        String(hours).padStart(2, '0') + ":" +
+        String(minutes).padStart(2, '0') + ":" +
+        String(seconds).padStart(2, '0');
+
+      setCurrentItem(prev => ({ ...prev, timeRemaining: formatted }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [endTime]);
 
   useEffect(() => {
     const fetchAuction = async () => {
@@ -72,6 +102,14 @@ export default function LiveAuction() {
                  setRecentBids([]);
                  setCurrentItem(prev => ({ ...prev, highestBidder: 'Nadie (Sé el primero)' }));
               }
+            }
+
+            // Auto-register to auction just in case
+            if (token) {
+              await fetch(`${API_URL}/api/auctions/${id}/register`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+              }).catch(() => {}); // ignore errors (like already registered)
             }
 
             // Socket connect for this item
@@ -160,7 +198,27 @@ export default function LiveAuction() {
       }
 
       setBidAmount('');
-      // Alert.alert("Éxito", "Puja enviada correctamente."); // Socket will handle UI update
+      // Force fetching bids again to update screen immediately (as fallback to sockets)
+      if (activeItem) {
+        const bidsRes = await fetch(`${API_URL}/api/bids/item/${activeItem.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (bidsRes.ok) {
+          const bidsData = await bidsRes.json();
+          if (bidsData.length > 0) {
+            setCurrentItem(prev => ({
+              ...prev,
+              currentBid: bidsData[0].amount,
+              highestBidder: bidsData[0].user?.firstName ? `${bidsData[0].user.firstName}***` : 'Unknown',
+            }));
+            setRecentBids(bidsData.slice(0, 5).map((b: any) => ({
+              user: b.user?.firstName ? `${b.user.firstName}***` : 'Unknown',
+              amount: b.amount,
+              id: b.id
+            })));
+          }
+        }
+      }
     } catch (error: any) {
       setErrorMsg(error.message || "Error de red al pujar");
     } finally {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { Mail } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
@@ -23,7 +23,11 @@ export default function ForgotPassword() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="flex-grow justify-center px-4 py-12">
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="flex-grow justify-center px-4 py-12">
       <View className="w-full max-w-md self-center">
         <View className="items-center mb-8">
           <Text className="text-3xl font-bold text-[#333F48] mb-2">Recuperar Contraseña</Text>
@@ -64,5 +68,6 @@ export default function ForgotPassword() {
         </View>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

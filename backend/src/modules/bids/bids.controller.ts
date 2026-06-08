@@ -84,3 +84,24 @@ export const getBidsByItem = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Error fetching bids' });
   }
 };
+
+export const getMyBids = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id?.toString();
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const bids = await prisma.bid.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        catalogItem: {
+          include: { auction: true }
+        }
+      }
+    });
+
+    res.json(bids);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching user bids' });
+  }
+};
