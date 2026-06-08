@@ -12,7 +12,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 export default function LiveAuction() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { user, token } = useAuth();
+  const { user, token, isAuthenticated } = useAuth();
   
   const [bidAmount, setBidAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,10 +29,40 @@ export default function LiveAuction() {
     basePrice: 40000,
     highestBidder: "User***89",
     image: "https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=800&q=80",
-    timeRemaining: "00:02:45"
+    timeRemaining: "03:00:00"
   });
 
   const [activeItem, setActiveItem] = useState<any>(null);
+
+  // Fecha de fin estática a 3 horas desde el momento en que se abre la app
+  const [endTime] = useState(() => new Date(Date.now() + 3 * 60 * 60 * 1000));
+
+  useEffect(() => {
+    // Cronómetro que actualiza el state cada 1 segundo
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = endTime.getTime() - now;
+
+      if (distance < 0) {
+        clearInterval(interval);
+        setCurrentItem(prev => ({ ...prev, timeRemaining: "00:00:00" }));
+        return;
+      }
+
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      const formatted = 
+        String(hours).padStart(2, '0') + ":" +
+        String(minutes).padStart(2, '0') + ":" +
+        String(seconds).padStart(2, '0');
+
+      setCurrentItem(prev => ({ ...prev, timeRemaining: formatted }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [endTime]);
 
   useEffect(() => {
     const fetchAuction = async () => {
@@ -72,6 +102,14 @@ export default function LiveAuction() {
                  setRecentBids([]);
                  setCurrentItem(prev => ({ ...prev, highestBidder: 'Nadie (Sé el primero)' }));
               }
+            }
+
+            // Auto-register to auction just in case
+            if (token) {
+              await fetch(`${API_URL}/api/auctions/${id}/register`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+              }).catch(() => {}); // ignore errors (like already registered)
             }
 
             // Socket connect for this item
@@ -160,7 +198,27 @@ export default function LiveAuction() {
       }
 
       setBidAmount('');
-      // Alert.alert("Éxito", "Puja enviada correctamente."); // Socket will handle UI update
+      // Force fetching bids again to update screen immediately (as fallback to sockets)
+      if (activeItem) {
+        const bidsRes = await fetch(`${API_URL}/api/bids/item/${activeItem.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (bidsRes.ok) {
+          const bidsData = await bidsRes.json();
+          if (bidsData.length > 0) {
+            setCurrentItem(prev => ({
+              ...prev,
+              currentBid: bidsData[0].amount,
+              highestBidder: bidsData[0].user?.firstName ? `${bidsData[0].user.firstName}***` : 'Unknown',
+            }));
+            setRecentBids(bidsData.slice(0, 5).map((b: any) => ({
+              user: b.user?.firstName ? `${b.user.firstName}***` : 'Unknown',
+              amount: b.amount,
+              id: b.id
+            })));
+          }
+        }
+      }
     } catch (error: any) {
       setErrorMsg(error.message || "Error de red al pujar");
     } finally {
@@ -195,10 +253,19 @@ export default function LiveAuction() {
           <Text className="text-2xl font-bold text-white mb-4">{currentItem.title}</Text>
           
           <View className="bg-gray-800 rounded-2xl p-6 mb-6 items-center">
-            <Text className="text-gray-400 mb-2">Puja Actual</Text>
-            <Text className="text-5xl font-bold text-green-400 mb-1">${currentItem.currentBid}</Text>
-            <Text className="text-gray-500 text-xs mb-3">Precio Base: ${currentItem.basePrice}</Text>
-            <Text className="text-gray-400">Por: <Text className="font-bold text-white">{currentItem.highestBidder}</Text></Text>
+            {isAuthenticated ? (
+              <>
+                <Text className="text-gray-400 mb-2">Puja Actual</Text>
+                <Text className="text-5xl font-bold text-green-400 mb-1">${currentItem.currentBid}</Text>
+                <Text className="text-gray-500 text-xs mb-3">Precio Base: ${currentItem.basePrice}</Text>
+                <Text className="text-gray-400">Por: <Text className="font-bold text-white">{currentItem.highestBidder}</Text></Text>
+              </>
+            ) : (
+              <View className="items-center py-2">
+                <Text className="text-gray-400 mb-2">Puja Oculta</Text>
+                <Text className="text-xl font-bold text-white mb-2 text-center">Iniciá sesión para ver los precios de esta subasta</Text>
+              </View>
+            )}
           </View>
 
           <View className="flex-row items-center justify-center gap-2 mb-6">
@@ -206,65 +273,79 @@ export default function LiveAuction() {
             <Text className="text-gray-400">restantes</Text>
           </View>
 
-          <Text className="text-white font-bold mb-4">Actividad Reciente</Text>
-          <View className="space-y-3 mb-8">
-            {recentBids.map((bid) => (
-              <View key={bid.id} className="flex-row items-center justify-between">
-                <Text className="text-gray-300">{bid.user}</Text>
-                <Text className="text-green-400 font-bold">${bid.amount}</Text>
+          {isAuthenticated && (
+            <>
+              <Text className="text-white font-bold mb-4">Actividad Reciente</Text>
+              <View className="space-y-3 mb-8">
+                {recentBids.map((bid) => (
+                  <View key={bid.id} className="flex-row items-center justify-between">
+                    <Text className="text-gray-300">{bid.user}</Text>
+                    <Text className="text-green-400 font-bold">${bid.amount}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
       {/* Bid Actions */}
       <View className="absolute bottom-0 w-full bg-gray-900 border-t border-gray-800 p-4 pb-8">
-        {!isExempt && (
-          <Text className="text-gray-400 text-xs mb-3 text-center">
-            Límites de puja para tu categoría: ${minBid} - ${maxBid}
-          </Text>
-        )}
-        <View className="flex-row gap-3 mb-4">
-          <Button 
-            variant="secondary" 
-            className="flex-1 bg-gray-800 border-gray-700 h-12"
-            disabled={isSubmitting}
-            onPress={() => setBidAmount((currentItem.currentBid + 500).toString())}
-          >
-            <Text className="text-white font-bold">+ $500</Text>
-          </Button>
-          <Button 
-            variant="secondary" 
-            className="flex-1 bg-gray-800 border-gray-700 h-12"
-            disabled={isSubmitting}
-            onPress={() => setBidAmount((currentItem.currentBid + 1000).toString())}
-          >
-            <Text className="text-white font-bold">+ $1000</Text>
-          </Button>
-        </View>
-        <View className="flex-row items-center gap-3">
-          <View className="flex-1 flex-row items-center bg-gray-800 rounded-xl px-4 h-14 border border-gray-700">
-            <Text className="text-gray-400 text-lg mr-2">$</Text>
-            <TextInput
-              value={bidAmount}
-              onChangeText={(t) => { setBidAmount(t); setErrorMsg(''); }}
-              placeholder="Monto a pujar"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="numeric"
-              className="flex-1 text-white text-lg h-full"
-              editable={!isSubmitting}
-            />
+        {isAuthenticated ? (
+          <>
+            {!isExempt && (
+              <Text className="text-gray-400 text-xs mb-3 text-center">
+                Límites de puja para tu categoría: ${minBid} - ${maxBid}
+              </Text>
+            )}
+            <View className="flex-row gap-3 mb-4">
+              <Button 
+                variant="secondary" 
+                className="flex-1 bg-gray-800 border-gray-700 h-12"
+                disabled={isSubmitting}
+                onPress={() => setBidAmount((currentItem.currentBid + 500).toString())}
+              >
+                <Text className="text-white font-bold">+ $500</Text>
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="flex-1 bg-gray-800 border-gray-700 h-12"
+                disabled={isSubmitting}
+                onPress={() => setBidAmount((currentItem.currentBid + 1000).toString())}
+              >
+                <Text className="text-white font-bold">+ $1000</Text>
+              </Button>
+            </View>
+            <View className="flex-row items-center gap-3">
+              <View className="flex-1 flex-row items-center bg-gray-800 rounded-xl px-4 h-14 border border-gray-700">
+                <Text className="text-gray-400 text-lg mr-2">$</Text>
+                <TextInput
+                  value={bidAmount}
+                  onChangeText={(t) => { setBidAmount(t); setErrorMsg(''); }}
+                  placeholder="Monto a pujar"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="numeric"
+                  className="flex-1 text-white text-lg h-full"
+                  editable={!isSubmitting}
+                />
+              </View>
+              <TouchableOpacity 
+                onPress={handleBid}
+                disabled={isSubmitting}
+                className={`w-14 h-14 rounded-xl items-center justify-center ${isSubmitting ? 'bg-gray-600' : 'bg-[#6A4F99]'}`}
+              >
+                {isSubmitting ? <ActivityIndicator color="white" /> : <HandCoins color="white" size={24} />}
+              </TouchableOpacity>
+            </View>
+            {errorMsg ? <Text className="text-red-400 text-xs mt-2 text-center">{errorMsg}</Text> : null}
+          </>
+        ) : (
+          <View className="items-center py-2">
+            <Button onPress={() => router.push('/(auth)/login')} className="w-full bg-[#6A4F99] h-12">
+              Iniciar Sesión para Pujar
+            </Button>
           </View>
-          <TouchableOpacity 
-            onPress={handleBid}
-            disabled={isSubmitting}
-            className={`w-14 h-14 rounded-xl items-center justify-center ${isSubmitting ? 'bg-gray-600' : 'bg-[#6A4F99]'}`}
-          >
-            {isSubmitting ? <ActivityIndicator color="white" /> : <HandCoins color="white" size={24} />}
-          </TouchableOpacity>
-        </View>
-        {errorMsg ? <Text className="text-red-400 text-xs mt-2 text-center">{errorMsg}</Text> : null}
+        )}
       </View>
     </View>
   );

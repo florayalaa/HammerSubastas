@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { User, Mail, MapPin, FileText, Upload, X } from 'lucide-react-native';
 import { apiPost } from '@/app/lib/api';
@@ -41,7 +41,11 @@ export default function Register() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="flex-grow justify-center px-4 py-8">
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="flex-grow justify-center px-4 py-8">
       <View className="w-full max-w-lg self-center">
         <View className="items-center mb-6">
           <Text className="text-3xl font-bold text-[#333F48] mb-2">Crear Cuenta</Text>
@@ -100,26 +104,28 @@ export default function Register() {
 
           <View className="mb-6">
             <Text className="text-sm font-medium text-slate-700 mb-2">País de Origen</Text>
-            <View className="relative justify-center border border-slate-200 rounded-lg h-12 overflow-hidden bg-white">
-              <View className="absolute left-3 z-10"><FileText color="#A08C79" size={18} /></View>
-              <View className="pl-9 w-full">
+            <View className="border border-slate-200 rounded-lg bg-white h-12 flex-row items-center">
+              <View className="pl-3 pr-1">
+                <FileText color="#A08C79" size={18} />
+              </View>
+              <View className="flex-1">
                 <Picker
                   selectedValue={formData.country}
                   onValueChange={(itemValue) => updateFormData('country', itemValue)}
-                  style={{ width: '100%', height: '100%', color: formData.country ? '#333F48' : '#9CA3AF' }}
+                  style={{ width: '100%', color: formData.country ? '#333F48' : '#9CA3AF' }}
                   dropdownIconColor="#A08C79"
                 >
                   <Picker.Item label="Selecciona un país" value="" color="#9CA3AF" />
-                  <Picker.Item label="Argentina" value="Argentina" />
-                  <Picker.Item label="Bolivia" value="Bolivia" />
-                  <Picker.Item label="Brasil" value="Brasil" />
-                  <Picker.Item label="Chile" value="Chile" />
-                  <Picker.Item label="Colombia" value="Colombia" />
-                  <Picker.Item label="Ecuador" value="Ecuador" />
-                  <Picker.Item label="Paraguay" value="Paraguay" />
-                  <Picker.Item label="Perú" value="Perú" />
-                  <Picker.Item label="Uruguay" value="Uruguay" />
-                  <Picker.Item label="Venezuela" value="Venezuela" />
+                  <Picker.Item label="Argentina" value="Argentina" color="#333F48" />
+                  <Picker.Item label="Bolivia" value="Bolivia" color="#333F48" />
+                  <Picker.Item label="Brasil" value="Brasil" color="#333F48" />
+                  <Picker.Item label="Chile" value="Chile" color="#333F48" />
+                  <Picker.Item label="Colombia" value="Colombia" color="#333F48" />
+                  <Picker.Item label="Ecuador" value="Ecuador" color="#333F48" />
+                  <Picker.Item label="Paraguay" value="Paraguay" color="#333F48" />
+                  <Picker.Item label="Perú" value="Perú" color="#333F48" />
+                  <Picker.Item label="Uruguay" value="Uruguay" color="#333F48" />
+                  <Picker.Item label="Venezuela" value="Venezuela" color="#333F48" />
                 </Picker>
               </View>
             </View>
@@ -192,9 +198,9 @@ export default function Register() {
                     try {
                       await apiPost('/auth/register', formData);
                       if (typeof window !== 'undefined') {
-                        window.alert("Registro Exitoso. Tus datos han sido enviados. Busca el código temporal en la consola del backend.");
+                        window.alert("Ingresa el código que te llego por mail para completar el registro");
                       } else {
-                        Alert.alert("Registro Exitoso", "Tus datos han sido enviados. Busca el código temporal en la consola del backend.");
+                        Alert.alert("Registro Exitoso", "Ingresa el código que te llego por mail para completar el registro");
                       }
                       router.push('/(auth)/complete-registration');
                     } catch (error: any) {
@@ -217,5 +223,6 @@ export default function Register() {
 
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

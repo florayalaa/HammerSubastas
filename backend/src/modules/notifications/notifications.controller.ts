@@ -9,9 +9,11 @@ export const getMyNotifications = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const notifications = await prisma.notification.findMany({
-      where: { userId },
-      orderBy: { id: 'desc' } // Note: Assuming id is uuid or missing createdAt. We should check Prisma schema.
+    const identificadorpersona = parseInt(userId);
+
+    const notifications = await prisma.notificaciones_web.findMany({
+      where: { identificadorpersona },
+      orderBy: { id: 'desc' }
     });
     
     res.json(notifications);
@@ -27,10 +29,9 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // Assuming we have a read boolean, but checking schema first
-    // Since we don't know the exact modern Notification schema, we will just delete it or update it.
-    await prisma.notification.delete({
-      where: { id }
+    await prisma.notificaciones_web.update({
+      where: { id: parseInt(id) },
+      data: { leido: true }
     });
 
     res.json({ success: true });

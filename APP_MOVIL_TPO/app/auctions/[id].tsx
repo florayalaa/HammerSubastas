@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Calendar, MapPin, Users, Package, ChevronLeft, Play, Lock } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useAuth } from '@/context/AuthContext';
 import { Card } from '@/components/ui/Card';
+import { apiPost } from '@/app/lib/api';
+import { ActivityIndicator, Alert } from 'react-native';
 
 export default function AuctionDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, token } = useAuth();
+  const [registering, setRegistering] = useState(false);
 
   const categoryRank: Record<string, number> = {
     "Común": 1,
@@ -19,8 +22,8 @@ export default function AuctionDetail() {
     "Platino": 5
   };
   const auction = {
-    id: Number(id),
-    title: "Subasta de Arte Contemporáneo",
+    id: id as string,
+    title: "Gran Subasta de Arte y Relojes",
     date: "18 de Marzo, 2026",
     time: "18:00",
     location: "Buenos Aires, Argentina",
@@ -28,7 +31,24 @@ export default function AuctionDetail() {
     currency: "USD",
     auctioneer: "Ricardo Martínez",
     description: "Una exclusiva colección de arte contemporáneo que incluye obras de reconocidos artistas internacionales.",
-    status: "upcoming",
+    status: "live", // Cambiado a live para que permita entrar
+  };
+
+  const handleJoinAuction = async () => {
+    if (!token) return;
+    setRegistering(true);
+    try {
+      await apiPost(`/auctions/${auction.id}/register`, {}, token);
+      router.push(`/auctions/live/${auction.id}`);
+    } catch (error: any) {
+      if (error.message?.includes('already registered') || error.error?.includes('already registered')) {
+         router.push(`/auctions/live/${auction.id}`);
+      } else {
+         Alert.alert('Error', error.message || error.error || 'No se pudo registrar a la subasta');
+      }
+    } finally {
+      setRegistering(false);
+    }
   };
 
   const catalogItems = [
@@ -89,7 +109,7 @@ export default function AuctionDetail() {
           </View>
         </View>
 
-        {isAuthenticated && (
+        {isAuthenticated ? (
           <View className="mt-4">
             {(!user?.hasPaymentMethods || categoryRank[auction.category] > categoryRank[user?.category || "Común"]) ? (
               <View className="bg-red-50 p-4 rounded-xl border border-red-200">
@@ -102,15 +122,33 @@ export default function AuctionDetail() {
                 )}
               </View>
             ) : (
-              <Link href={`/auctions/live/${auction.id}`} asChild>
-                <TouchableOpacity className={`flex-row items-center justify-center gap-2 py-4 rounded-xl ${auction.status === "live" ? 'bg-red-500' : 'bg-[#6A4F99] border-2 border-white'}`}>
-                  <Play color="white" size={20} />
-                  <Text className="text-white font-bold text-lg">
-                    {auction.status === "live" ? 'Unirse a la Subasta EN VIVO' : 'Participar en Subasta'}
-                  </Text>
-                </TouchableOpacity>
-              </Link>
+              <TouchableOpacity 
+                onPress={handleJoinAuction} 
+                disabled={registering}
+                className={`flex-row items-center justify-center gap-2 py-4 rounded-xl ${auction.status === "live" ? 'bg-red-500' : 'bg-[#6A4F99] border-2 border-white'}`}>
+                {registering ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <>
+                    <Play color="white" size={20} />
+                    <Text className="text-white font-bold text-lg">
+                      {auction.status === "live" ? 'Unirse a la Subasta EN VIVO' : 'Participar en Subasta'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
             )}
+          </View>
+        ) : (
+          <View className="mt-4">
+            <TouchableOpacity 
+              onPress={() => router.push(`/auctions/live/${auction.id}`)}
+              className="flex-row items-center justify-center gap-2 py-4 rounded-xl bg-gray-600/80 border border-gray-400"
+            >
+              <Play color="white" size={20} />
+              <Text className="text-white font-bold text-lg">Entrar como Espectador</Text>
+            </TouchableOpacity>
+            <Text className="text-white/70 text-xs text-center mt-2">No podrás ver precios ni pujar sin iniciar sesión.</Text>
           </View>
         )}
       </View>

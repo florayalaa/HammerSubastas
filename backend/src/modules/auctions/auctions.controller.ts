@@ -58,7 +58,7 @@ export const createAuction = async (req: AuthRequest, res: Response) => {
 export const registerForAuction = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params; // auctionId
-    const userId = req.user?.id;
+    const userId = req.user?.id?.toString();
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const auction = await prisma.auction.findUnique({ where: { id } });

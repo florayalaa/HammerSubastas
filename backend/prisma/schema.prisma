@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,53 +8,50 @@ datasource db {
 }
 
 model User {
-  id                 String   @id @default(uuid())
+  id                 String            @id @default(uuid())
   firstName          String
   lastName           String
-  email              String   @unique
+  email              String            @unique
   passwordHash       String
   country            String
   address            String
-  category           String   @default("COMUN")
-  isApproved         Boolean  @default(false)
-  mustChangePassword Boolean  @default(true)
+  category           String            @default("COMUN")
+  isApproved         Boolean           @default(false)
+  mustChangePassword Boolean           @default(true)
   documentFront      String?
   documentBack       String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  bids             Bid[]
-  paymentMethods   PaymentMethod[]
-  itemSubmissions  ItemSubmission[]
-  notifications    Notification[]
-  auctionAttendees AuctionAttendee[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  auctionAttendees   AuctionAttendee[]
+  bids               Bid[]
+  itemSubmissions    ItemSubmission[]
+  notifications      Notification[]
+  paymentMethods     PaymentMethod[]
 }
 
-// Modelos dummy para las relaciones, serán completados por las otras Personas
 model Bid {
   id            String      @id @default(uuid())
   amount        Float
   catalogItemId String
-  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id])
   userId        String
-  user          User        @relation(fields: [userId], references: [id])
   createdAt     DateTime    @default(now())
+  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
 }
 
 model Auction {
-  id            String   @id @default(uuid())
+  id            String            @id @default(uuid())
   title         String
   description   String
   startingPrice Float
   currentPrice  Float
   startDate     DateTime
   endDate       DateTime
-  status        String   @default("PENDING")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  catalogItems CatalogItem[]
-  attendees    AuctionAttendee[]
+  status        String            @default("PENDING")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  attendees     AuctionAttendee[]
+  catalogItems  CatalogItem[]
 }
 
 model PaymentMethod {
@@ -75,26 +69,25 @@ model ItemSubmission {
 model CatalogItem {
   id            String   @id @default(uuid())
   auctionId     String
-  auction       Auction  @relation(fields: [auctionId], references: [id])
   title         String
   description   String
   startingPrice Float
   currentPrice  Float
   winnerId      String?
-  status        String   @default("PENDING") // PENDING, ACTIVE, SOLD, UNSOLD
+  status        String   @default("PENDING")
   createdAt     DateTime @default(now())
-  
   bids          Bid[]
+  auction       Auction  @relation(fields: [auctionId], references: [id])
 }
 
 model AuctionAttendee {
   id        String   @id @default(uuid())
   auctionId String
-  auction   Auction  @relation(fields: [auctionId], references: [id])
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   bidderNum Int      @default(autoincrement())
   createdAt DateTime @default(now())
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([auctionId, userId])
 }
@@ -102,20 +95,16 @@ model AuctionAttendee {
 model Notification {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
-// -----------------------------------------------------------------------------
-// LEGACY TABLES FOR SQL SERVER (Based on schema_base_datos.sql)
-// -----------------------------------------------------------------------------
-
 model paises {
-  numero       Int        @id
+  numero       Int        @id(map: "pk_paises")
   nombre       String     @db.VarChar(250)
-  nombreCorto  String?    @db.VarChar(250)
+  nombrecorto  String?    @db.VarChar(250)
   capital      String     @db.VarChar(250)
   nacionalidad String     @db.VarChar(250)
   idiomas      String     @db.VarChar(150)
@@ -123,190 +112,263 @@ model paises {
 }
 
 model personas {
-  identificador  Int                  @id @default(autoincrement())
-  documento      String               @db.VarChar(20)
-  nombre         String               @db.VarChar(150)
-  direccion      String?              @db.VarChar(250)
-  estado         String?              @db.VarChar(15) // 'activo', 'incativo'
-  foto           Bytes? // varbinary(max)
-  clientes       clientes?
-  duenios        duenios?
-  subastadores   subastadores?
-  credenciales   credenciales_web?
-  notificaciones notificaciones_web[]
+  identificador      Int                  @id(map: "pk_personas") @default(autoincrement())
+  documento          String               @db.VarChar(20)
+  nombre             String               @db.VarChar(150)
+  direccion          String?              @db.VarChar(250)
+  estado             String?              @db.VarChar(15)
+  foto               Bytes?
+  clientes           clientes?
+  credenciales       credenciales_web?
+  duenios            duenios?
+  notificaciones_web notificaciones_web[]
+  subastadores       subastadores?
 }
 
 model empleados {
-  identificador Int         @id
+  identificador Int         @id(map: "pk_empleados")
   cargo         String?     @db.VarChar(100)
   sector        Int?
-  sectores      sectores[]
+  catalogos     catalogos[]
   clientes      clientes[]
   duenios       duenios[]
   productos     productos[]
-  catalogos     catalogos[]
+  sectores      sectores[]
 }
 
 model sectores {
-  identificador     Int        @id @default(autoincrement())
-  nombreSector      String     @db.VarChar(150)
-  codigoSector      String?    @db.VarChar(10)
-  responsableSector Int?
-  empleados         empleados? @relation(fields: [responsableSector], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  identificador     Int        @id(map: "pk_sectores") @default(autoincrement())
+  nombresector      String     @db.VarChar(150)
+  codigosector      String?    @db.VarChar(10)
+  responsablesector Int?
+  empleados         empleados? @relation(fields: [responsablesector], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_sectores_empleados")
 }
 
 model seguros {
-  nroPoliza       String      @id @db.VarChar(30)
+  nropoliza       String      @id(map: "pk_seguros") @db.VarChar(30)
   compania        String      @db.VarChar(150)
-  polizaCombinada String?     @db.VarChar(2) // 'si', 'no'
+  polizacombinada String?     @db.VarChar(2)
   importe         Decimal     @db.Decimal(18, 2)
   productos       productos[]
 }
 
 model clientes {
-  identificador     Int                 @id
-  numeroPais        Int?
-  admitido          String?             @db.VarChar(2) // 'si', 'no'
-  categoria         String?             @db.VarChar(10) // comun, especial, plata, oro, platino
+  identificador     Int                 @id(map: "pk_clientes")
+  numeropais        Int?
+  admitido          String?             @db.VarChar(2)
+  categoria         String?             @db.VarChar(10)
   verificador       Int
-  personas          personas            @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  paises            paises?             @relation(fields: [numeroPais], references: [numero], onUpdate: NoAction, onDelete: NoAction)
-  empleados         empleados           @relation(fields: [verificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  fotodocfrente     String?             @db.VarChar(300)
+  fotodocdorso      String?             @db.VarChar(300)
   asistentes        asistentes[]
-  registroDeSubasta registroDeSubasta[]
+  empleados         empleados           @relation(fields: [verificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_clientes_empleados")
+  paises            paises?             @relation(fields: [numeropais], references: [numero], onDelete: NoAction, onUpdate: NoAction, map: "fk_clientes_paises")
+  personas          personas            @relation(fields: [identificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_clientes_personas")
+  mediosdepago      mediosdepago[]
+  registrodesubasta registrodesubasta[]
 }
 
 model duenios {
-  identificador          Int                 @id
-  numeroPais             Int?
-  verificacionFinanciera String?             @map("verificaciónFinanciera") @db.VarChar(2)
-  verificacionJudicial   String?             @map("verificaciónJudicial") @db.VarChar(2)
-  calificacionRiesgo     Int?
+  identificador          Int                 @id(map: "pk_duenios")
+  numeropais             Int?
+  verificacionfinanciera String?             @db.VarChar(2)
+  verificacionjudicial   String?             @db.VarChar(2)
+  calificacionriesgo     Int?
   verificador            Int
-  personas               personas            @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  empleados              empleados           @relation(fields: [verificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  empleados              empleados           @relation(fields: [verificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_duenios_empleados")
+  personas               personas            @relation(fields: [identificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_duenios_personas")
   productos              productos[]
-  registroDeSubasta      registroDeSubasta[]
+  registrodesubasta      registrodesubasta[]
 }
 
 model subastadores {
-  identificador Int        @id
+  identificador Int        @id(map: "pk_subastadores")
   matricula     String?    @db.VarChar(15)
   region        String?    @db.VarChar(50)
-  personas      personas   @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  personas      personas   @relation(fields: [identificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_subastadores_personas")
   subastas      subastas[]
 }
 
 model subastas {
-  identificador       Int                 @id @default(autoincrement())
-  fecha               DateTime            @db.Date
-  hora                DateTime            @db.Time
-  estado              String?             @db.VarChar(10) // abierta, carrada
+  identificador       Int                 @id(map: "pk_subastas") @default(autoincrement())
+  fecha               DateTime?           @db.Date
+  hora                DateTime            @db.Time(6)
+  estado              String?             @db.VarChar(10)
   subastador          Int?
   ubicacion           String?             @db.VarChar(350)
-  capacidadAsistentes Int?
-  tieneDeposito       String?             @db.VarChar(2)
-  seguridadPropia     String?             @db.VarChar(2)
+  capacidadasistentes Int?
+  tienedeposito       String?             @db.VarChar(2)
+  seguridadpropia     String?             @db.VarChar(2)
   categoria           String?             @db.VarChar(10)
-  subastadores        subastadores?       @relation(fields: [subastador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  catalogos           catalogos[]
+  moneda              String              @default("pesos") @db.VarChar(10)
   asistentes          asistentes[]
-  registroDeSubasta   registroDeSubasta[]
+  catalogos           catalogos[]
+  registrodesubasta   registrodesubasta[]
+  subastadores        subastadores?       @relation(fields: [subastador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_subastas_subastadores")
 }
 
 model productos {
-  identificador       Int                 @id @default(autoincrement())
+  identificador       Int                 @id(map: "pk_productos") @default(autoincrement())
   fecha               DateTime?           @db.Date
   disponible          String?             @db.VarChar(2)
-  descripcionCatalogo String?             @default("No Posee") @db.VarChar(500)
-  descripcionCompleta String              @db.VarChar(300)
+  descripcioncatalogo String?             @default("No Posee") @db.VarChar(500)
+  descripcioncompleta String?             @db.VarChar(300)
   revisor             Int
   duenio              Int
   seguro              String?             @db.VarChar(30)
-  empleados           empleados           @relation(fields: [revisor], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  duenios             duenios             @relation(fields: [duenio], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  seguros             seguros?            @relation(fields: [seguro], references: [nroPoliza], onUpdate: NoAction, onDelete: NoAction)
   fotos               fotos[]
-  itemsCatalogo       itemsCatalogo[]
-  registroDeSubasta   registroDeSubasta[]
+  itemscatalogo       itemscatalogo[]
+  duenios             duenios             @relation(fields: [duenio], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_productos_duenios")
+  empleados           empleados           @relation(fields: [revisor], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_productos_empleados")
+  seguros             seguros?            @relation(fields: [seguro], references: [nropoliza], onDelete: NoAction, onUpdate: NoAction, map: "fk_productos_seguros")
+  registrodesubasta   registrodesubasta[]
 }
 
 model fotos {
-  identificador Int       @id @default(autoincrement())
+  identificador Int       @id(map: "pk_fotos") @default(autoincrement())
   producto      Int
   foto          Bytes
-  productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  productos     productos @relation(fields: [producto], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_fotos_productos")
 }
 
 model catalogos {
-  identificador Int             @id @default(autoincrement())
+  identificador Int             @id(map: "pk_catalogos") @default(autoincrement())
   descripcion   String          @db.VarChar(250)
   subasta       Int?
   responsable   Int
-  empleados     empleados       @relation(fields: [responsable], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  subastas      subastas?       @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  itemsCatalogo itemsCatalogo[]
+  empleados     empleados       @relation(fields: [responsable], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_catalogos_empleados")
+  subastas      subastas?       @relation(fields: [subasta], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_catalogos_subastas")
+  itemscatalogo itemscatalogo[]
 }
 
 model itemsCatalogo {
-  identificador Int       @id @default(autoincrement())
+  identificador Int     @id @default(autoincrement())
   catalogo      Int
   producto      Int
-  precioBase    Decimal   @db.Decimal(18, 2)
-  comision      Decimal   @db.Decimal(18, 2)
-  subastado     String?   @db.VarChar(2)
-  catalogos     catalogos @relation(fields: [catalogo], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  pujos         pujos[]
+  precioBase    Decimal @db.Decimal(18, 2)
+  comision      Decimal @db.Decimal(18, 2)
+  subastado     String? @db.VarChar(2)
 }
 
 model asistentes {
-  identificador Int      @id @default(autoincrement())
-  numeroPostor  Int
+  identificador Int           @id(map: "pk_asistentes") @default(autoincrement())
+  numeropostor  Int
   cliente       Int
   subasta       Int
-  clientes      clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  subastas      subastas @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  mediodepago   Int?
+  clientes      clientes      @relation(fields: [cliente], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_asistentes_clientes")
+  mediosdepago  mediosdepago? @relation(fields: [mediodepago], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_asistentes_mediospago")
+  subastas      subastas      @relation(fields: [subasta], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_asistentes_subastas")
   pujos         pujos[]
 }
 
 model pujos {
-  identificador Int           @id @default(autoincrement())
+  identificador Int           @id(map: "pk_pujos") @default(autoincrement())
   asistente     Int
   item          Int
   importe       Decimal       @db.Decimal(18, 2)
   ganador       String?       @default("no") @db.VarChar(2)
-  asistentes    asistentes    @relation(fields: [asistente], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  itemsCatalogo itemsCatalogo @relation(fields: [item], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  asistentes    asistentes    @relation(fields: [asistente], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_pujos_asistentes")
+  itemsCatalogo itemscatalogo @relation(fields: [item], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_pujos_itemscatalogo")
 }
 
 model registroDeSubasta {
-  identificador Int       @id @default(autoincrement())
+  identificador Int     @id @default(autoincrement())
+  subasta       Int
+  duenio        Int
+  producto      Int
+  cliente       Int
+  importe       Decimal @db.Decimal(18, 2)
+  comision      Decimal @db.Decimal(18, 2)
+}
+
+model credenciales_web {
+  identificador      Int      @id(map: "pk_credenciales_web")
+  email              String   @unique @db.VarChar(255)
+  passwordHash       String   @map("passwordhash") @db.VarChar(255)
+  mustChangePassword Boolean  @map("mustchangepassword") @default(true)
+  personas           personas @relation(fields: [identificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_credenciales_personas")
+}
+
+model notificaciones_web {
+  id                   Int      @id(map: "pk_notificaciones_web") @default(autoincrement())
+  identificadorpersona Int
+  mensaje              String   @db.VarChar(500)
+  leido                Boolean  @default(false)
+  fecha                DateTime @default(now()) @db.Timestamp(6)
+  personas             personas @relation(fields: [identificadorpersona], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_notificaciones_personas")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chequescertificados {
+  identificador   Int          @id(map: "pk_chequescertificados")
+  nrocheque       String       @db.VarChar(30)
+  banco           String       @db.VarChar(150)
+  monto           Decimal      @db.Decimal(18, 2)
+  montodisponible Decimal      @db.Decimal(18, 2)
+  vencimiento     DateTime     @db.Date
+  mediosdepago    mediosdepago @relation(fields: [identificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_chequescertificados_medios")
+}
+
+model cuentasbancarias {
+  identificador  Int          @id(map: "pk_cuentasbancarias")
+  banco          String       @db.VarChar(150)
+  nrocuenta      String       @db.VarChar(50)
+  cbu            String?      @db.VarChar(22)
+  swift          String?      @db.VarChar(11)
+  montoreservado Decimal      @default(0) @db.Decimal(18, 2)
+  mediosdepago   mediosdepago @relation(fields: [identificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_cuentasbancarias_medios")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model itemscatalogo {
+  identificador Int       @id(map: "pk_itemscatalogo") @default(autoincrement())
+  numeropieza   Int
+  catalogo      Int
+  producto      Int
+  preciobase    Decimal   @db.Decimal(18, 2)
+  comision      Decimal   @db.Decimal(18, 2)
+  subastado     String?   @db.VarChar(2)
+  catalogos     catalogos @relation(fields: [catalogo], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_itemscatalogo_catalogos")
+  productos     productos @relation(fields: [producto], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_itemscatalogo_productos")
+  pujos         pujos[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model mediosdepago {
+  identificador       Int                  @id(map: "pk_mediosdepago") @default(autoincrement())
+  cliente             Int
+  tipo                String               @db.VarChar(20)
+  moneda              String               @db.VarChar(10)
+  verificado          String               @default("no") @db.VarChar(2)
+  activo              String               @default("si") @db.VarChar(2)
+  asistentes          asistentes[]
+  chequescertificados chequescertificados?
+  cuentasbancarias    cuentasbancarias?
+  clientes            clientes             @relation(fields: [cliente], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_mediosdepago_clientes")
+  tarjetascredito     tarjetascredito?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model registrodesubasta {
+  identificador Int       @id(map: "pk_registrodesubasta") @default(autoincrement())
   subasta       Int
   duenio        Int
   producto      Int
   cliente       Int
   importe       Decimal   @db.Decimal(18, 2)
   comision      Decimal   @db.Decimal(18, 2)
-  subastas      subastas  @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  duenios       duenios   @relation(fields: [duenio], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  productos     productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-  clientes      clientes  @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+  clientes      clientes  @relation(fields: [cliente], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_registrodesubasta_clientes")
+  duenios       duenios   @relation(fields: [duenio], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_registrodesubasta_duenios")
+  productos     productos @relation(fields: [producto], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_registrodesubasta_productos")
+  subastas      subastas  @relation(fields: [subasta], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_registrodesubasta_subastas")
 }
 
-model credenciales_web {
-  identificador      Int      @id
-  email              String   @unique @db.VarChar(255)
-  passwordHash       String   @db.VarChar(255)
-  mustChangePassword Boolean  @default(true)
-  personas           personas @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
-}
-
-model notificaciones_web {
-  id                   Int      @id @default(autoincrement())
-  identificadorPersona Int
-  mensaje              String   @db.VarChar(500)
-  leido                Boolean  @default(false)
-  fecha                DateTime @default(now()) @db.Timestamp(3)
-  personas             personas @relation(fields: [identificadorPersona], references: [identificador], onUpdate: NoAction, onDelete: NoAction)
+model tarjetascredito {
+  identificador Int          @id(map: "pk_tarjetascredito")
+  numerotarjeta String       @db.VarChar(20)
+  titular       String       @db.VarChar(150)
+  vencimiento   String       @db.VarChar(7)
+  red           String       @db.VarChar(30)
+  mediosdepago  mediosdepago @relation(fields: [identificador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_tarjetascredito_medios")
 }

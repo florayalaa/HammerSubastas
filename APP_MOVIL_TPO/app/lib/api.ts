@@ -41,4 +41,15 @@ export async function apiPost(path: string, body: any, token?: string) {
   });
 }
 
-export default { API_BASE_URL, apiGet, apiPost };
+export async function apiPut(path: string, body: any, token?: string) {
+  return request(path, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+export default { API_BASE_URL, apiGet, apiPost, apiPut };

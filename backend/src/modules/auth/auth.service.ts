@@ -42,6 +42,21 @@ export class AuthService {
       }
     });
 
+    // Sincronizar con el modelo User (compatibilidad)
+    await prisma.user.create({
+      data: {
+        id: persona.identificador.toString(),
+        email: data.email,
+        firstName: data.firstName || 'Usuario',
+        lastName: data.lastName || 'Web',
+        passwordHash: passwordHash,
+        country: data.country || '',
+        address: data.address || '',
+        isApproved: true,
+        mustChangePassword: true,
+      }
+    });
+
     return { 
       message: 'Registro exitoso. Se ha enviado un código a su email.', 
       user: { id: persona.identificador, email: data.email, name: persona.nombre } 
@@ -66,6 +81,24 @@ export class AuthService {
 
     if (creds.mustChangePassword) {
       throw new Error('Debe completar el registro con su código temporal antes de iniciar sesión.');
+    }
+
+    // Lazy sync con el modelo User para usuarios existentes (compatibilidad)
+    let syncUser = await prisma.user.findUnique({ where: { id: creds.identificador.toString() } });
+    if (!syncUser) {
+      await prisma.user.create({
+        data: {
+          id: creds.identificador.toString(),
+          email: creds.email,
+          firstName: creds.personas.nombre.split(' ')[0] || 'Usuario',
+          lastName: creds.personas.nombre.split(' ').slice(1).join(' ') || '',
+          passwordHash: creds.passwordHash,
+          country: '',
+          address: creds.personas.direccion || '',
+          isApproved: true,
+          mustChangePassword: false,
+        }
+      });
     }
 
     const token = this.generateToken(creds.personas, creds.email);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Lock, ChevronLeft, Key, Mail, Hash } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
@@ -43,7 +43,11 @@ export default function CompleteRegistration() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50 px-6 justify-center">
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="flex-grow justify-center px-6 py-12">
       <TouchableOpacity 
         onPress={() => router.push('/(auth)/login')}
         className="absolute top-14 left-6 flex-row items-center"
@@ -118,6 +122,7 @@ export default function CompleteRegistration() {
           Guardar y Finalizar
         </Button>
       </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

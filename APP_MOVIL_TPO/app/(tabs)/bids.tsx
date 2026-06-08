@@ -1,30 +1,66 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
 import { Clock } from 'lucide-react-native';
-
-const myBids = [
-  {
-    id: '1',
-    title: 'iPhone 13 Pro Max',
-    currentBid: 850,
-    myBid: 850,
-    status: 'winning',
-    timeLeft: '2h 15m',
-    image: 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?auto=format&fit=crop&w=500&q=60',
-  },
-  {
-    id: '2',
-    title: 'MacBook Pro M1',
-    currentBid: 1200,
-    myBid: 1100,
-    status: 'outbid',
-    timeLeft: '5h 30m',
-    image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=500&q=60',
-  }
-];
+import { Image } from 'expo-image';
+import { useAuth } from '@/context/AuthContext';
+import { apiGet } from '@/app/lib/api';
 
 export default function Bids() {
+  const { token, isAuthenticated } = useAuth();
+  const [bids, setBids] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBids = async () => {
+      try {
+        if (!token) return;
+        const res = await apiGet('/bids/my-bids', token);
+        if (res && Array.isArray(res)) {
+          // Group by catalogItem so we don't show duplicates if the user bid multiple times on the same item
+          const uniqueItems = new Map();
+          res.forEach(bid => {
+            const item = bid.catalogItem;
+            if (!item) return;
+            
+            if (!uniqueItems.has(item.id)) {
+              uniqueItems.set(item.id, {
+                id: item.auctionId, // Link to auction details or live view
+                title: item.title,
+                currentBid: item.currentPrice,
+                myBid: bid.amount,
+                status: bid.amount >= item.currentPrice ? 'winning' : 'outbid',
+                timeLeft: 'Termina pronto',
+                image: 'https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=500&q=60',
+              });
+            } else {
+              // If we already have it, keep the highest of our bids
+              const existing = uniqueItems.get(item.id);
+              if (bid.amount > existing.myBid) {
+                existing.myBid = bid.amount;
+                existing.status = bid.amount >= item.currentPrice ? 'winning' : 'outbid';
+              }
+            }
+          });
+          setBids(Array.from(uniqueItems.values()));
+        }
+      } catch (error) {
+        console.error("Error fetching bids", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBids();
+  }, [token]);
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#6A4F99" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView className="flex-1 bg-gray-50 p-4">
       <View className="mb-6">
@@ -33,10 +69,10 @@ export default function Bids() {
       </View>
 
       <View className="gap-4 mb-8">
-        {myBids.map((bid) => (
-          <Link key={bid.id} href={`/auctions/${bid.id}`} asChild>
+        {bids.map((bid, index) => (
+          <Link key={index} href={`/auctions/${bid.id}`} asChild>
             <TouchableOpacity className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-row h-32">
-              <Image source={{ uri: bid.image }} className="w-1/3 h-full" resizeMode="cover" />
+              <Image source={{ uri: bid.image }} className="w-1/3 h-full" contentFit="cover" />
               <View className="p-3 flex-1 justify-between">
                 <View>
                   <Text className="font-semibold text-base text-[#333F48] mb-1" numberOfLines={1}>
@@ -65,11 +101,20 @@ export default function Bids() {
             </TouchableOpacity>
           </Link>
         ))}
-        {myBids.length === 0 && (
+        {!isAuthenticated ? (
           <View className="items-center justify-center py-12">
-            <Text className="text-gray-500">No tienes pujas activas.</Text>
+            <Text className="text-gray-500 mb-4 text-center">Iniciá sesión para ver tu historial de pujas.</Text>
+            <Link href="/(auth)/login" asChild>
+              <TouchableOpacity className="bg-[#6A4F99] px-6 py-3 rounded-xl">
+                <Text className="text-white font-bold">Iniciar Sesión</Text>
+              </TouchableOpacity>
+            </Link>
           </View>
-        )}
+        ) : bids.length === 0 ? (
+          <View className="items-center justify-center py-12">
+            <Text className="text-gray-500">No tenés pujas activas.</Text>
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );
