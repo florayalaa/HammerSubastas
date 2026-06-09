@@ -4,19 +4,15 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Empezando el seeding de la base de datos...');
+  console.log('Iniciando seed de la base de datos...');
 
-  // Limpiar tablas modernas
-  await prisma.bid.deleteMany();
-  await prisma.catalogItem.deleteMany();
-  await prisma.auctionAttendee.deleteMany();
-  await prisma.auction.deleteMany();
-  await prisma.paymentMethod.deleteMany();
-  await prisma.itemSubmission.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.user.deleteMany();
-
-  // Limpiar tablas legacy (en orden por foreign keys)
+  // ─── 1. LIMPIEZA (respeta orden de FK) ──────────────────────────────────
+  // ⚠️ No se tocan paises — se cargan aparte con paises.sql
+  await prisma.notificaciones.deleteMany();
+  await prisma.extra_metodosPago.deleteMany();
+  await prisma.extra_documentosCliente.deleteMany();
+  await prisma.extra_credencialesCliente.deleteMany();
+  await prisma.extra_subastas.deleteMany();
   await prisma.pujos.deleteMany();
   await prisma.asistentes.deleteMany();
   await prisma.registroDeSubasta.deleteMany();
@@ -30,245 +26,315 @@ async function main() {
   await prisma.clientes.deleteMany();
   await prisma.empleados.deleteMany();
   await prisma.sectores.deleteMany();
-  await prisma.credenciales_web.deleteMany();
-  await prisma.notificaciones_web.deleteMany();
   await prisma.personas.deleteMany();
-  await prisma.paises.deleteMany();
   await prisma.seguros.deleteMany();
 
-  console.log('Tablas limpiadas exitosamente.');
+  console.log('Tablas limpiadas.');
 
-  // === 1. Creación de datos básicos (Países, Sectores, Seguros) ===
-  const pais = await prisma.paises.create({
-    data: {
-      numero: 1,
-      nombre: 'Argentina',
-      nombreCorto: 'ARG',
-      capital: 'Buenos Aires',
-      nacionalidad: 'Argentino',
-      idiomas: 'Español'
-    }
+  // ─── 2. RESET IDENTIDAD personas ────────────────────────────────────────
+  // Garantiza que el primer empleado reciba identificador=1.
+  // auth.service.ts tiene EMPLEADO_DEFAULT = 1 hardcodeado como verificador de clientes.
+  await prisma.$queryRawUnsafe(`DBCC CHECKIDENT ('personas', RESEED, 0)`);
+
+  // ─── 3. SECTORES Y SEGURO BASE ──────────────────────────────────────────
+  const sectorAdmin = await prisma.sectores.create({
+    data: { nombreSector: 'Administración', codigoSector: 'ADM' },
   });
-
-  const sectorRevisores = await prisma.sectores.create({
-    data: { nombreSector: 'Revisores', codigoSector: 'REV' }
-  });
-
   const sectorSubastadores = await prisma.sectores.create({
-    data: { nombreSector: 'Subastadores', codigoSector: 'SUB' }
+    data: { nombreSector: 'Subastadores', codigoSector: 'SUB' },
   });
 
-  const seguroBase = await prisma.seguros.create({
+  await prisma.seguros.create({
     data: {
-      nroPoliza: 'POL-123456',
-      compania: 'Seguros La Segunda',
+      nroPoliza: 'POL-HAMMER-001',
+      compania: 'Zurich Seguros',
       polizaCombinada: 'si',
-      importe: 50000.00
-    }
+      importe: 100000.0,
+    },
   });
 
-  // === 2. Creación de Personas y Empleados ===
-  const personaEmpleado1 = await prisma.personas.create({
-    data: { documento: '11111111', nombre: 'Juan Revisor', direccion: 'Calle Falsa 123', estado: 'activo' }
-  });
-
-  const empleadoRevisor = await prisma.empleados.create({
+  // ─── 4. EMPLEADO ADMINISTRADOR (identificador = 1 tras DBCC CHECKIDENT) ─
+  const personaAdmin = await prisma.personas.create({
     data: {
-      identificador: personaEmpleado1.identificador,
-      cargo: 'Revisor de Arte',
-      sector: sectorRevisores.identificador
-    }
-  });
-
-  const personaEmpleado2 = await prisma.personas.create({
-    data: { documento: '22222222', nombre: 'Ana Subastadora', direccion: 'Av. Siempreviva 742', estado: 'activo' }
-  });
-
-  const empleadoSubastador = await prisma.empleados.create({
-    data: {
-      identificador: personaEmpleado2.identificador,
-      cargo: 'Subastador Principal',
-      sector: sectorSubastadores.identificador
-    }
-  });
-
-  const subastadorRol = await prisma.subastadores.create({
-    data: {
-      identificador: personaEmpleado2.identificador,
-      matricula: 'MAT-789',
-      region: 'CABA'
-    }
-  });
-
-  // === 3. Creación de Clientes/Usuarios ===
-  const passwordHash = await bcrypt.hash('password123', 10);
-
-  const personaUser = await prisma.personas.create({
-    data: {
-      documento: '33333333',
-      nombre: 'Usuario Comprador',
-      direccion: 'Av. Corrientes 1000',
+      documento: '00000001',
+      nombre: 'Administrador Sistema',
       estado: 'activo',
-      credenciales: {
-        create: {
-          email: 'user@test.com',
-          passwordHash: passwordHash,
-          mustChangePassword: false
-        }
-      }
-    }
+    },
+  });
+  const empleadoAdmin = await prisma.empleados.create({
+    data: {
+      identificador: personaAdmin.identificador,
+      cargo: 'Administrador',
+      sector: sectorAdmin.identificador,
+    },
+  });
+  console.log(`Empleado admin → identificador=${personaAdmin.identificador} (debe ser 1)`);
+
+  // ─── 5. SUBASTADOR ──────────────────────────────────────────────────────
+  const personaSubastador = await prisma.personas.create({
+    data: {
+      documento: '00000002',
+      nombre: 'Carlos Subastador',
+      estado: 'activo',
+    },
+  });
+  await prisma.empleados.create({
+    data: {
+      identificador: personaSubastador.identificador,
+      cargo: 'Subastador Principal',
+      sector: sectorSubastadores.identificador,
+    },
+  });
+  const subastador = await prisma.subastadores.create({
+    data: {
+      identificador: personaSubastador.identificador,
+      matricula: 'MAT-001',
+      region: 'CABA',
+    },
   });
 
-  const clienteRol = await prisma.clientes.create({
+  // ─── 6. USUARIO DEMO ────────────────────────────────────────────────────
+  // Credenciales: demo@hammer.com / Demo1234!  |  Categoría: Oro
+  const hashDemo = await bcrypt.hash('Demo1234!', 10);
+
+  // Usamos el primer país disponible (cargado con paises.sql)
+  const primerPais = await prisma.paises.findFirst({ orderBy: { numero: 'asc' } });
+
+  const personaDemo = await prisma.personas.create({
     data: {
-      identificador: personaUser.identificador,
-      numeroPais: pais.numero,
+      documento: '99999999',
+      nombre: 'Usuario Demo',
+      direccion: 'Av. Corrientes 1234, CABA',
+      estado: 'activo',
+    },
+  });
+
+  const clienteDemo = await prisma.clientes.create({
+    data: {
+      identificador: personaDemo.identificador,
+      numeroPais: primerPais?.numero ?? null,
       admitido: 'si',
-      categoria: 'Plata',
-      verificador: empleadoRevisor.identificador
-    }
+      categoria: 'oro',
+      verificador: empleadoAdmin.identificador,
+      extra_credencialesCliente: {
+        create: {
+          email: 'demo@hammer.com',
+          passwordHash: hashDemo,
+          debeCambiarClave: 'no',
+        },
+      },
+    },
   });
 
-  const duenioRol = await prisma.duenios.create({
+  // El usuario demo también actúa como dueño para poder asociarle productos
+  const duenioDemo = await prisma.duenios.create({
     data: {
-      identificador: personaUser.identificador,
-      numeroPais: pais.numero,
+      identificador: personaDemo.identificador,
+      numeroPais: primerPais?.numero ?? null,
       verificacionFinanciera: 'si',
       verificacionJudicial: 'si',
       calificacionRiesgo: 1,
-      verificador: empleadoRevisor.identificador
-    }
+      verificador: empleadoAdmin.identificador,
+    },
   });
 
-  // DUPLICATE IN NEW MODERN 'User' TABLE
-  const modernUser = await prisma.user.create({
-    data: {
-      id: personaUser.identificador.toString(), // Keep IDs in sync if possible, or let UUID auto-generate
-      firstName: 'Usuario',
-      lastName: 'Comprador',
-      email: 'user@test.com',
-      passwordHash: passwordHash,
-      country: 'Argentina',
-      address: 'Av. Corrientes 1000',
-      category: 'Plata',
-      isApproved: true,
-      mustChangePassword: false
-    }
-  });
+  console.log(`Usuario demo → demo@hammer.com | ID=${personaDemo.identificador}`);
 
-  // === 4. Creación de Productos y Subastas ===
-  const producto1 = await prisma.productos.create({
+  // ─── 7. PRODUCTOS ───────────────────────────────────────────────────────
+  const placeholder = Buffer.from('PLACEHOLDER_IMG');
+
+  const prod1 = await prisma.productos.create({
     data: {
-      fecha: new Date(),
+      fecha: new Date('2025-01-15'),
       disponible: 'si',
-      descripcionCatalogo: 'Cuadro Antiguo del Siglo XVIII',
-      descripcionCompleta: 'Cuadro original restaurado con marco de roble.',
-      revisor: empleadoRevisor.identificador,
-      duenio: duenioRol.identificador,
-      seguro: seguroBase.nroPoliza
-    }
+      descripcionCatalogo: 'Reloj Omega Vintage 1965',
+      descripcionCompleta: 'Reloj de bolsillo Omega en acero inoxidable, restaurado, funcionamiento perfecto.',
+      revisor: empleadoAdmin.identificador,
+      duenio: duenioDemo.identificador,
+      seguro: 'POL-HAMMER-001',
+    },
   });
+  await prisma.fotos.create({ data: { producto: prod1.identificador, foto: placeholder } });
 
-  const producto2 = await prisma.productos.create({
+  const prod2 = await prisma.productos.create({
     data: {
-      fecha: new Date(),
+      fecha: new Date('2025-01-15'),
       disponible: 'si',
-      descripcionCatalogo: 'Reloj de Bolsillo de Oro',
-      descripcionCompleta: 'Reloj marca Patek Philippe de 1920, bañado en oro.',
-      revisor: empleadoRevisor.identificador,
-      duenio: duenioRol.identificador,
-      seguro: seguroBase.nroPoliza
-    }
+      descripcionCatalogo: 'Cuadro al Óleo — Paisaje Patagónico',
+      descripcionCompleta: 'Óleo sobre tela firmado, escuela regional patagónica, circa 1980. Marco original.',
+      revisor: empleadoAdmin.identificador,
+      duenio: duenioDemo.identificador,
+      seguro: 'POL-HAMMER-001',
+    },
   });
+  await prisma.fotos.create({ data: { producto: prod2.identificador, foto: placeholder } });
 
-  // Crear fotos simuladas (como bytes vacíos o un pequeño buffer para prueba)
-  await prisma.fotos.create({
-    data: { producto: producto1.identificador, foto: Buffer.from('dummy_image_data_1') }
-  });
-  await prisma.fotos.create({
-    data: { producto: producto2.identificador, foto: Buffer.from('dummy_image_data_2') }
-  });
-
-  const subastaLegacy = await prisma.subastas.create({
+  const prod3 = await prisma.productos.create({
     data: {
-      fecha: new Date(),
-      hora: new Date(),
+      fecha: new Date('2025-02-01'),
+      disponible: 'si',
+      descripcionCatalogo: 'Collar de Diamantes Art Déco',
+      descripcionCompleta: 'Collar oro 18k con diamantes naturales, diseño Art Déco circa 1930. Certificado GIA.',
+      revisor: empleadoAdmin.identificador,
+      duenio: duenioDemo.identificador,
+      seguro: 'POL-HAMMER-001',
+    },
+  });
+  await prisma.fotos.create({ data: { producto: prod3.identificador, foto: placeholder } });
+
+  const prod4 = await prisma.productos.create({
+    data: {
+      fecha: new Date('2024-11-01'),
+      disponible: 'si',
+      descripcionCatalogo: 'Jarrón Porcelana China Siglo XVIII',
+      descripcionCompleta: 'Jarrón de porcelana azul y blanca, período Qing. Certificado de autenticidad incluido.',
+      revisor: empleadoAdmin.identificador,
+      duenio: duenioDemo.identificador,
+      seguro: 'POL-HAMMER-001',
+    },
+  });
+  await prisma.fotos.create({ data: { producto: prod4.identificador, foto: placeholder } });
+
+  // ─── 8. SUBASTAS ────────────────────────────────────────────────────────
+  const horaDefault = new Date('1970-01-01T19:00:00Z');
+  const fechaProxSemana = new Date();
+  fechaProxSemana.setDate(fechaProxSemana.getDate() + 7);
+  const fechaProxQuincena = new Date();
+  fechaProxQuincena.setDate(fechaProxQuincena.getDate() + 14);
+
+  // Subasta 1 — Abierta, categoría común, semana próxima
+  const subasta1 = await prisma.subastas.create({
+    data: {
+      fecha: fechaProxSemana,
+      hora: horaDefault,
       estado: 'abierta',
-      subastador: subastadorRol.identificador,
-      ubicacion: 'Sala Virtual 1',
-      capacidadAsistentes: 100,
+      subastador: subastador.identificador,
+      ubicacion: 'Salón Principal, Palermo, Buenos Aires',
+      capacidadAsistentes: 200,
+      tieneDeposito: 'si',
+      seguridadPropia: 'si',
+      categoria: 'comun',
+      extra_subastas: {
+        create: {
+          titulo: 'Subasta de Arte Moderno',
+          descripcion: 'Selección curada de pinturas y esculturas de artistas contemporáneos argentinos.',
+        },
+      },
+    },
+  });
+
+  // Subasta 2 — Abierta, categoría oro, quincena próxima
+  const subasta2 = await prisma.subastas.create({
+    data: {
+      fecha: fechaProxQuincena,
+      hora: new Date('1970-01-01T20:00:00Z'),
+      estado: 'abierta',
+      subastador: subastador.identificador,
+      ubicacion: 'Sala VIP, Puerto Madero, Buenos Aires',
+      capacidadAsistentes: 50,
+      tieneDeposito: 'si',
+      seguridadPropia: 'si',
+      categoria: 'oro',
+      extra_subastas: {
+        create: {
+          titulo: 'Subasta Exclusiva de Joyas y Relojes',
+          descripcion: 'Piezas únicas de alta joyería y relojería de lujo. Acceso exclusivo categoría Oro y Platino.',
+        },
+      },
+    },
+  });
+
+  // Subasta 3 — Cerrada, historial
+  const subasta3 = await prisma.subastas.create({
+    data: {
+      fecha: new Date('2025-12-01'),
+      hora: new Date('1970-01-01T18:00:00Z'),
+      estado: 'cerrada',
+      subastador: subastador.identificador,
+      ubicacion: 'Sala Histórica, San Telmo, Buenos Aires',
+      capacidadAsistentes: 150,
       tieneDeposito: 'si',
       seguridadPropia: 'no',
-      categoria: 'Arte'
-    }
+      categoria: 'comun',
+      extra_subastas: {
+        create: {
+          titulo: 'Subasta de Antigüedades del Río de la Plata',
+          descripcion: 'Colección de antigüedades y objetos históricos del patrimonio rioplatense.',
+        },
+      },
+    },
   });
 
-  const catalogo = await prisma.catalogos.create({
+  // ─── 9. CATÁLOGOS E ÍTEMS ───────────────────────────────────────────────
+  // Subasta 1 → prod1 + prod2
+  const cat1 = await prisma.catalogos.create({
     data: {
-      descripcion: 'Gran Subasta de Arte y Relojes',
-      subasta: subastaLegacy.identificador,
-      responsable: empleadoRevisor.identificador
-    }
+      descripcion: 'Catálogo — Subasta de Arte Moderno',
+      subasta: subasta1.identificador,
+      responsable: empleadoAdmin.identificador,
+    },
+  });
+  await prisma.itemsCatalogo.createMany({
+    data: [
+      { catalogo: cat1.identificador, producto: prod1.identificador, precioBase: 8500.0,  comision: 12.0, subastado: 'no' },
+      { catalogo: cat1.identificador, producto: prod2.identificador, precioBase: 4200.0,  comision: 12.0, subastado: 'no' },
+    ],
   });
 
-  const itemCat1 = await prisma.itemsCatalogo.create({
+  // Subasta 2 → prod3
+  const cat2 = await prisma.catalogos.create({
     data: {
-      catalogo: catalogo.identificador,
-      producto: producto1.identificador,
-      precioBase: 1500.00,
-      comision: 10.00,
-      subastado: 'no'
-    }
+      descripcion: 'Catálogo — Subasta Exclusiva de Joyas',
+      subasta: subasta2.identificador,
+      responsable: empleadoAdmin.identificador,
+    },
+  });
+  await prisma.itemsCatalogo.create({
+    data: { catalogo: cat2.identificador, producto: prod3.identificador, precioBase: 35000.0, comision: 15.0, subastado: 'no' },
   });
 
-  const itemCat2 = await prisma.itemsCatalogo.create({
+  // Subasta 3 → prod4 (cerrada, subastado = 'si')
+  const cat3 = await prisma.catalogos.create({
     data: {
-      catalogo: catalogo.identificador,
-      producto: producto2.identificador,
-      precioBase: 3500.00,
-      comision: 10.00,
-      subastado: 'no'
-    }
+      descripcion: 'Catálogo — Subasta de Antigüedades',
+      subasta: subasta3.identificador,
+      responsable: empleadoAdmin.identificador,
+    },
+  });
+  await prisma.itemsCatalogo.create({
+    data: { catalogo: cat3.identificador, producto: prod4.identificador, precioBase: 12000.0, comision: 10.0, subastado: 'si' },
   });
 
-  // DUPLICATE IN NEW MODERN 'Auction' TABLE
-  const modernAuction = await prisma.auction.create({
-    data: {
-      title: 'Gran Subasta de Arte y Relojes',
-      description: 'Subasta especial de artefactos antiguos y de colección.',
-      startingPrice: 1500.00,
-      currentPrice: 1500.00,
-      startDate: new Date(),
-      endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // En 7 días
-      status: 'ACTIVE'
-    }
+  // ─── 10. NOTIFICACIONES PARA EL USUARIO DEMO ───────────────────────────
+  await prisma.notificaciones.createMany({
+    data: [
+      {
+        identificadorPersona: personaDemo.identificador,
+        mensaje: 'Tu método de pago fue verificado exitosamente.',
+        leido: false,
+      },
+      {
+        identificadorPersona: personaDemo.identificador,
+        mensaje: 'Una subasta de tu categoría (Oro) está por comenzar. ¡No te la pierdas!',
+        leido: false,
+      },
+      {
+        identificadorPersona: personaDemo.identificador,
+        mensaje: 'Tu puja fue superada en el ítem Reloj Omega Vintage. ¡Pujá nuevamente para recuperar la delantera!',
+        leido: false,
+      },
+    ],
   });
 
-  const modernCatalogItem1 = await prisma.catalogItem.create({
-    data: {
-      auctionId: modernAuction.id,
-      title: 'Cuadro Antiguo del Siglo XVIII',
-      description: 'Cuadro original restaurado con marco de roble.',
-      startingPrice: 1500.00,
-      currentPrice: 1500.00,
-      status: 'ACTIVE'
-    }
-  });
-
-  const modernCatalogItem2 = await prisma.catalogItem.create({
-    data: {
-      auctionId: modernAuction.id,
-      title: 'Reloj de Bolsillo de Oro',
-      description: 'Reloj marca Patek Philippe de 1920, bañado en oro.',
-      startingPrice: 3500.00,
-      currentPrice: 3500.00,
-      status: 'ACTIVE'
-    }
-  });
-
-  console.log('Seeding completado con éxito!');
-  console.log(`Usuario creado: user@test.com / password123`);
-  console.log(`Subasta creada (Modern ID): ${modernAuction.id}`);
+  console.log('');
+  console.log('Seed completado con exito!');
+  console.log('──────────────────────────────────────');
+  console.log(`Empleado admin:   identificador=${personaAdmin.identificador} (debe ser 1)`);
+  console.log('Usuario demo:     demo@hammer.com / Demo1234!');
+  console.log('Categoria demo:   Oro');
+  console.log(`Subastas:         IDs ${subasta1.identificador}, ${subasta2.identificador}, ${subasta3.identificador}`);
+  console.log('Prerequisito:     paises.sql debe ejecutarse antes del seed');
+  console.log('──────────────────────────────────────');
 }
 
 main()

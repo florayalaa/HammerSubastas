@@ -1,13 +1,13 @@
 import express from 'express';
 import cors from 'cors';
-import authRoutes from './modules/auth/auth.routes';
-import usersRoutes from './modules/users/users.routes';
-import auctionsRoutes from './modules/auctions/auctions.routes';
-import bidsRoutes from './modules/bids/bids.routes';
-import countriesRoutes from './modules/countries/countries.routes';
-import { articlesRoutes } from './modules/articles/articles.routes';
-import { paymentsRoutes } from './modules/payments/payments.routes';
-import { notificationsRoutes } from './modules/notifications/notifications.routes';
+import autenticacionRoutes from './modulos/autenticacion/autenticacion.routes';
+import usuariosRoutes from './modulos/usuarios/usuarios.routes';
+import subastasRoutes from './modulos/subastas/subastas.routes';
+import pujosRoutes from './modulos/pujos/pujos.routes';
+import paisesRoutes from './modulos/paises/paises.routes';
+import { articulosRoutes } from './modulos/articulos/articulos.routes';
+import { pagosRoutes } from './modulos/pagos/pagos.routes';
+import { notificacionesRoutes } from './modulos/notificaciones/notificaciones.routes';
 
 const app = express();
 
@@ -18,13 +18,13 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use('/api/countries', countriesRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/auctions', auctionsRoutes);
-app.use('/api/bids', bidsRoutes);
-app.use('/api/articles', articlesRoutes);
-app.use('/api/payments', paymentsRoutes);
-app.use('/api/notifications', notificationsRoutes);
+app.use('/api/paises', paisesRoutes);
+app.use('/api/autenticacion', autenticacionRoutes);
+app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/subastas', subastasRoutes);
+app.use('/api/pujos', pujosRoutes);
+app.use('/api/articulos', articulosRoutes);
+app.use('/api/pagos', pagosRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
 
 export default app;
