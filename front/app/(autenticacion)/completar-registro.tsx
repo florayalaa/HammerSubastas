@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Lock, ChevronLeft, Key, Mail } from 'lucide-react-native';
+import { ChevronLeft, Key, Mail } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { apiPost } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { FormField, PasswordField } from './_components/authComponents'; 
 
 export default function CompleteRegistration() {
   const router = useRouter();
@@ -43,7 +43,11 @@ export default function CompleteRegistration() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="flex-grow justify-center px-6 py-12">
+      <ScrollView 
+        className="flex-1 bg-gray-50" 
+        contentContainerClassName="flex-grow justify-center px-6 py-12"
+        keyboardShouldPersistTaps="handled"
+      >
         <TouchableOpacity
           onPress={() => router.push('/(autenticacion)/iniciar-sesion')}
           className="absolute top-14 left-6 flex-row items-center"
@@ -63,42 +67,30 @@ export default function CompleteRegistration() {
         </View>
 
         <View className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-slate-700 mb-2">Correo Electrónico</Text>
-            <View className="relative justify-center">
-              <View className="absolute left-3 z-10"><Mail color="#A08C79" size={18} /></View>
-              <Input
-                className="pl-9" containerClassName="mb-0"
-                value={email} onChangeText={setEmail}
-                placeholder="tu@email.com" keyboardType="email-address" autoCapitalize="none"
-                editable={!pendingEmail}
-              />
-            </View>
-          </View>
+          <FormField 
+            label="Correo Electrónico" 
+            icon={<Mail color="#A08C79" size={18} />} 
+            value={email} 
+            onChangeText={setEmail} 
+            placeholder="tu@email.com" 
+            keyboardType="email-address" 
+            editable={!pendingEmail}
+          />
 
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-slate-700 mb-2">Nueva Contraseña</Text>
-            <View className="relative justify-center">
-              <View className="absolute left-3 z-10"><Lock color="#A08C79" size={18} /></View>
-              <Input
-                className="pl-9" containerClassName="mb-0"
-                value={password} onChangeText={setPassword}
-                placeholder="••••••••" secureTextEntry
-              />
-            </View>
-          </View>
+          {/* Contraseña Normal (Tiene el Ojo) */}
+          <PasswordField 
+            label="Nueva Contraseña" 
+            value={password} 
+            onChangeText={setPassword} 
+          />
 
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-slate-700 mb-2">Confirmar Contraseña</Text>
-            <View className="relative justify-center">
-              <View className="absolute left-3 z-10"><Lock color="#A08C79" size={18} /></View>
-              <Input
-                className="pl-9" containerClassName="mb-0"
-                value={confirmPassword} onChangeText={setConfirmPassword}
-                placeholder="••••••••" secureTextEntry
-              />
-            </View>
-          </View>
+          {/* Confirmar Contraseña (Ojo Oculto) */}
+          <PasswordField 
+            label="Confirmar Contraseña" 
+            value={confirmPassword} 
+            onChangeText={setConfirmPassword} 
+            showToggle={false} 
+          />
 
           <Button
             onPress={handleComplete}
