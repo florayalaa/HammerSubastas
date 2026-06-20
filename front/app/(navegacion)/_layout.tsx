@@ -1,9 +1,12 @@
 import { Tabs, useRouter } from 'expo-router';
 import { Home, Gavel, User, Tag, Bell, HandCoins } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
 
 export default function TabLayout() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
   return (
     <Tabs
       screenOptions={{
@@ -23,31 +26,38 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="auctions"
+        name="subastas"
         options={{
           title: 'Subastas',
           tabBarIcon: ({ color }) => <Gavel color={color} size={24} />,
         }}
       />
       <Tabs.Screen
-        name="sell"
+        name="explorar"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="vender"
         options={{
           title: 'Vender',
           tabBarIcon: ({ color }) => <Tag color={color} size={24} />,
+          href: isAuthenticated ? undefined : null,
         }}
       />
       <Tabs.Screen
-        name="bids"
+        name="pujas"
         options={{
           title: 'Mis Pujas',
           tabBarIcon: ({ color }) => <HandCoins color={color} size={24} />,
+          href: isAuthenticated ? undefined : null,
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="perfil"
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color }) => <User color={color} size={24} />,
+          href: isAuthenticated ? undefined : null,
         }}
       />
     </Tabs>

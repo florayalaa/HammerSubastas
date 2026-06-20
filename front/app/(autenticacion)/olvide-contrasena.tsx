@@ -18,7 +18,7 @@ export default function ForgotPassword() {
     Alert.alert(
       'Correo Enviado',
       'Si el correo electrónico existe en nuestra base de datos, recibirás un enlace para restablecer tu contraseña.',
-      [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+      [{ text: 'OK', onPress: () => router.replace('/(autenticacion)/iniciar-sesion') }]
     );
   };
 
@@ -61,7 +61,7 @@ export default function ForgotPassword() {
 
           <View className="flex-row justify-center">
             <Text className="text-[#A08C79]">¿Recordaste tu contraseña? </Text>
-            <Link href="/(auth)/login" asChild>
+            <Link href="/(autenticacion)/iniciar-sesion" asChild>
               <Text className="text-[#6A4F99] font-semibold">Volver al login</Text>
             </Link>
           </View>

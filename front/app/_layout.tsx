@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { View, Text } from 'react-native';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: '(navegacion)',
 };
 
 function RootLayoutNav() {
@@ -20,9 +20,9 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isReady || showSplash) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const inAuthGroup = segments[0] === '(autenticacion)';
 
-    if (!isAuthenticated && !inAuthGroup && segments[0] !== '(tabs)') {
+    if (!isAuthenticated && !inAuthGroup && segments[0] !== '(navegacion)') {
       // ¿Permitir navegar las pestañas sin autenticación? En web algunas partes eran públicas.
       // Por ahora se protegen las pestañas si es necesario.
     }
@@ -57,8 +57,8 @@ function RootLayoutNav() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(autenticacion)" options={{ headerShown: false }} />
+      <Stack.Screen name="(navegacion)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>
   );

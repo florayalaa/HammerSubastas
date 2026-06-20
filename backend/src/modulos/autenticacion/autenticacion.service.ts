@@ -3,10 +3,17 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../configuracion/baseDatos';
 import { sendTemporaryPasswordEmail } from '../../utilidades/correo';
 
-const EMPLEADO_DEFAULT = 1;
-
 export class AuthService {
   private readonly jwtSecret = process.env.JWT_SECRET || 'super_secret_jwt_key_12345';
+
+  private async getEmpleadoVerificador(): Promise<number> {
+    const empleado = await prisma.empleados.findFirst();
+    if (empleado) return empleado.identificador;
+    const nuevo = await prisma.empleados.create({
+      data: { identificador: 1, cargo: 'Sistema' },
+    });
+    return nuevo.identificador;
+  }
 
   async register(data: any, files?: { fotoFrente?: Buffer; fotoDorso?: Buffer }) {
     const existingCreds = await prisma.extra_credencialesCliente.findUnique({
@@ -17,9 +24,12 @@ export class AuthService {
       throw new Error('El email ya está registrado');
     }
 
+    const verificador = await this.getEmpleadoVerificador();
+    const nombre = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Usuario';
+    // La contraseña temporal se genera pero se almacena hasheada;
+    // el envío del mail ocurre cuando el admin valida → estadoCredencial = 'validado'
     const tempCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const passwordHash = await bcrypt.hash(tempCode, 10);
-    const nombre = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Usuario';
 
     const persona = await prisma.personas.create({
       data: {
@@ -29,7 +39,7 @@ export class AuthService {
         estado: 'activo',
         clientes: {
           create: {
-            verificador: EMPLEADO_DEFAULT,
+            verificador,
             admitido: 'no',
             numeroPais: data.numeroPais ? parseInt(data.numeroPais) : null,
             extra_credencialesCliente: {
@@ -37,6 +47,7 @@ export class AuthService {
                 email: data.email,
                 passwordHash,
                 debeCambiarClave: 'si',
+                estadoCredencial: 'pendiente',
               },
             },
           },
@@ -59,12 +70,62 @@ export class AuthService {
       });
     }
 
-    await sendTemporaryPasswordEmail(data.email, tempCode, nombre);
-
     return {
       message: 'Solicitud enviada. Tu cuenta será verificada y recibirás una contraseña temporal por email.',
       user: { id: persona.identificador, email: data.email, name: persona.nombre },
     };
+  }
+
+  // Llamado por el admin al validar un cliente
+  async validarCliente(clienteId: number) {
+    const creds = await prisma.extra_credencialesCliente.findFirst({
+      where: { cliente: clienteId },
+      include: { clientes: { include: { personas: true } } },
+    });
+
+    if (!creds) throw new Error('Credenciales no encontradas');
+    if (creds.estadoCredencial !== 'pendiente') {
+      throw new Error('El cliente no está en estado pendiente');
+    }
+
+    const tempCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const passwordHash = await bcrypt.hash(tempCode, 10);
+
+    await prisma.extra_credencialesCliente.update({
+      where: { identificador: creds.identificador },
+      data: {
+        passwordHash,
+        debeCambiarClave: 'si',
+        estadoCredencial: 'validado',
+        mailEnviado: true,
+      },
+    });
+
+    await prisma.clientes.update({
+      where: { identificador: clienteId },
+      data: { admitido: 'si' },
+    });
+
+    const nombre = creds.clientes.personas?.nombre ?? '';
+    await sendTemporaryPasswordEmail(creds.email, tempCode, nombre);
+
+    return { message: 'Cliente validado y contraseña temporal enviada por email.' };
+  }
+
+  // Llamado por el admin al rechazar un cliente
+  async rechazarCliente(clienteId: number) {
+    const creds = await prisma.extra_credencialesCliente.findFirst({
+      where: { cliente: clienteId },
+    });
+
+    if (!creds) throw new Error('Credenciales no encontradas');
+
+    await prisma.extra_credencialesCliente.update({
+      where: { identificador: creds.identificador },
+      data: { estadoCredencial: 'rechazado' },
+    });
+
+    return { message: 'Cliente rechazado.' };
   }
 
   async login(data: any) {
@@ -90,8 +151,14 @@ export class AuthService {
       throw new Error('Credenciales inválidas');
     }
 
-    if (creds.debeCambiarClave === 'si') {
-      throw new Error('Debe completar el registro con su contraseña temporal antes de iniciar sesión.');
+    switch (creds.estadoCredencial) {
+      case 'pendiente':
+        throw new Error('Tu cuenta está pendiente de verificación por parte de la empresa.');
+      case 'rechazado':
+        throw new Error('Tu solicitud fue rechazada por la empresa. Contactate con soporte.');
+      case 'validado':
+        throw new Error('Debe completar el registro con su contraseña temporal antes de iniciar sesión.');
+      // 'activo' → continúa
     }
 
     const token = this.generateToken(creds.clientes, creds.email);
@@ -133,8 +200,8 @@ export class AuthService {
       throw new Error('Usuario no encontrado');
     }
 
-    if (creds.debeCambiarClave !== 'si') {
-      throw new Error('Este usuario ya completó su registro');
+    if (creds.estadoCredencial !== 'validado') {
+      throw new Error('Solo se puede completar el registro cuando la cuenta fue validada por la empresa.');
     }
 
     const newPasswordHash = await bcrypt.hash(data.newPassword, 10);
@@ -144,6 +211,7 @@ export class AuthService {
       data: {
         passwordHash: newPasswordHash,
         debeCambiarClave: 'no',
+        estadoCredencial: 'activo',
       },
     });
 

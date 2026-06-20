@@ -31,7 +31,7 @@ export default function CompleteRegistration() {
       Alert.alert(
         '¡Registro Completado!',
         'Tu contraseña fue guardada. Ya podés iniciar sesión.',
-        [{ text: 'Ir al Login', onPress: () => router.replace('/(auth)/login') }]
+        [{ text: 'Ir al Login', onPress: () => router.replace('/(autenticacion)/iniciar-sesion') }]
       );
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo completar el registro');
@@ -45,7 +45,7 @@ export default function CompleteRegistration() {
     >
       <ScrollView className="flex-1 bg-gray-50" contentContainerClassName="flex-grow justify-center px-6 py-12">
         <TouchableOpacity
-          onPress={() => router.push('/(auth)/login')}
+          onPress={() => router.push('/(autenticacion)/iniciar-sesion')}
           className="absolute top-14 left-6 flex-row items-center"
         >
           <ChevronLeft color="#A08C79" size={24} />

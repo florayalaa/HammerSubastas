@@ -10,5 +10,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post('/registrar', upload.fields([{ name: 'fotoFrente', maxCount: 1 }, { name: 'fotoDorso', maxCount: 1 }]), validateRequest(registerSchema), authController.register);
 router.post('/completar-registro', validateRequest(completeRegistrationSchema), authController.completeRegistration);
 router.post('/login', validateRequest(loginSchema), authController.login);
+router.post('/admin/validar-cliente/:id', authController.validarCliente);
+router.post('/admin/rechazar-cliente/:id', authController.rechazarCliente);
 
 export default router;

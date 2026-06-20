@@ -19,14 +19,14 @@ export default function Login() {
     }
     try {
       await login(email, password);
-      router.replace('/(tabs)');
+      router.replace('/(navegacion)');
     } catch (error: any) {
       if (error.message?.includes('completar el registro')) {
         // pendingEmail ya fue seteado en AuthContext.login antes de relanzar el error
         Alert.alert(
           'Registro incompleto',
           'Debés establecer tu propia contraseña para continuar.',
-          [{ text: 'Continuar', onPress: () => router.push('/(auth)/complete-registration') }]
+          [{ text: 'Continuar', onPress: () => router.push('/(autenticacion)/completar-registro') }]
         );
       } else {
         Alert.alert('Error', error.message || 'No se pudo iniciar sesión');
@@ -82,7 +82,7 @@ export default function Login() {
           </View>
 
           <View className="flex-row items-center justify-end mb-6 mt-2">
-            <Link href="/(auth)/forgot-password" asChild>
+            <Link href="/(autenticacion)/olvide-contrasena" asChild>
               <Text className="text-sm text-[#6A4F99] font-medium">¿Olvidaste tu contraseña?</Text>
             </Link>
           </View>
@@ -93,14 +93,14 @@ export default function Login() {
 
           <View className="mt-6 flex-row justify-center">
             <Text className="text-[#A08C79]">¿No tienes una cuenta? </Text>
-            <Link href="/(auth)/register" asChild>
+            <Link href="/(autenticacion)/registro" asChild>
               <Text className="text-[#6A4F99] font-semibold">Regístrate aquí</Text>
             </Link>
           </View>
           
           <View className="mt-3 flex-row justify-center">
             <Text className="text-[#A08C79]">¿Recibiste tu contraseña temporal? </Text>
-            <Link href="/(auth)/complete-registration" asChild>
+            <Link href="/(autenticacion)/completar-registro" asChild>
               <Text className="text-[#6A4F99] font-semibold">Activá tu cuenta</Text>
             </Link>
           </View>

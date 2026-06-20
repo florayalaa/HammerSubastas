@@ -1,7 +1,16 @@
-export const API_BASE_URL = process.env.API_BASE_URL ?? 'http://127.0.0.1:3000/api';
+export const API_BASE_URL = process.env.API_BASE_URL ?? 'http://192.168.0.11:4000/api';
 
 async function request(path: string, init: RequestInit = {}) {
-  const res = await fetch(`${API_BASE_URL}${path}`, init);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, { ...init, signal: controller.signal });
+  } catch (err: any) {
+    clearTimeout(timeout);
+    throw new Error(err?.name === 'AbortError' ? 'Tiempo de espera agotado' : 'No se pudo conectar al servidor');
+  }
+  clearTimeout(timeout);
   let json: any = null;
   try {
     json = await res.json();

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { socketService } from '@/services/socket';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.11:4000';
 
 export default function LiveAuction() {
   const { id } = useLocalSearchParams();
@@ -67,7 +67,7 @@ export default function LiveAuction() {
   useEffect(() => {
     const fetchAuction = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/auctions/${id}`);
+        const res = await fetch(`${API_URL}/api/subastas/${id}`);
         if (res.ok) {
           const data = await res.json();
           if (data.catalogItems && data.catalogItems.length > 0) {
@@ -106,7 +106,7 @@ export default function LiveAuction() {
 
             // Registro automático a la subasta por si acaso
             if (token) {
-              await fetch(`${API_URL}/api/auctions/${id}/register`, {
+              await fetch(`${API_URL}/api/subastas/${id}/register`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
               }).catch(() => {}); // ignoramos errores (ej: ya registrado)
@@ -342,7 +342,7 @@ export default function LiveAuction() {
           </>
         ) : (
           <View className="items-center py-2">
-            <Button onPress={() => router.push('/(auth)/login')} className="w-full bg-[#6A4F99] h-12">
+            <Button onPress={() => router.push('/(autenticacion)/iniciar-sesion')} className="w-full bg-[#6A4F99] h-12">
               Iniciar Sesión para Pujar
             </Button>
           </View>

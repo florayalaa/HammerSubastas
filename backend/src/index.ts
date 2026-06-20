@@ -1,6 +1,7 @@
 import app from './app';
 import http from 'http';
 import { Server } from 'socket.io';
+import { iniciarPollingValidacion } from './utilidades/pollingValidacion';
 
 const port = process.env.PORT ?? 4000;
 
@@ -32,4 +33,5 @@ io.on('connection', (socket) => {
 
 server.listen(port as number, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${port}`);
+  iniciarPollingValidacion();
 });

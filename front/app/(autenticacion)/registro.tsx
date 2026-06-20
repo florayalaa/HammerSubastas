@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, FlatList, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { User, Mail, MapPin, FileText, Upload } from 'lucide-react-native';
+import { User, Mail, MapPin, FileText, Upload, ChevronDown } from 'lucide-react-native';
 import { apiGet, apiPostFormData } from '@/app/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import * as ImagePicker from 'expo-image-picker';
-import { Picker } from '@react-native-picker/picker';
 
 interface Pais {
   id: number;
@@ -21,6 +20,7 @@ export default function Register() {
     email: '',
     address: '',
     numeroPais: 0,
+    documento: '',
   });
 
   const [paises, setPaises] = useState<Pais[]>([]);
@@ -28,6 +28,7 @@ export default function Register() {
   const [documentFront, setDocumentFront] = useState<string | null>(null);
   const [documentBack, setDocumentBack] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showPaisModal, setShowPaisModal] = useState(false);
 
   useEffect(() => {
     apiGet('/paises')
@@ -66,6 +67,7 @@ export default function Register() {
       fd.append('email', formData.email);
       fd.append('address', formData.address);
       fd.append('numeroPais', String(formData.numeroPais));
+      fd.append('documento', formData.documento);
 
       if (documentFront) {
         fd.append('fotoFrente', {
@@ -85,9 +87,9 @@ export default function Register() {
       await apiPostFormData('/autenticacion/registrar', fd);
       Alert.alert(
         'Solicitud enviada',
-        'Tus datos fueron recibidos. Tu cuenta será verificada y recibirás una contraseña temporal por email cuando sea aprobada.'
+        'Tu solicitud de registro fue recibida. Vamos a verificar tus datos y, si todo es correcto, te enviaremos una contraseña temporal al email que ingresaste para que puedas activar tu cuenta.'
       );
-      router.push('/(auth)/login');
+      router.push('/(autenticacion)/iniciar-sesion');
     } catch (error: any) {
       Alert.alert('Error en el registro', error.message || 'Ocurrió un error al registrarse');
     }
@@ -144,6 +146,18 @@ export default function Register() {
             </View>
 
             <View className="mb-4">
+              <Text className="text-sm font-medium text-slate-700 mb-2">DNI</Text>
+              <View className="relative justify-center">
+                <View className="absolute left-3 z-10"><FileText color="#A08C79" size={18} /></View>
+                <Input
+                  className="pl-9" containerClassName="mb-0"
+                  value={formData.documento} onChangeText={(t) => updateFormData('documento', t.replace(/\D/g, '').slice(0, 8))}
+                  placeholder="12345678" keyboardType="numeric" maxLength={8}
+                />
+              </View>
+            </View>
+
+            <View className="mb-4">
               <Text className="text-sm font-medium text-slate-700 mb-2">Domicilio Legal</Text>
               <View className="relative justify-center">
                 <View className="absolute left-3 z-10"><MapPin color="#A08C79" size={18} /></View>
@@ -157,28 +171,53 @@ export default function Register() {
 
             <View className="mb-6">
               <Text className="text-sm font-medium text-slate-700 mb-2">País de Origen</Text>
-              <View className="border border-slate-200 rounded-lg bg-white h-12 flex-row items-center">
-                <View className="pl-3 pr-1">
-                  <FileText color="#A08C79" size={18} />
-                </View>
+              <TouchableOpacity
+                onPress={() => !cargandoPaises && setShowPaisModal(true)}
+                className="border border-slate-200 rounded-lg bg-white h-12 flex-row items-center px-3"
+              >
+                <FileText color="#A08C79" size={18} />
                 {cargandoPaises ? (
-                  <ActivityIndicator size="small" color="#A08C79" style={{ marginLeft: 8 }} />
+                  <ActivityIndicator size="small" color="#A08C79" style={{ marginLeft: 8, flex: 1 }} />
                 ) : (
-                  <View className="flex-1">
-                    <Picker
-                      selectedValue={formData.numeroPais}
-                      onValueChange={(val) => updateFormData('numeroPais', val)}
-                      style={{ width: '100%', color: formData.numeroPais ? '#333F48' : '#9CA3AF' }}
-                      dropdownIconColor="#A08C79"
-                    >
-                      <Picker.Item label="Selecciona un país" value={0} color="#9CA3AF" />
-                      {paises.map((p) => (
-                        <Picker.Item key={p.id} label={p.name} value={p.id} color="#333F48" />
-                      ))}
-                    </Picker>
-                  </View>
+                  <>
+                    <Text className="flex-1 ml-2" style={{ color: formData.numeroPais ? '#333F48' : '#9CA3AF' }}>
+                      {formData.numeroPais ? paises.find(p => p.id === formData.numeroPais)?.name : 'Seleccioná un país'}
+                    </Text>
+                    <ChevronDown color="#A08C79" size={18} />
+                  </>
                 )}
-              </View>
+              </TouchableOpacity>
+
+              <Modal visible={showPaisModal} transparent animationType="slide">
+                <TouchableOpacity
+                  style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
+                  activeOpacity={1}
+                  onPress={() => setShowPaisModal(false)}
+                />
+                <View style={{ backgroundColor: 'white', maxHeight: 360, borderTopLeftRadius: 16, borderTopRightRadius: 16, position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+                  <View className="flex-row justify-between items-center px-4 py-3 border-b border-gray-100">
+                    <Text className="text-base font-semibold text-[#333F48]">Seleccioná un país</Text>
+                    <TouchableOpacity onPress={() => setShowPaisModal(false)}>
+                      <Text className="text-[#6A4F99] font-semibold">Listo</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <FlatList
+                    data={paises}
+                    keyExtractor={(p) => String(p.id)}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => { updateFormData('numeroPais', item.id); setShowPaisModal(false); }}
+                        className="px-4 py-3 border-b border-gray-50 flex-row justify-between items-center"
+                      >
+                        <Text style={{ color: formData.numeroPais === item.id ? '#6A4F99' : '#333F48', fontWeight: formData.numeroPais === item.id ? '600' : '400' }}>
+                          {item.name}
+                        </Text>
+                        {formData.numeroPais === item.id && <Text className="text-[#6A4F99]">✓</Text>}
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </Modal>
             </View>
 
             <View className="mb-6">
@@ -216,7 +255,7 @@ export default function Register() {
 
             <View className="mt-4 flex-row justify-center">
               <Text className="text-sm text-[#A08C79]">¿Ya tienes una cuenta? </Text>
-              <Link href="/(auth)/login" asChild>
+              <Link href="/(autenticacion)/iniciar-sesion" asChild>
                 <Text className="text-[#6A4F99] font-semibold">Inicia sesión aquí</Text>
               </Link>
             </View>

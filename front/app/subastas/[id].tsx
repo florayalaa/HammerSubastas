@@ -38,10 +38,10 @@ export default function AuctionDetail() {
     setRegistering(true);
     try {
       await apiPost(`/subastas/${auction.id}/registrar`, {}, token);
-      router.push(`/auctions/live/${auction.id}`);
+      router.push(`/subastas/en-vivo/${auction.id}`);
     } catch (error: any) {
       if (error.message?.includes('already registered') || error.error?.includes('already registered')) { // ya registrado
-         router.push(`/auctions/live/${auction.id}`);
+         router.push(`/subastas/en-vivo/${auction.id}`);
       } else {
          Alert.alert('Error', error.message || error.error || 'No se pudo registrar a la subasta');
       }
@@ -141,7 +141,7 @@ export default function AuctionDetail() {
         ) : (
           <View className="mt-4">
             <TouchableOpacity 
-              onPress={() => router.push(`/auctions/live/${auction.id}`)}
+              onPress={() => router.push(`/subastas/en-vivo/${auction.id}`)}
               className="flex-row items-center justify-center gap-2 py-4 rounded-xl bg-gray-600/80 border border-gray-400"
             >
               <Play color="white" size={20} />
@@ -183,7 +183,7 @@ export default function AuctionDetail() {
                     ) : (
                       <View className="flex-row items-center gap-1">
                         <Lock color="#A08C79" size={14} />
-                        <Link href="/(auth)/login" asChild>
+                        <Link href="/(autenticacion)/iniciar-sesion" asChild>
                           <TouchableOpacity><Text className="text-[#6A4F99] underline text-sm">Inicia sesión</Text></TouchableOpacity>
                         </Link>
                       </View>

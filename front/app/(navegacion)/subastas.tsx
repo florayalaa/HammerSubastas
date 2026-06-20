@@ -122,7 +122,7 @@ export default function Auctions() {
                     ) : (
                       <View className="flex-row items-center">
                         <Lock size={14} color="#A08C79" className="mr-1" />
-                        <Link href="/(auth)/login" asChild>
+                        <Link href="/(autenticacion)/iniciar-sesion" asChild>
                           <TouchableOpacity><Text className="text-[#6A4F99] text-sm underline">Inicia sesión</Text></TouchableOpacity>
                         </Link>
                       </View>
@@ -131,13 +131,13 @@ export default function Auctions() {
                 </View>
 
                 <View className="flex-row gap-3 mt-2">
-                  <Link href={`/auctions/${auction.id}`} asChild>
+                  <Link href={`/subastas/${auction.id}`} asChild>
                     <TouchableOpacity className="flex-1 bg-[#6A4F99] py-3 rounded-lg items-center">
                       <Text className="text-white font-semibold">Ver Catálogo</Text>
                     </TouchableOpacity>
                   </Link>
                   {auction.status === "live" && (
-                    <Link href={`/auctions/live/${auction.id}`} asChild>
+                    <Link href={`/subastas/en-vivo/${auction.id}`} asChild>
                       <TouchableOpacity className="flex-1 bg-red-500 py-3 rounded-lg flex-row justify-center items-center gap-2">
                         <Play size={16} color="white" />
                         <Text className="text-white font-semibold">Participar</Text>

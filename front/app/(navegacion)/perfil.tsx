@@ -99,7 +99,7 @@ export default function Profile() {
         <TouchableOpacity 
           onPress={async () => {
             await logout();
-            router.replace('/(auth)/login');
+            router.replace('/(autenticacion)/iniciar-sesion');
           }} 
           className="p-2 bg-red-100 rounded-full"
         >
@@ -130,7 +130,7 @@ export default function Profile() {
       <Card className="mb-6 border-gray-200 p-5">
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-lg font-bold text-[#333F48]">Información Personal</Text>
-          <Link href="/profile/edit" asChild>
+          <Link href="/perfil/editar" asChild>
             <TouchableOpacity>
               <Text className="text-[#6A4F99] font-semibold">Editar</Text>
             </TouchableOpacity>
@@ -192,42 +192,42 @@ export default function Profile() {
       <Card className="mb-8 border-gray-200 p-2">
         <Text className="text-lg font-bold text-[#333F48] mb-2 px-3 pt-3">Acciones Rápidas</Text>
         
-        <Link href="/profile/payment-methods" asChild>
+        <Link href="/perfil/medios-de-pago" asChild>
           <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
             <CreditCard color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Medios de Pago</Text>
           </TouchableOpacity>
         </Link>
         
-        <Link href="/profile/upload-article" asChild>
+        <Link href="/perfil/subir-articulo" asChild>
           <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
             <UploadCloud color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Subir Artículo (Consignar)</Text>
           </TouchableOpacity>
         </Link>
         
-        <Link href="/profile/my-purchases" asChild>
+        <Link href="/perfil/mis-compras" asChild>
           <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
             <ShoppingBag color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Mis Compras</Text>
           </TouchableOpacity>
         </Link>
 
-        <Link href="/profile/my-sales" asChild>
+        <Link href="/perfil/mis-ventas" asChild>
           <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
             <Package color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Mis Ventas</Text>
           </TouchableOpacity>
         </Link>
 
-        <Link href="/profile/my-documents" asChild>
+        <Link href="/perfil/mis-documentos" asChild>
           <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
             <FileText color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Mis Documentos</Text>
           </TouchableOpacity>
         </Link>
 
-        <Link href="/profile/metrics" asChild>
+        <Link href="/perfil/metricas" asChild>
           <TouchableOpacity className="flex-row items-center gap-3 p-3">
             <BarChart3 color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Mis Métricas</Text>

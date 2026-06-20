@@ -14,6 +14,7 @@ export const registerSchema = z.object({
   email: strictEmail,
   numeroPais: z.coerce.number().int().positive('El país es requerido'),
   address: z.string().min(5, 'La dirección es requerida'),
+  documento: z.string().regex(/^\d{8}$/, 'El DNI debe tener exactamente 8 dígitos numéricos'),
 });
 
 export const completeRegistrationSchema = z.object({

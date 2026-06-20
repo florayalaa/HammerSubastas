@@ -15,19 +15,19 @@ export default function Home() {
         </Text>
         
         <View className="w-full gap-4 mt-6">
-          <Link href="/(tabs)" asChild>
+          <Link href="/(navegacion)" asChild>
             <Button className="w-full bg-white h-14 rounded-xl" textClassName="text-[#6A4F99] font-bold text-lg">
               Ver Subastas
             </Button>
           </Link>
           
-          <Link href="/(auth)/register" asChild>
+          <Link href="/(autenticacion)/registro" asChild>
             <Button className="w-full bg-[#6A4F99] border-2 border-white h-14 rounded-xl" textClassName="text-white font-bold text-lg">
               Registrarse
             </Button>
           </Link>
           
-          <Link href="/(auth)/login" asChild>
+          <Link href="/(autenticacion)/iniciar-sesion" asChild>
             <Button variant="ghost" className="w-full mt-2" textClassName="text-white font-medium">
               ¿Ya tienes cuenta? Inicia sesión
             </Button>

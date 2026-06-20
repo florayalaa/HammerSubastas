@@ -32,6 +32,26 @@ export class AuthController {
       res.status(400).json({ status: 'error', message: error.message });
     }
   }
+
+  async validarCliente(req: Request, res: Response, next: NextFunction) {
+    try {
+      const clienteId = parseInt(req.params.id, 10);
+      const result = await authService.validarCliente(clienteId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  }
+
+  async rechazarCliente(req: Request, res: Response, next: NextFunction) {
+    try {
+      const clienteId = parseInt(req.params.id, 10);
+      const result = await authService.rechazarCliente(clienteId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  }
 }
 
 export const authController = new AuthController();

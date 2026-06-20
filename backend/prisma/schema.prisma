@@ -68,12 +68,14 @@ model empleados {
 }
 
 model extra_credencialesCliente {
-  identificador    Int      @id(map: "pk_extra_credencialesCliente") @default(autoincrement())
-  cliente          Int
-  email            String   @unique(map: "uq_extra_credencialesCliente_email") @db.VarChar(200)
-  passwordHash     String   @db.VarChar(500)
-  debeCambiarClave String   @default("si", map: "DF__extra_cre__debeC__160F4887") @db.VarChar(2)
-  clientes         clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_credencialesCliente_clientes")
+  identificador     Int      @id(map: "pk_extra_credencialesCliente") @default(autoincrement())
+  cliente           Int
+  email             String   @unique(map: "uq_extra_credencialesCliente_email") @db.VarChar(200)
+  passwordHash      String   @db.VarChar(500)
+  debeCambiarClave  String   @default("si", map: "DF__extra_cre__debeC__160F4887") @db.VarChar(2)
+  estadoCredencial  String   @default("pendiente") @db.VarChar(20)
+  mailEnviado       Boolean  @default(false)
+  clientes          clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_credencialesCliente_clientes")
 }
 
 model extra_documentosCliente {

@@ -70,7 +70,7 @@ export default function Bids() {
 
       <View className="gap-4 mb-8">
         {bids.map((bid, index) => (
-          <Link key={index} href={`/auctions/${bid.id}`} asChild>
+          <Link key={index} href={`/subastas/${bid.id}`} asChild>
             <TouchableOpacity className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-row h-32">
               <Image source={{ uri: bid.image }} className="w-1/3 h-full" contentFit="cover" />
               <View className="p-3 flex-1 justify-between">
@@ -104,7 +104,7 @@ export default function Bids() {
         {!isAuthenticated ? (
           <View className="items-center justify-center py-12">
             <Text className="text-gray-500 mb-4 text-center">Iniciá sesión para ver tu historial de pujas.</Text>
-            <Link href="/(auth)/login" asChild>
+            <Link href="/(autenticacion)/iniciar-sesion" asChild>
               <TouchableOpacity className="bg-[#6A4F99] px-6 py-3 rounded-xl">
                 <Text className="text-white font-bold">Iniciar Sesión</Text>
               </TouchableOpacity>
