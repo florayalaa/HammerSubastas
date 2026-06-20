@@ -13,6 +13,7 @@ export default function PaymentMethods() {
   const [methods, setMethods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [tipo, setTipo] = useState<'tarjeta' | 'cheque' | 'transferencia' | null>(null);
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
@@ -36,17 +37,30 @@ export default function PaymentMethods() {
     fetchMethods();
   }, [fetchMethods]);
 
+  const formatCardNumber = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 16);
+    return digits.replace(/(.{4})/g, '$1 ').trim();
+  };
+
+  const formatExpiry = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 4);
+    if (digits.length >= 3) return digits.slice(0, 2) + '/' + digits.slice(2);
+    return digits;
+  };
+
   const handleAdd = async () => {
-    if (cardNumber.length < 13 || expiry.length < 4 || cvc.length < 3) {
+    const rawCard = cardNumber.replace(/\s/g, '');
+    if (rawCard.length < 16 || expiry.length < 5 || cvc.length < 3 || cvc.length > 4) {
       Alert.alert('Error', 'Por favor, completa todos los campos correctamente.');
       return;
     }
 
     setSubmitting(true);
     try {
-      await apiPost('/pagos', { cardNumber, expiry, cvc }, token || '');
+      await apiPost('/pagos', { cardNumber: cardNumber.replace(/\s/g, ''), expiry, cvc, tipo }, token || '');
       Alert.alert('Éxito', 'Método de pago añadido');
       setShowAdd(false);
+      setTipo(null);
       setCardNumber('');
       setExpiry('');
       setCvc('');
@@ -99,62 +113,108 @@ export default function PaymentMethods() {
           </View>
         ) : (
           methods.map((m) => (
-            <View key={m.id} className="bg-white p-4 rounded-xl border border-gray-200 mb-3 flex-row justify-between items-center shadow-sm">
+            <View key={m.identificador} className="bg-white p-4 rounded-xl border border-gray-200 mb-3 flex-row justify-between items-center shadow-sm">
               <View className="flex-row items-center">
                 <View className="w-10 h-10 bg-[#6A4F99]/10 rounded-full items-center justify-center mr-3">
                   <CreditCard color="#6A4F99" size={20} />
                 </View>
                 <View>
-                  <Text className="font-bold text-[#333F48]">Tarjeta guardada</Text>
-                  <Text className="text-xs text-[#A08C79]">Termina en **** {m.id.substring(m.id.length - 4)}</Text>
+                  <Text className="font-bold text-[#333F48] capitalize">{m.tipo}</Text>
+                  <Text className="text-xs text-[#A08C79]">
+                    {m.numero ? `**** ${String(m.numero).slice(-4)}` : 'Sin número'}
+                  </Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={() => handleDelete(m.id)} className="p-2 bg-red-50 rounded-full">
+              <TouchableOpacity onPress={() => handleDelete(String(m.identificador))} className="p-2 bg-red-50 rounded-full">
                 <Trash2 color="#ef4444" size={18} />
               </TouchableOpacity>
             </View>
           ))
         )}
 
-        {showAdd ? (
+        {showAdd && !tipo ? (
           <View className="bg-white p-4 rounded-xl border border-gray-200 mt-4 shadow-sm">
-            <Text className="font-bold text-[#333F48] mb-4">Nueva Tarjeta</Text>
-            
-            <View className="mb-3">
-              <Text className="text-xs text-[#A08C79] mb-1">Número de Tarjeta</Text>
-              <TextInput 
-                value={cardNumber}
-                onChangeText={setCardNumber}
-                keyboardType="numeric"
-                placeholder="0000 0000 0000 0000"
-                className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
-              />
+            <Text className="font-bold text-[#333F48] mb-4">¿Qué tipo de medio querés agregar?</Text>
+            <View className="gap-3">
+              {([
+                { value: 'tarjeta', label: 'Tarjeta' },
+                { value: 'cheque', label: 'Cheque' },
+                { value: 'transferencia', label: 'Transferencia' },
+              ] as const).map((t) => (
+                <TouchableOpacity
+                  key={t.value}
+                  onPress={() => setTipo(t.value)}
+                  className="py-3 rounded-lg border border-gray-200 items-center bg-white"
+                >
+                  <Text className="text-sm font-semibold text-[#333F48]">{t.label}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity onPress={() => setShowAdd(false)} className="py-3 items-center">
+                <Text className="text-sm text-[#A08C79]">Cancelar</Text>
+              </TouchableOpacity>
             </View>
+          </View>
+        ) : showAdd && tipo ? (
+          <View className="bg-white p-4 rounded-xl border border-gray-200 mt-4 shadow-sm">
+            <Text className="font-bold text-[#333F48] mb-4">
+              {tipo === 'tarjeta' ? 'Nueva Tarjeta' : tipo === 'cheque' ? 'Nuevo Cheque' : 'Nueva Transferencia'}
+            </Text>
 
-            <View className="flex-row gap-3 mb-4">
-              <View className="flex-1">
-                <Text className="text-xs text-[#A08C79] mb-1">Vencimiento</Text>
-                <TextInput 
-                  value={expiry}
-                  onChangeText={setExpiry}
-                  placeholder="MM/AA"
+            {tipo === 'tarjeta' ? (
+              <>
+                <View className="mb-3">
+                  <Text className="text-xs text-[#A08C79] mb-1">Número de Tarjeta</Text>
+                  <TextInput
+                    value={cardNumber}
+                    onChangeText={(t) => setCardNumber(formatCardNumber(t))}
+                    keyboardType="numeric"
+                    placeholder="0000 0000 0000 0000"
+                    maxLength={19}
+                    className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
+                  />
+                </View>
+                <View className="flex-row gap-3 mb-4">
+                  <View className="flex-1">
+                    <Text className="text-xs text-[#A08C79] mb-1">Vencimiento</Text>
+                    <TextInput
+                      value={expiry}
+                      onChangeText={(t) => setExpiry(formatExpiry(t))}
+                      keyboardType="numeric"
+                      placeholder="MM/AA"
+                      maxLength={5}
+                      className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xs text-[#A08C79] mb-1">CVC</Text>
+                    <TextInput
+                      value={cvc}
+                      onChangeText={(t) => setCvc(t.replace(/\D/g, '').slice(0, 4))}
+                      keyboardType="numeric"
+                      placeholder="123/1234"
+                      maxLength={4}
+                      secureTextEntry
+                      className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
+                    />
+                  </View>
+                </View>
+              </>
+            ) : (
+              <View className="mb-4">
+                <Text className="text-xs text-[#A08C79] mb-1">
+                  {tipo === 'cheque' ? 'Número de Cheque' : 'CBU / Alias'}
+                </Text>
+                <TextInput
+                  value={cardNumber}
+                  onChangeText={setCardNumber}
+                  placeholder={tipo === 'cheque' ? 'Ej: 00123456' : 'Ej: mi.alias o CBU'}
                   className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
                 />
               </View>
-              <View className="flex-1">
-                <Text className="text-xs text-[#A08C79] mb-1">CVC</Text>
-                <TextInput 
-                  value={cvc}
-                  onChangeText={setCvc}
-                  keyboardType="numeric"
-                  placeholder="123"
-                  className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
-                />
-              </View>
-            </View>
+            )}
 
             <View className="flex-row gap-3">
-              <Button variant="secondary" className="flex-1" onPress={() => setShowAdd(false)}>
+              <Button variant="secondary" className="flex-1" onPress={() => { setTipo(null); setCardNumber(''); setExpiry(''); setCvc(''); }}>
                 <Text>Cancelar</Text>
               </Button>
               <Button className="flex-1 bg-[#6A4F99]" onPress={handleAdd} disabled={submitting}>
@@ -163,10 +223,10 @@ export default function PaymentMethods() {
             </View>
           </View>
         ) : (
-          <Button className="mt-4 bg-[#C9A063] flex-row items-center justify-center gap-2" onPress={() => setShowAdd(true)}>
+          <TouchableOpacity onPress={() => setShowAdd(true)} className="mt-4 w-full bg-[#C9A063] h-12 rounded-md flex-row items-center justify-center gap-2">
             <Plus color="white" size={20} />
-            <Text className="text-white font-bold">Agregar Método de Pago</Text>
-          </Button>
+            <Text className="text-white font-bold">Agregar</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </View>

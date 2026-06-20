@@ -103,7 +103,7 @@ export class AuthService {
 
     await prisma.clientes.update({
       where: { identificador: clienteId },
-      data: { admitido: 'si' },
+      data: { admitido: 'si', categoria: 'comun' },
     });
 
     const nombre = creds.clientes.personas?.nombre ?? '';

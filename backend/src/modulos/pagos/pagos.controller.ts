@@ -9,12 +9,13 @@ export class PaymentsController {
         return res.status(401).json({ message: 'No autenticado' });
       }
 
-      const { cardNumber, expiry, cvc } = req.body;
+      const { cardNumber, expiry, cvc, tipo } = req.body;
       const result = await paymentsService.addPaymentMethod({
         userId: userId.toString(),
         cardNumber,
         expiry,
-        cvc
+        cvc,
+        tipo,
       });
 
       res.status(201).json({ status: 'success', data: result });

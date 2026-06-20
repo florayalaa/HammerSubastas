@@ -7,7 +7,10 @@ export class UsersService {
       where: { identificador: id },
       include: {
         clientes: {
-          include: { extra_credencialesCliente: true },
+          include: {
+            extra_credencialesCliente: { take: 1 },
+            paises: true,
+          },
         },
       },
     });
@@ -21,13 +24,13 @@ export class UsersService {
       firstName: persona.nombre.split(' ')[0] || '',
       lastName: persona.nombre.split(' ').slice(1).join(' ') || '',
       email: persona.clientes?.extra_credencialesCliente?.[0]?.email ?? '',
-      country: '',
+      country: persona.clientes?.paises?.nombre || '',
       address: persona.direccion || '',
       category: persona.clientes?.categoria || 'comun',
       isApproved: persona.clientes?.admitido === 'si',
       documentFront: persona.foto ? 'base64-image' : null,
       documentBack: null,
-      createdAt: new Date(),
+      createdAt: persona.clientes?.extra_credencialesCliente?.[0]?.fechaRegistro?.toISOString().split('T')[0] ?? null,
     };
   }
 

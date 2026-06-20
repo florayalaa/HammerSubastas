@@ -9,7 +9,7 @@ export class PaymentsService {
     const method = await prisma.extra_metodosPago.create({
       data: {
         cliente: parseInt(data.userId),
-        tipo: data.tipo || 'credito',
+        tipo: data.tipo || 'tarjeta',
         numero: data.cardNumber,
         vencimiento: data.expiry,
         cvv: data.cvc,

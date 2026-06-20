@@ -15,7 +15,7 @@ async function procesarValidadosSinMail() {
 
       await prisma.clientes.update({
         where: { identificador: cred.cliente },
-        data: { admitido: 'si' },
+        data: { admitido: 'si', categoria: 'comun' },
       });
 
       const nombre = cred.clientes.personas?.nombre ?? '';

@@ -5,18 +5,16 @@ import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Profile() {
   const router = useRouter();
-  const { logout, user } = useAuth();
+  const { logout, user, token } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = await AsyncStorage.getItem('token');
         if (!token) throw new Error('No token');
         const res = await apiGet('/usuarios/yo', token);
         if (res && res.user) {
@@ -28,7 +26,7 @@ export default function Profile() {
             country: res.user.country || "No especificado",
             category: res.user.category ? res.user.category.charAt(0).toUpperCase() + res.user.category.slice(1).toLowerCase() : "Común",
             verified: res.user.isApproved,
-            memberSince: new Date(res.user.createdAt).toLocaleDateString(),
+            memberSince: res.user.createdAt ? res.user.createdAt.split('-').reverse().join('/') : 'Reciente',
             paymentMethods: 0,
             totalBids: 0,
             wonAuctions: 0,
@@ -60,7 +58,7 @@ export default function Profile() {
     };
 
     fetchProfile();
-  }, [user]);
+  }, [user, token]);
 
   if (loading) {
     return (
@@ -82,8 +80,6 @@ export default function Profile() {
   const catColor = categoryColors[currentCategory] || categoryColors["Común"];
 
   const stats = [
-    { label: "Miembro Desde", value: profileData?.memberSince },
-    { label: "Métodos de Pago", value: profileData?.paymentMethods },
     { label: "Pujas Totales", value: profileData?.totalBids },
     { label: "Subastas Ganadas", value: profileData?.wonAuctions },
     { label: "Total Invertido", value: profileData?.totalSpent, highlight: true },
@@ -169,23 +165,31 @@ export default function Profile() {
               <Text className="font-semibold text-[#333F48]">{profileData?.country}</Text>
             </View>
           </View>
+
+          <View className="flex-row items-center gap-3">
+            <Shield color="#A08C79" size={20} />
+            <View>
+              <Text className="text-xs text-[#A08C79] mb-0.5">Miembro Desde</Text>
+              <Text className="font-semibold text-[#333F48]">{profileData?.memberSince}</Text>
+            </View>
+          </View>
         </View>
       </Card>
 
-      {/* Stats (Horizontal) */}
+      {/* Stats */}
       <View className="mb-6">
         <Text className="text-lg font-bold text-[#333F48] mb-3">Estadísticas de Cuenta</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
+        <View className="flex-row gap-2">
           {stats.map((stat, index) => (
-            <View 
-              key={index} 
-              className={`w-36 p-4 rounded-xl mr-3 border ${stat.highlight ? 'bg-[#C9A063] border-[#C9A063]' : 'bg-white border-gray-200'}`}
+            <View
+              key={index}
+              className={`flex-1 p-4 rounded-xl border ${stat.highlight ? 'bg-[#C9A063] border-[#C9A063]' : 'bg-white border-gray-200'}`}
             >
-              <Text className={`text-xs mb-1 ${stat.highlight ? 'text-white/80' : 'text-[#A08C79]'}`}>{stat.label}</Text>
-              <Text className={`text-xl font-bold ${stat.highlight ? 'text-white' : 'text-[#333F48]'}`}>{stat.value}</Text>
+              <Text className={`text-[10px] mb-1 ${stat.highlight ? 'text-white/80' : 'text-[#A08C79]'}`}>{stat.label}</Text>
+              <Text className={`text-sm font-bold ${stat.highlight ? 'text-white' : 'text-[#333F48]'}`} numberOfLines={1}>{stat.value}</Text>
             </View>
           ))}
-        </ScrollView>
+        </View>
       </View>
 
       {/* Quick Actions */}

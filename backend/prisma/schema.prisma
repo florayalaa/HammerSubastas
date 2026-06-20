@@ -75,6 +75,7 @@ model extra_credencialesCliente {
   debeCambiarClave  String   @default("si", map: "DF__extra_cre__debeC__160F4887") @db.VarChar(2)
   estadoCredencial  String   @default("pendiente") @db.VarChar(20)
   mailEnviado       Boolean  @default(false)
+  fechaRegistro     DateTime @default(now()) @db.Date
   clientes          clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_credencialesCliente_clientes")
 }
 
