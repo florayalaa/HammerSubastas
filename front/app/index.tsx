@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, ScrollView } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
+  const { isAuthenticated, isReady } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isReady && isAuthenticated) {
+      router.replace('/(navegacion)');
+    }
+  }, [isReady, isAuthenticated]);
+
+  if (!isReady || isAuthenticated) return null;
+
   return (
     <ScrollView className="flex-1 bg-[#C9A063]" contentContainerClassName="flex-grow justify-center p-6">
       <View className="items-center">

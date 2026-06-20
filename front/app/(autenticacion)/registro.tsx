@@ -89,7 +89,7 @@ export default function Register() {
         'Solicitud enviada',
         'Tu solicitud de registro fue recibida. Vamos a verificar tus datos y, si todo es correcto, te enviaremos una contraseña temporal al email que ingresaste para que puedas activar tu cuenta.'
       );
-      router.push('/(autenticacion)/iniciar-sesion');
+      router.replace('/(autenticacion)/iniciar-sesion');
     } catch (error: any) {
       Alert.alert('Error en el registro', error.message || 'Ocurrió un error al registrarse');
     }
@@ -255,7 +255,7 @@ export default function Register() {
 
             <View className="mt-4 flex-row justify-center">
               <Text className="text-sm text-[#A08C79]">¿Ya tienes una cuenta? </Text>
-              <Link href="/(autenticacion)/iniciar-sesion" asChild>
+              <Link href="/(autenticacion)/iniciar-sesion" replace asChild>
                 <Text className="text-[#6A4F99] font-semibold">Inicia sesión aquí</Text>
               </Link>
             </View>

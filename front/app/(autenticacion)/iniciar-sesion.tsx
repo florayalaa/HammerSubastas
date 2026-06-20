@@ -81,7 +81,7 @@ export default function Login() {
             </View>
           </View>
 
-          <View className="flex-row items-center justify-end mb-6 mt-2">
+          <View className="flex-row items-center justify-center mb-6 mt-2">
             <Link href="/(autenticacion)/olvide-contrasena" asChild>
               <Text className="text-sm text-[#6A4F99] font-medium">¿Olvidaste tu contraseña?</Text>
             </Link>
@@ -93,7 +93,7 @@ export default function Login() {
 
           <View className="mt-6 flex-row justify-center">
             <Text className="text-[#A08C79]">¿No tienes una cuenta? </Text>
-            <Link href="/(autenticacion)/registro" asChild>
+            <Link href="/(autenticacion)/registro" replace asChild>
               <Text className="text-[#6A4F99] font-semibold">Regístrate aquí</Text>
             </Link>
           </View>

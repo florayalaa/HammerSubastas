@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Mail } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -61,9 +61,9 @@ export default function ForgotPassword() {
 
           <View className="flex-row justify-center">
             <Text className="text-[#A08C79]">¿Recordaste tu contraseña? </Text>
-            <Link href="/(autenticacion)/iniciar-sesion" asChild>
+            <TouchableOpacity onPress={() => router.back()}>
               <Text className="text-[#6A4F99] font-semibold">Volver al login</Text>
-            </Link>
+            </TouchableOpacity>
           </View>
         </View>
       </View>

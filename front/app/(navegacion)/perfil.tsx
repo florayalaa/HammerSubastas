@@ -185,7 +185,9 @@ export default function Profile() {
               key={index}
               className={`flex-1 p-4 rounded-xl border ${stat.highlight ? 'bg-[#C9A063] border-[#C9A063]' : 'bg-white border-gray-200'}`}
             >
-              <Text className={`text-[10px] mb-1 ${stat.highlight ? 'text-white/80' : 'text-[#A08C79]'}`}>{stat.label}</Text>
+              <View style={{ height: 28 }} className="mb-1">
+                <Text numberOfLines={2} className={`text-[10px] ${stat.highlight ? 'text-white/80' : 'text-[#A08C79]'}`}>{stat.label}</Text>
+              </View>
               <Text className={`text-sm font-bold ${stat.highlight ? 'text-white' : 'text-[#333F48]'}`} numberOfLines={1}>{stat.value}</Text>
             </View>
           ))}
