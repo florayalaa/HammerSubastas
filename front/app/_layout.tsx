@@ -22,10 +22,12 @@ function RootLayoutNav() {
     if (!isReady || showSplash) return;
 
     const inAuthGroup = segments[0] === '(autenticacion)';
+    const inDashBGroup = segments[0] === '(navegacion)';
+    const inSubastas = segments[0] === 'subastas';
 
     if (isAuthenticated && inAuthGroup) {
       router.replace('/(navegacion)');
-    } else if (!isAuthenticated && !inAuthGroup && segments.length > 0) {
+    } else if (!isAuthenticated && !inAuthGroup && segments.length > 0 && !inDashBGroup && !inSubastas) {
       router.replace('/(autenticacion)/iniciar-sesion');
     }
   }, [isAuthenticated, isReady, showSplash, segments]);
