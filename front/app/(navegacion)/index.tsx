@@ -2,10 +2,10 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
 import { Gavel, HandCoins, ChevronRight } from 'lucide-react-native';
-import { Image } from 'expo-image';
 import { Card, CardContent } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
+import { TarjetaSubasta } from '@/components/TarjetaSubasta';
 
 export default function Dashboard() {
   const { isAuthenticated, token, user } = useAuth();
@@ -21,14 +21,23 @@ export default function Dashboard() {
         const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.11:4000'}/api/subastas`);
         if (res.ok) {
           const data = await res.json();
+          
+          // Mapeamos los datos respetando las claves esperadas por la TarjetaSubasta reutilizable
           const mapped = data.map((a: any) => ({
             id: a.id,
-            title: a.title,
-            date: new Date(a.startDate).toLocaleDateString() + ' - ' + new Date(a.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            status: a.status.toLowerCase(),
-            image: "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80",
+            titulo: a.title,
+            fecha: new Date(a.startDate).toLocaleDateString(),
+            hora: new Date(a.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            categoria: a.category || "General",
+            moneda: a.currency || "USD",
+            articulos: a.itemsCount || a.items?.length || 0,
+            pujaInicial: `$${a.startingPrice || 0}`,
+            estado: a.status?.toLowerCase() === 'active' ? 'en_vivo' : 'proxima',
+            imagen: a.image || null,
           }));
-          setActiveAuctions(mapped);
+          
+          // Limitamos el renderizado únicamente a las primeras 3 subastas
+          setActiveAuctions(mapped.slice(0, 3));
         }
       } catch (e) {
         console.warn("Error al obtener subastas", e);
@@ -97,6 +106,7 @@ export default function Dashboard() {
         </>
       )}
 
+      {/* Listado de Subastas Activas Integrado con la Tarjeta Estilizada */}
       <View className="mb-8">
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-xl font-bold text-[#333F48]">Subastas Activas</Text>
@@ -111,30 +121,19 @@ export default function Dashboard() {
         {activeAuctions.length === 0 ? (
           <Text className="text-[#A08C79] text-sm">No hay subastas disponibles</Text>
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
-            {activeAuctions.map((auction) => (
-              <Link key={auction.id} href="/(navegacion)/subastas" asChild>
-                <TouchableOpacity className="bg-white rounded-xl shadow-sm border border-gray-200 w-72 mr-4 overflow-hidden">
-                  <Image source={auction.image} className="w-full h-40" contentFit="cover" />
-                  <View className="p-4">
-                    <View className="flex-row items-center gap-2 mb-2 flex-wrap">
-                      {auction.status === "live" && (
-                        <View className="px-2 py-1 bg-red-500 rounded flex-row items-center gap-1">
-                          <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                          <Text className="text-white text-[10px] font-bold">EN VIVO</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text className="font-semibold text-[#333F48] mb-1" numberOfLines={1}>{auction.title}</Text>
-                    <Text className="text-xs text-[#A08C79]">{auction.date}</Text>
-                  </View>
-                </TouchableOpacity>
-              </Link>
+          <View>
+            {activeAuctions.map((subasta) => (
+              <TarjetaSubasta 
+                key={subasta.id} 
+                subasta={subasta} 
+                estaAutenticado={isAuthenticated} 
+              />
             ))}
-          </ScrollView>
+          </View>
         )}
       </View>
 
+      {/* Historial de Pujas Recientes */}
       {isAuthenticated && (
         <View className="mb-8">
           <View className="flex-row items-center justify-between mb-4">

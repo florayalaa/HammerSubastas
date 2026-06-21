@@ -82,8 +82,6 @@ export default function Login() {
                 <Text className="text-[#6A4F99] font-semibold">Regístrate aquí</Text>
               </Link>
             </View>
-            
-
           </View>
         </View>
       </ScrollView>

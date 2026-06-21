@@ -1,3 +1,4 @@
 APP_MOVIL_TPO/.env
 backend/prisma/migrations/migration_lock.toml
 backend/prisma/migrations/20260606185841_a/migration.sql
+front/.env

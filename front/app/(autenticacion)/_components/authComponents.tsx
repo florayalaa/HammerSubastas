@@ -31,7 +31,7 @@ export const FormField = ({ label, icon, value, onChangeText, placeholder, ...pr
   </View>
 );
 
-// 2. PasswordField (NUEVO: Especializado para contraseñas con el ojo integrado)
+// 2. PasswordField (Especializado para contraseñas con el ojo integrado)
 interface PasswordFieldProps {
   label: string;
   value: string;
