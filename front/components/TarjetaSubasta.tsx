@@ -5,7 +5,7 @@ import { Calendar, Users, DollarSign, Lock } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Card } from '@/components/ui/Card';
 
-// Cambiamos el require por una URL de internet directa
+
 const IMAGEN_PLACEHOLDER_URL = "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80";
 
 interface TarjetaSubastaProps {
