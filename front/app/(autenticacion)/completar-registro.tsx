@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Key, Mail } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { apiPost } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { FormField, PasswordField } from './_components/authComponents'; 
+import { FormField, PasswordField } from './_components/authComponents';
 
 export default function CompleteRegistration() {
   const router = useRouter();
   const { pendingEmail, clearPendingEmail } = useAuth();
+
+  useEffect(() => {
+    if (!pendingEmail) {
+      router.replace('/(autenticacion)/iniciar-sesion');
+    }
+  }, [pendingEmail]);
 
   const [email, setEmail] = useState(pendingEmail ?? '');
   const [password, setPassword] = useState('');

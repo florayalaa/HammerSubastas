@@ -31,7 +31,7 @@ export default function Dashboard() {
           setActiveAuctions(mapped);
         }
       } catch (e) {
-        console.error("Error al obtener subastas", e);
+        console.warn("Error al obtener subastas", e);
       }
     };
     fetchAuctions();
@@ -48,7 +48,7 @@ export default function Dashboard() {
         setStats({ totalBids: statsData.totalBids ?? 0, auctionsWon: statsData.auctionsWon ?? 0 });
         setRecentBids(Array.isArray(bidsData) ? bidsData.slice(0, 3) : []);
       })
-      .catch((e) => console.error("Error al obtener estadísticas", e))
+      .catch((e) => { if (e?.status !== 401) console.warn("Error al obtener estadísticas", e); })
       .finally(() => setLoadingStats(false));
   }, [isAuthenticated, token]);
 

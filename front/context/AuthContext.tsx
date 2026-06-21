@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import { apiPost } from '@/app/lib/api';
+import { apiGet, apiPost, registrarManejadorSesionExpirada } from '@/app/lib/api';
 
 interface User {
   id: number;
@@ -70,13 +70,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setUser(null);
     setToken(null);
     setPendingEmail(null);
     await AsyncStorage.removeItem('user');
     await SecureStore.deleteItemAsync('token');
-  };
+  }, []);
+
+  useEffect(() => {
+    registrarManejadorSesionExpirada(logout);
+  }, [logout]);
+
+  useEffect(() => {
+    if (!token) return;
+    const intervalo = setInterval(async () => {
+      try {
+        await apiGet('/usuarios/yo', token);
+      } catch {
+        // el manejadorSesionExpirada se encarga del 401
+      }
+    }, 30000);
+    return () => clearInterval(intervalo);
+  }, [token]);
 
   const clearPendingEmail = () => setPendingEmail(null);
 

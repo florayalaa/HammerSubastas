@@ -14,8 +14,11 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       try {
-        if (!token) throw new Error('No token');
         const res = await apiGet('/usuarios/yo', token);
         if (res && res.user) {
           setProfileData({
@@ -34,7 +37,7 @@ export default function Profile() {
           });
         }
       } catch (e) {
-        console.error('Error fetching profile', e);
+        console.warn('Error al cargar el perfil', e);
         // Fallback al user del context si la API falla
         if (user) {
           setProfileData({

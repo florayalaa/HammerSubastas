@@ -27,7 +27,7 @@ export default function PaymentMethods() {
         setMethods(res.data);
       }
     } catch (error) {
-      console.error('Error fetching payments', error);
+      console.warn('Error al obtener medios de pago', error);
     } finally {
       setLoading(false);
     }

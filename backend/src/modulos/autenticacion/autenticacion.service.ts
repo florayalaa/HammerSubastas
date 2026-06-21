@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../configuracion/baseDatos';
-import { sendTemporaryPasswordEmail } from '../../utilidades/correo';
+import { sendTemporaryPasswordEmail, sendRejectionEmail } from '../../utilidades/correo';
 
 export class AuthService {
   private readonly jwtSecret = process.env.JWT_SECRET || 'super_secret_jwt_key_12345';
@@ -116,6 +116,7 @@ export class AuthService {
   async rechazarCliente(clienteId: number) {
     const creds = await prisma.extra_credencialesCliente.findFirst({
       where: { cliente: clienteId },
+      include: { clientes: { include: { personas: true } } },
     });
 
     if (!creds) throw new Error('Credenciales no encontradas');
@@ -125,7 +126,23 @@ export class AuthService {
       data: { estadoCredencial: 'rechazado' },
     });
 
-    return { message: 'Cliente rechazado.' };
+    await prisma.personas.update({
+      where: { identificador: creds.clientes.identificador },
+      data: { estado: 'inactivo' },
+    });
+
+    const nombre = creds.clientes.personas?.nombre ?? 'Usuario';
+    try {
+      await sendRejectionEmail(creds.email, nombre);
+      await prisma.extra_credencialesCliente.update({
+        where: { identificador: creds.identificador },
+        data: { mailEnviado: true },
+      });
+    } catch (e) {
+      console.error(`⚠️  [MAIL RECHAZO FALLIDO] a ${creds.email}:`, e);
+    }
+
+    return { message: 'Cliente rechazado y notificado por email.' };
   }
 
   async login(data: any) {
@@ -145,20 +162,31 @@ export class AuthService {
       throw new Error('Credenciales inválidas');
     }
 
-    const isPasswordValid = await bcrypt.compare(data.password, creds.passwordHash);
-
-    if (!isPasswordValid) {
-      throw new Error('Credenciales inválidas');
-    }
-
     switch (creds.estadoCredencial) {
       case 'pendiente':
         throw new Error('Tu cuenta está pendiente de verificación por parte de la empresa.');
       case 'rechazado':
         throw new Error('Tu solicitud fue rechazada por la empresa. Contactate con soporte.');
-      case 'validado':
+      case 'inactivo':
+        throw new Error('Tu cuenta fue desactivada. Contactate con soporte en subastas.hammer@gmail.com');
+    }
+
+    const isPasswordValid = await bcrypt.compare(data.password, creds.passwordHash);
+
+    if (creds.estadoCredencial === 'validado') {
+      if (!creds.mailEnviado) {
+        throw new Error('Tu cuenta fue aprobada pero aún estamos procesando tu acceso. En breve recibirás un email con los pasos a seguir.');
+      }
+      if (creds.debeCambiarClave === 'si') {
+        if (!isPasswordValid) {
+          throw new Error('Contraseña temporal incorrecta. Revisá el email que recibiste.');
+        }
         throw new Error('Debe completar el registro con su contraseña temporal antes de iniciar sesión.');
-      // 'activo' → continúa
+      }
+    }
+
+    if (!isPasswordValid) {
+      throw new Error('Credenciales inválidas');
     }
 
     const token = this.generateToken(creds.clientes, creds.email);

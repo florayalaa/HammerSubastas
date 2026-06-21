@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { prisma } from '../configuracion/baseDatos';
-import { sendTemporaryPasswordEmail } from './correo';
+import { sendTemporaryPasswordEmail, sendRejectionEmail, sendDeactivationEmail } from './correo';
 
 async function procesarValidadosSinMail() {
   const pendientes = await prisma.extra_credencialesCliente.findMany({
@@ -33,7 +33,65 @@ async function procesarValidadosSinMail() {
   }
 }
 
+async function procesarRechazadosSinMail() {
+  const rechazados = await prisma.extra_credencialesCliente.findMany({
+    where: { estadoCredencial: 'rechazado', mailEnviado: false },
+    include: { clientes: { include: { personas: true } } },
+  });
+
+  for (const cred of rechazados) {
+    try {
+      const nombre = cred.clientes.personas?.nombre ?? 'Usuario';
+      await sendRejectionEmail(cred.email, nombre);
+
+      await prisma.personas.update({
+        where: { identificador: cred.clientes.identificador },
+        data: { estado: 'inactivo' },
+      });
+
+      await prisma.extra_credencialesCliente.update({
+        where: { identificador: cred.identificador },
+        data: { mailEnviado: true },
+      });
+
+      console.log(`Mail de rechazo enviado a ${cred.email}`);
+    } catch (err) {
+      console.error(`Error al procesar rechazo para ${cred.email}:`, err);
+    }
+  }
+}
+
+async function procesarCuentasInactivadas() {
+  const inactivados = await prisma.extra_credencialesCliente.findMany({
+    where: {
+      estadoCredencial: { notIn: ['inactivo', 'rechazado'] },
+      clientes: { personas: { estado: 'inactivo' } },
+    },
+    include: { clientes: { include: { personas: true } } },
+  });
+
+  for (const cred of inactivados) {
+    try {
+      await prisma.extra_credencialesCliente.update({
+        where: { identificador: cred.identificador },
+        data: { estadoCredencial: 'inactivo' },
+      });
+
+      const nombre = cred.clientes.personas?.nombre ?? 'Usuario';
+      await sendDeactivationEmail(cred.email, nombre);
+
+      console.log(`Cuenta inactivada y notificada: ${cred.email}`);
+    } catch (err) {
+      console.error(`Error al procesar inactivación para ${cred.email}:`, err);
+    }
+  }
+}
+
 export function iniciarPollingValidacion(intervaloMs = 10000) {
-  setInterval(procesarValidadosSinMail, intervaloMs);
+  setInterval(async () => {
+    await procesarValidadosSinMail();
+    await procesarRechazadosSinMail();
+    await procesarCuentasInactivadas();
+  }, intervaloMs);
   console.log('Polling de validación iniciado');
 }

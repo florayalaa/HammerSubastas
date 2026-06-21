@@ -1,5 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import '../global.css';
@@ -16,15 +16,14 @@ export const unstable_settings = {
 function RootLayoutNav() {
   const { isAuthenticated, isReady, showSplash } = useAuth();
   const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isReady || showSplash) return;
 
     const inAuthGroup = segments[0] === '(autenticacion)';
-
-    if (!isAuthenticated && !inAuthGroup && segments[0] !== '(navegacion)') {
-      // ¿Permitir navegar las pestañas sin autenticación? En web algunas partes eran públicas.
-      // Por ahora se protegen las pestañas si es necesario.
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(autenticacion)/iniciar-sesion');
     }
   }, [isAuthenticated, isReady, showSplash, segments]);
 
@@ -59,7 +58,6 @@ function RootLayoutNav() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(autenticacion)" options={{ headerShown: false }} />
       <Stack.Screen name="(navegacion)" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>
   );
 }

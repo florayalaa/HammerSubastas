@@ -45,7 +45,7 @@ export default function Bids() {
           setBids(Array.from(uniqueItems.values()));
         }
       } catch (error) {
-        console.error("Error fetching bids", error);
+        console.warn("Error al obtener pujas", error);
       } finally {
         setLoading(false);
       }

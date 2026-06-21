@@ -118,7 +118,7 @@ export default function LiveAuction() {
           }
         }
       } catch (e) {
-        console.error("Error fetching auction", e);
+        console.warn("Error al obtener subasta", e);
       }
     };
     if (id) fetchAuction();

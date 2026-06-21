@@ -1,5 +1,11 @@
 export const API_BASE_URL = process.env.API_BASE_URL ?? 'http://192.168.0.11:4000/api';
 
+let manejadorSesionExpirada: (() => void) | null = null;
+
+export function registrarManejadorSesionExpirada(handler: () => void) {
+  manejadorSesionExpirada = handler;
+}
+
 async function request(path: string, init: RequestInit = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
@@ -18,6 +24,10 @@ async function request(path: string, init: RequestInit = {}) {
     // ignoramos errores de parseo json
   }
   if (!res.ok) {
+    const tieneToken = !!(init.headers && (init.headers as Record<string, string>)['Authorization']);
+    if (res.status === 401 && tieneToken && manejadorSesionExpirada) {
+      manejadorSesionExpirada();
+    }
     let message = json?.message ?? `HTTP ${res.status}`;
     if (json?.errors && Array.isArray(json.errors)) {
       message += ' - ' + json.errors.map((e: any) => e.message).join(', ');

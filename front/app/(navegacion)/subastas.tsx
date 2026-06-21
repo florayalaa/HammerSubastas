@@ -34,7 +34,7 @@ export default function Auctions() {
           setAuctions(formattedAuctions);
         }
       } catch (error) {
-        console.error("Error al obtener subastas:", error);
+        console.warn("Error al obtener subastas:", error);
       } finally {
         setLoading(false);
       }

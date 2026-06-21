@@ -83,12 +83,6 @@ export default function Login() {
               </Link>
             </View>
             
-            <View className="mt-3 flex-row justify-center">
-              <Text className="text-[#A08C79]">¿Recibiste tu contraseña temporal? </Text>
-              <Link href="/(autenticacion)/completar-registro" asChild>
-                <Text className="text-[#6A4F99] font-semibold">Activá tu cuenta</Text>
-              </Link>
-            </View>
 
           </View>
         </View>

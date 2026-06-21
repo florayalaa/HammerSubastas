@@ -52,8 +52,11 @@ export default function Register() {
       if (documentBack) fd.append('fotoDorso', { uri: documentBack, name: 'dorso.jpg', type: 'image/jpeg' } as any);
 
       await apiPostFormData('/autenticacion/registrar', fd);
-      Alert.alert('Solicitud enviada', 'Tu solicitud de registro fue recibida...');
-      router.replace('/(autenticacion)/iniciar-sesion');
+      Alert.alert(
+        'Solicitud enviada',
+        'Tu solicitud de registro fue recibida. En breve recibirás un correo con tu contraseña temporal.',
+        [{ text: 'OK', onPress: () => router.replace('/(autenticacion)/iniciar-sesion') }]
+      );
     } catch (error: any) {
       Alert.alert('Error en el registro', error.message || 'Ocurrió un error al registrarse');
     }

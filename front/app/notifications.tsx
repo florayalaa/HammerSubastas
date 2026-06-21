@@ -18,7 +18,7 @@ export default function Notifications() {
       const data = await apiGet('/notificaciones', token);
       setNotifications(data);
     } catch (e) {
-      console.error(e);
+      console.warn("Error al obtener notificaciones", e);
     } finally {
       setLoading(false);
     }
@@ -35,7 +35,7 @@ export default function Notifications() {
     try {
       await apiPut(`/notificaciones/${id}/leida`, {}, token);
     } catch (e) {
-      console.error("Error marcando como leida", e);
+      console.warn("Error marcando como leída", e);
       // Revertimos si falló
       fetchNotifications();
     }
