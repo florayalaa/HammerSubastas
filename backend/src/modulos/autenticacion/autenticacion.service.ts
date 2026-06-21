@@ -92,7 +92,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(tempCode, 10);
 
     await prisma.extra_credencialesCliente.update({
-      where: { identificador: creds.identificador },
+      where: { cliente: creds.cliente },
       data: {
         passwordHash,
         debeCambiarClave: 'si',
@@ -122,7 +122,7 @@ export class AuthService {
     if (!creds) throw new Error('Credenciales no encontradas');
 
     await prisma.extra_credencialesCliente.update({
-      where: { identificador: creds.identificador },
+      where: { cliente: creds.cliente },
       data: { estadoCredencial: 'rechazado' },
     });
 
@@ -135,7 +135,7 @@ export class AuthService {
     try {
       await sendRejectionEmail(creds.email, nombre);
       await prisma.extra_credencialesCliente.update({
-        where: { identificador: creds.identificador },
+        where: { cliente: creds.cliente },
         data: { mailEnviado: true },
       });
     } catch (e) {
@@ -235,7 +235,7 @@ export class AuthService {
     const newPasswordHash = await bcrypt.hash(data.newPassword, 10);
 
     await prisma.extra_credencialesCliente.update({
-      where: { identificador: creds.identificador },
+      where: { cliente: creds.cliente },
       data: {
         passwordHash: newPasswordHash,
         debeCambiarClave: 'no',

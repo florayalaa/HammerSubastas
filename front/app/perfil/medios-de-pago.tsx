@@ -1,69 +1,126 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, TextInputProps, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, CreditCard, Trash2, Plus } from 'lucide-react-native';
+import { ChevronLeft, CreditCard, Trash2, Plus, FileText, Building2, Camera, X, ChevronDown } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { apiGet, apiPost } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { CountryPickerModal } from '@/components/authComponents';
+import * as ImagePicker from 'expo-image-picker';
+
+interface Pais { id: number; name: string; }
+
+const CampoFormulario = ({ label, className = '', ...props }: { label: string } & TextInputProps) => (
+  <View className="mb-3">
+    <Text className="text-xs text-[#A08C79] mb-1">{label}</Text>
+    <TextInput
+      className={`border border-gray-200 rounded-lg p-3 text-[#333F48] ${className}`}
+      placeholderTextColor="#C4B5A5"
+      {...props}
+    />
+  </View>
+);
 
 export default function PaymentMethods() {
   const router = useRouter();
   const { token } = useAuth();
-  
+
   const [methods, setMethods] = useState<any[]>([]);
+  const [paises, setPaises] = useState<Pais[]>([]);
+  const [showPaisModal, setShowPaisModal] = useState(false);
+  const [paisCuentaId, setPaisCuentaId] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [tipo, setTipo] = useState<'tarjeta' | 'cheque' | 'transferencia' | null>(null);
+  const [tipo, setTipo] = useState<'tarjeta' | 'cheque' | 'cuenta bancaria' | null>(null);
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
+  const [titular, setTitular] = useState('');
+  const [banco, setBanco] = useState('');
+  const [paisCuenta, setPaisCuenta] = useState('');
+  const [alias, setAlias] = useState('');
+  const [fotoCheque, setFotoCheque] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchMethods = useCallback(async () => {
     try {
       if (!token) return;
-      const res = await apiGet('/pagos', token);
-      if (res && res.data) {
-        setMethods(res.data);
-      }
-    } catch (error) {
-      console.warn('Error al obtener medios de pago', error);
+      const [pagosRes, paisesRes] = await Promise.all([
+        apiGet('/pagos', token),
+        apiGet('/paises'),
+      ]);
+      if (pagosRes?.data) setMethods(pagosRes.data);
+      setPaises(paisesRes?.data ?? paisesRes ?? []);
+    } catch {
+      console.warn('Error al obtener medios de pago');
     } finally {
       setLoading(false);
     }
   }, [token]);
 
-  useEffect(() => {
-    fetchMethods();
-  }, [fetchMethods]);
+  useEffect(() => { fetchMethods(); }, [fetchMethods]);
 
-  const formatCardNumber = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(.{4})/g, '$1 ').trim();
-  };
+  const formatCardNumber = (value: string) =>
+    value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
 
   const formatExpiry = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 4);
-    if (digits.length >= 3) return digits.slice(0, 2) + '/' + digits.slice(2);
-    return digits;
+    return digits.length >= 3 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+  };
+
+  const resetForm = () => {
+    setTipo(null);
+    setCardNumber('');
+    setExpiry('');
+    setCvc('');
+    setTitular('');
+    setBanco('');
+    setPaisCuenta('');
+    setAlias('');
+    setFotoCheque(null);
+    setPaisCuentaId(0);
+    setPaisCuenta('');
+  };
+
+  const tomarFotoCheque = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara para sacar la foto del cheque.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+    if (!result.canceled && result.assets[0]) setFotoCheque(result.assets[0].uri);
   };
 
   const handleAdd = async () => {
-    const rawCard = cardNumber.replace(/\s/g, '');
-    if (rawCard.length < 16 || expiry.length < 5 || cvc.length < 3 || cvc.length > 4) {
-      Alert.alert('Error', 'Por favor, completa todos los campos correctamente.');
+    if (!cardNumber.trim()) {
+      Alert.alert('Error', 'Por favor, ingresá el número o identificador.');
+      return;
+    }
+    if (tipo === 'tarjeta') {
+      const raw = cardNumber.replace(/\s/g, '');
+      if (raw.length < 16 || expiry.length < 5 || cvc.length < 3) {
+        Alert.alert('Error', 'Completá número de tarjeta, vencimiento y CVC.');
+        return;
+      }
+    }
+    if (tipo === 'cuenta bancaria' && cardNumber.replace(/\s/g, '').length !== 22) {
+      Alert.alert('Error', 'El CBU debe tener exactamente 22 dígitos.');
+      return;
+    }
+    if (tipo === 'cuenta bancaria' && alias && !/^[a-z0-9.\-]{6,20}$/.test(alias)) {
+      Alert.alert('Error', 'El alias debe tener entre 6 y 20 caracteres. Solo se permiten letras minúsculas, números, puntos y guiones.');
       return;
     }
 
+    const paisNombre = paises.find(p => p.id === paisCuentaId)?.name ?? paisCuenta;
+
     setSubmitting(true);
     try {
-      await apiPost('/pagos', { cardNumber: cardNumber.replace(/\s/g, ''), expiry, cvc, tipo }, token || '');
+      await apiPost('/pagos', { cardNumber, expiry, cvc, tipo, titular, banco, paisCuenta: paisNombre, alias }, token || '');
       Alert.alert('Éxito', 'Método de pago añadido');
       setShowAdd(false);
-      setTipo(null);
-      setCardNumber('');
-      setExpiry('');
-      setCvc('');
+      resetForm();
       fetchMethods();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo añadir el método de pago');
@@ -76,11 +133,9 @@ export default function PaymentMethods() {
     try {
       const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/payments/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Error al eliminar');
+      if (!res.ok) throw new Error();
       Alert.alert('Éxito', 'Método de pago eliminado');
       fetchMethods();
     } catch {
@@ -108,28 +163,59 @@ export default function PaymentMethods() {
       <ScrollView className="flex-1 px-4 py-4">
         {methods.length === 0 && !showAdd ? (
           <View className="items-center justify-center py-10">
-            <CreditCard color="#A08C79" size={48} className="mb-4" />
-            <Text className="text-[#A08C79] text-center mb-6">No tienes medios de pago guardados.</Text>
+            <CreditCard color="#A08C79" size={48} />
+            <Text className="text-[#A08C79] text-center mt-4 mb-6">No tenés medios de pago guardados.</Text>
           </View>
         ) : (
-          methods.map((m) => (
-            <View key={m.identificador} className="bg-white p-4 rounded-xl border border-gray-200 mb-3 flex-row justify-between items-center shadow-sm">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-[#6A4F99]/10 rounded-full items-center justify-center mr-3">
-                  <CreditCard color="#6A4F99" size={20} />
-                </View>
-                <View>
-                  <Text className="font-bold text-[#333F48] capitalize">{m.tipo}</Text>
-                  <Text className="text-xs text-[#A08C79]">
-                    {m.numero ? `**** ${String(m.numero).slice(-4)}` : 'Sin número'}
-                  </Text>
+          methods.map((m) => {
+            const esTarjeta = m.tipo === 'tarjeta';
+            const esCheque = m.tipo === 'cheque';
+            const esCuenta = m.tipo === 'cuenta bancaria' || m.tipo === 'transferencia';
+            const Icono = esTarjeta ? CreditCard : esCheque ? FileText : Building2;
+            const color = esTarjeta ? '#6A4F99' : esCheque ? '#C9A063' : '#4A7C59';
+
+            const titulo = esTarjeta
+              ? `Tarjeta  ···· ${String(m.numero).slice(-4)}`
+              : esCheque
+              ? `Cheque Nº ${m.numero}`
+              : 'Cuenta Bancaria';
+
+            const estadoColor =
+              m.estado === 'verificado' ? '#16a34a' :
+              m.estado === 'rechazado'  ? '#dc2626' :
+              '#6A4F99';
+
+            return (
+              <View key={m.identificador} className="bg-white rounded-xl border border-gray-200 mb-3 shadow-sm overflow-hidden">
+                <View style={{ backgroundColor: color }} className="h-1.5 w-full" />
+                <View className="p-4 flex-row justify-between items-start">
+                  <View className="flex-row items-start flex-1 mr-3">
+                    <View className="w-10 h-10 rounded-full items-center justify-center mr-3 mt-0.5" style={{ backgroundColor: color + '18' }}>
+                      <Icono color={color} size={20} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-bold text-[#333F48] mb-1">{titulo}</Text>
+                      {m.titular ? <Text className="text-xs text-[#A08C79]">Titular: {m.titular}</Text> : null}
+                      {esTarjeta && m.vencimiento ? <Text className="text-xs text-[#A08C79]">Vence: {m.vencimiento}</Text> : null}
+                      {!esTarjeta && m.banco ? <Text className="text-xs text-[#A08C79]">Banco: {m.banco}</Text> : null}
+                      {esCuenta && m.numero ? (
+                        <Text className="text-xs text-[#A08C79]" numberOfLines={1}>
+                          CBU: {`${String(m.numero).slice(0, 6)}···${String(m.numero).slice(-4)}`}
+                        </Text>
+                      ) : null}
+                      {esCuenta && m.alias ? <Text className="text-xs text-[#A08C79]">Alias: {m.alias}</Text> : null}
+                      <View className="mt-1.5 self-start px-2 py-0.5 rounded-full" style={{ backgroundColor: estadoColor + '18' }}>
+                        <Text className="text-[10px] font-semibold capitalize" style={{ color: estadoColor }}>{m.estado}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => handleDelete(String(m.identificador))} className="p-2 bg-red-50 rounded-full">
+                    <Trash2 color="#ef4444" size={18} />
+                  </TouchableOpacity>
                 </View>
               </View>
-              <TouchableOpacity onPress={() => handleDelete(String(m.identificador))} className="p-2 bg-red-50 rounded-full">
-                <Trash2 color="#ef4444" size={18} />
-              </TouchableOpacity>
-            </View>
-          ))
+            );
+          })
         )}
 
         {showAdd && !tipo ? (
@@ -139,7 +225,7 @@ export default function PaymentMethods() {
               {([
                 { value: 'tarjeta', label: 'Tarjeta' },
                 { value: 'cheque', label: 'Cheque' },
-                { value: 'transferencia', label: 'Transferencia' },
+                { value: 'cuenta bancaria', label: 'Cuenta Bancaria' },
               ] as const).map((t) => (
                 <TouchableOpacity
                   key={t.value}
@@ -157,64 +243,117 @@ export default function PaymentMethods() {
         ) : showAdd && tipo ? (
           <View className="bg-white p-4 rounded-xl border border-gray-200 mt-4 shadow-sm">
             <Text className="font-bold text-[#333F48] mb-4">
-              {tipo === 'tarjeta' ? 'Nueva Tarjeta' : tipo === 'cheque' ? 'Nuevo Cheque' : 'Nueva Transferencia'}
+              {tipo === 'tarjeta' ? 'Nueva Tarjeta' : tipo === 'cheque' ? 'Nuevo Cheque' : 'Nueva Cuenta Bancaria'}
             </Text>
 
-            {tipo === 'tarjeta' ? (
+            {tipo === 'tarjeta' && (
               <>
-                <View className="mb-3">
-                  <Text className="text-xs text-[#A08C79] mb-1">Número de Tarjeta</Text>
-                  <TextInput
-                    value={cardNumber}
-                    onChangeText={(t) => setCardNumber(formatCardNumber(t))}
-                    keyboardType="numeric"
-                    placeholder="0000 0000 0000 0000"
-                    maxLength={19}
-                    className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
-                  />
-                </View>
-                <View className="flex-row gap-3 mb-4">
+                <CampoFormulario label="Titular" value={titular} onChangeText={setTitular} placeholder="Nombre del titular" />
+                <CampoFormulario
+                  label="Número de Tarjeta"
+                  value={cardNumber}
+                  onChangeText={(t) => setCardNumber(formatCardNumber(t))}
+                  keyboardType="numeric"
+                  placeholder="0000 0000 0000 0000"
+                  maxLength={19}
+                />
+                <View className="flex-row gap-3 mb-3">
                   <View className="flex-1">
-                    <Text className="text-xs text-[#A08C79] mb-1">Vencimiento</Text>
-                    <TextInput
+                    <CampoFormulario
+                      label="Vencimiento"
                       value={expiry}
                       onChangeText={(t) => setExpiry(formatExpiry(t))}
                       keyboardType="numeric"
                       placeholder="MM/AA"
                       maxLength={5}
-                      className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
                     />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-xs text-[#A08C79] mb-1">CVC</Text>
-                    <TextInput
+                    <CampoFormulario
+                      label="CVC"
                       value={cvc}
                       onChangeText={(t) => setCvc(t.replace(/\D/g, '').slice(0, 4))}
                       keyboardType="numeric"
-                      placeholder="123/1234"
+                      placeholder="123"
                       maxLength={4}
                       secureTextEntry
-                      className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
                     />
                   </View>
                 </View>
               </>
-            ) : (
-              <View className="mb-4">
-                <Text className="text-xs text-[#A08C79] mb-1">
-                  {tipo === 'cheque' ? 'Número de Cheque' : 'CBU / Alias'}
-                </Text>
-                <TextInput
-                  value={cardNumber}
-                  onChangeText={setCardNumber}
-                  placeholder={tipo === 'cheque' ? 'Ej: 00123456' : 'Ej: mi.alias o CBU'}
-                  className="border border-gray-200 rounded-lg p-3 text-[#333F48]"
-                />
-              </View>
             )}
 
-            <View className="flex-row gap-3">
-              <Button variant="secondary" className="flex-1" onPress={() => { setTipo(null); setCardNumber(''); setExpiry(''); setCvc(''); }}>
+            {tipo === 'cheque' && (
+              <>
+                <CampoFormulario
+                  label="Número de Cheque"
+                  value={cardNumber}
+                  onChangeText={(t) => setCardNumber(t.replace(/\D/g, '').slice(0, 11))}
+                  keyboardType="numeric"
+                  placeholder="Ej: 00123456"
+                  maxLength={11}
+                />
+                <CampoFormulario label="Banco" value={banco} onChangeText={setBanco} placeholder="Ej: Banco Nación" />
+                <CampoFormulario label="Titular" value={titular} onChangeText={setTitular} placeholder="Nombre del titular" />
+                <View className="mb-3">
+                  <Text className="text-xs text-[#A08C79] mb-2">Foto del Cheque</Text>
+                  {fotoCheque ? (
+                    <View className="relative">
+                      <Image source={{ uri: fotoCheque }} className="w-full h-40 rounded-lg" resizeMode="cover" />
+                      <TouchableOpacity onPress={() => setFotoCheque(null)} className="absolute top-2 right-2 bg-black/50 rounded-full p-1">
+                        <X color="white" size={16} />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={tomarFotoCheque}
+                      className="border-2 border-dashed border-gray-300 rounded-lg h-28 items-center justify-center gap-2"
+                    >
+                      <Camera color="#A08C79" size={28} />
+                      <Text className="text-sm text-[#A08C79]">Sacar foto del cheque</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </>
+            )}
+
+            {tipo === 'cuenta bancaria' && (
+              <>
+                <CampoFormulario
+                  label="CBU (22 dígitos)"
+                  value={cardNumber}
+                  onChangeText={(t) => setCardNumber(t.replace(/\D/g, '').slice(0, 22))}
+                  keyboardType="numeric"
+                  placeholder="0000000000000000000000"
+                  maxLength={22}
+                />
+                <CampoFormulario
+                  label="Alias (6-20 caracteres)"
+                  value={alias}
+                  onChangeText={(t) => setAlias(t.toLowerCase().replace(/[^a-z0-9.\-]/g, '').slice(0, 20))}
+                  placeholder="Ej: mi.alias.banco"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <CampoFormulario label="Banco" value={banco} onChangeText={setBanco} placeholder="Ej: Banco Galicia" />
+                <CampoFormulario label="Titular de la Cuenta" value={titular} onChangeText={setTitular} placeholder="Nombre del titular" />
+                <View className="mb-3">
+                  <Text className="text-xs text-[#A08C79] mb-1">País de la Cuenta</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowPaisModal(true)}
+                    className="border border-gray-200 rounded-lg p-3 flex-row items-center justify-between"
+                  >
+                    <Text style={{ color: paisCuentaId ? '#333F48' : '#C4B5A5' }}>
+                      {paisCuentaId ? paises.find(p => p.id === paisCuentaId)?.name : 'Seleccioná un país'}
+                    </Text>
+                    <ChevronDown color="#A08C79" size={16} />
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            <View className="flex-row gap-3 mt-1">
+              <Button variant="secondary" className="flex-1" onPress={resetForm}>
                 <Text>Cancelar</Text>
               </Button>
               <Button className="flex-1 bg-[#6A4F99]" onPress={handleAdd} disabled={submitting}>
@@ -229,6 +368,14 @@ export default function PaymentMethods() {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      <CountryPickerModal
+        visible={showPaisModal}
+        onClose={() => setShowPaisModal(false)}
+        paises={paises}
+        selectedId={paisCuentaId}
+        onSelect={(id) => { setPaisCuentaId(id); setShowPaisModal(false); }}
+      />
     </View>
   );
 }

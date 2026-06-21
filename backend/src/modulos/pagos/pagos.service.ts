@@ -1,18 +1,41 @@
 import { prisma } from '../../configuracion/baseDatos';
 
 export class PaymentsService {
-  async addPaymentMethod(data: { userId: string; cardNumber: string; expiry: string; cvc: string; tipo?: string }) {
-    if (data.cardNumber.length < 13) {
+  async addPaymentMethod(data: {
+    userId: string;
+    cardNumber: string;
+    expiry?: string;
+    cvc?: string;
+    tipo?: string;
+    titular?: string;
+    banco?: string;
+    paisCuenta?: string;
+    alias?: string;
+  }) {
+    const tipo = data.tipo || 'tarjeta';
+
+    if (!data.cardNumber) {
+      throw new Error('El número / identificador es requerido');
+    }
+    if (tipo === 'tarjeta' && data.cardNumber.replace(/\s/g, '').length < 13) {
       throw new Error('Número de tarjeta inválido');
+    }
+    if (tipo === 'cuenta bancaria' && data.cardNumber.replace(/\s/g, '').length !== 22) {
+      throw new Error('El CBU debe tener exactamente 22 dígitos');
     }
 
     const method = await prisma.extra_metodosPago.create({
       data: {
         cliente: parseInt(data.userId),
-        tipo: data.tipo || 'tarjeta',
-        numero: data.cardNumber,
-        vencimiento: data.expiry,
-        cvv: data.cvc,
+        tipo,
+        numero: data.cardNumber.replace(/\s/g, ''),
+        vencimiento: data.expiry || null,
+        cvv: data.cvc || null,
+        titular: data.titular || null,
+        banco: data.banco || null,
+        paisCuenta: data.paisCuenta || null,
+        alias: data.alias || null,
+        estado: tipo === 'cheque' ? 'pendiente' : 'verificado',
       },
     });
 

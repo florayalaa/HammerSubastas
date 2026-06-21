@@ -22,7 +22,7 @@ async function procesarValidadosSinMail() {
       await sendTemporaryPasswordEmail(cred.email, tempCode, nombre);
 
       await prisma.extra_credencialesCliente.update({
-        where: { identificador: cred.identificador },
+        where: { cliente: cred.cliente },
         data: { passwordHash, mailEnviado: true },
       });
 
@@ -50,7 +50,7 @@ async function procesarRechazadosSinMail() {
       });
 
       await prisma.extra_credencialesCliente.update({
-        where: { identificador: cred.identificador },
+        where: { cliente: cred.cliente },
         data: { mailEnviado: true },
       });
 
@@ -73,7 +73,7 @@ async function procesarCuentasInactivadas() {
   for (const cred of inactivados) {
     try {
       await prisma.extra_credencialesCliente.update({
-        where: { identificador: cred.identificador },
+        where: { cliente: cred.cliente },
         data: { estadoCredencial: 'inactivo' },
       });
 

@@ -28,17 +28,17 @@ model catalogos {
 }
 
 model clientes {
-  identificador             Int                         @id(map: "pk_clientes")
+  identificador             Int                        @id(map: "pk_clientes")
   numeroPais                Int?
-  admitido                  String?                     @db.VarChar(2)
-  categoria                 String?                     @db.VarChar(10)
+  admitido                  String?                    @db.VarChar(2)
+  categoria                 String?                    @db.VarChar(10)
   verificador               Int
   asistentes                asistentes[]
-  empleados                 empleados                   @relation(fields: [verificador], references: [identificador], onUpdate: NoAction, map: "fk_clientes_empleados")
-  paises                    paises?                     @relation(fields: [numeroPais], references: [numero], onDelete: NoAction, onUpdate: NoAction, map: "fk_clientes_paises")
-  personas                  personas                    @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, map: "fk_clientes_personas")
-  extra_credencialesCliente extra_credencialesCliente[]
-  extra_documentosCliente   extra_documentosCliente[]
+  empleados                 empleados                  @relation(fields: [verificador], references: [identificador], onUpdate: NoAction, map: "fk_clientes_empleados")
+  paises                    paises?                    @relation(fields: [numeroPais], references: [numero], onDelete: NoAction, onUpdate: NoAction, map: "fk_clientes_paises")
+  personas                  personas                   @relation(fields: [identificador], references: [identificador], onUpdate: NoAction, map: "fk_clientes_personas")
+  extra_credencialesCliente extra_credencialesCliente?
+  extra_documentosCliente   extra_documentosCliente?
   extra_metodosPago         extra_metodosPago[]
   registroDeSubasta         registroDeSubasta[]
 }
@@ -68,23 +68,22 @@ model empleados {
 }
 
 model extra_credencialesCliente {
-  identificador     Int      @id(map: "pk_extra_credencialesCliente") @default(autoincrement())
-  cliente           Int
-  email             String   @unique(map: "uq_extra_credencialesCliente_email") @db.VarChar(200)
-  passwordHash      String   @db.VarChar(500)
-  debeCambiarClave  String   @default("si", map: "DF__extra_cre__debeC__160F4887") @db.VarChar(2)
-  estadoCredencial  String   @default("pendiente") @db.VarChar(20)
-  mailEnviado       Boolean  @default(false)
-  fechaRegistro     DateTime @default(now()) @db.Date
-  clientes          clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_credencialesCliente_clientes")
+  cliente          Int      @id(map: "pk_extra_credencialesCliente")
+  email            String   @unique(map: "uq_extra_credencialesCliente_email") @db.VarChar(200)
+  passwordHash     String   @db.VarChar(500)
+  estadoCredencial String   @default("pendiente", map: "DF__extra_cre__estad__7755B73D") @db.VarChar(20)
+  debeCambiarClave String   @default("si", map: "DF__extra_cre__debeC__793DFFAF") @db.VarChar(2)
+  mailEnviado      Boolean  @default(false, map: "DF__extra_cre__mailE__7B264821")
+  fechaRegistro    DateTime @default(now(), map: "DF__extra_cre__fecha__7C1A6C5A") @db.Date
+  identificador    Int      @default(autoincrement())
+  clientes         clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_credencialesCliente_clientes")
 }
 
 model extra_documentosCliente {
-  identificador Int      @id(map: "pk_extra_documentosCliente") @default(autoincrement())
-  cliente       Int
-  fotoFrente    Bytes
-  fotoDorso     Bytes
-  clientes      clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_documentosCliente_clientes")
+  cliente    Int      @id(map: "pk_extra_documentosCliente")
+  fotoFrente Bytes
+  fotoDorso  Bytes
+  clientes   clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_documentosCliente_clientes")
 }
 
 model extra_metodosPago {
@@ -95,6 +94,10 @@ model extra_metodosPago {
   vencimiento   String?  @db.VarChar(7)
   cvv           String?  @db.VarChar(4)
   estado        String   @default("pendiente", map: "DF__extra_met__estad__1EA48E88") @db.VarChar(20)
+  titular       String?  @db.VarChar(150)
+  banco         String?  @db.VarChar(150)
+  paisCuenta    String?  @db.VarChar(100)
+  alias         String?  @db.VarChar(30)
   clientes      clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_metodosPago_clientes")
 }
 
@@ -136,16 +139,16 @@ model paises {
 }
 
 model personas {
-  identificador Int           @id(map: "pk_personas") @default(autoincrement())
-  documento     String        @db.VarChar(20)
-  nombre        String        @db.VarChar(150)
-  direccion     String?       @db.VarChar(250)
-  estado        String?       @db.VarChar(15)
-  foto          Bytes?
+  identificador  Int              @id(map: "pk_personas") @default(autoincrement())
+  documento      String           @db.VarChar(20)
+  nombre         String           @db.VarChar(150)
+  direccion      String?          @db.VarChar(250)
+  estado         String?          @db.VarChar(15)
+  foto           Bytes?
   clientes       clientes?
   duenios        duenios?
-  subastadores   subastadores?
   notificaciones notificaciones[]
+  subastadores   subastadores?
 }
 
 model productos {
@@ -229,14 +232,6 @@ model subastas {
   subastadores        subastadores?       @relation(fields: [subastador], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_subastas_subastadores")
 }
 
-// Tabla extra del equipo — crear en SQL Server si no existe:
-// CREATE TABLE notificaciones (
-//   id INT IDENTITY(1,1) PRIMARY KEY,
-//   identificadorPersona INT NOT NULL REFERENCES personas(identificador),
-//   mensaje VARCHAR(500) NOT NULL,
-//   leido BIT NOT NULL DEFAULT 0,
-//   fecha DATETIME2 NOT NULL DEFAULT GETDATE()
-// )
 model notificaciones {
   id                   Int      @id @default(autoincrement())
   identificadorPersona Int
@@ -245,4 +240,3 @@ model notificaciones {
   fecha                DateTime @default(now())
   personas             personas @relation(fields: [identificadorPersona], references: [identificador], onUpdate: NoAction, map: "fk_notificaciones_personas")
 }
-

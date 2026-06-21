@@ -22,7 +22,10 @@ function RootLayoutNav() {
     if (!isReady || showSplash) return;
 
     const inAuthGroup = segments[0] === '(autenticacion)';
-    if (!isAuthenticated && !inAuthGroup) {
+
+    if (isAuthenticated && inAuthGroup) {
+      router.replace('/(navegacion)');
+    } else if (!isAuthenticated && !inAuthGroup && segments.length > 0) {
       router.replace('/(autenticacion)/iniciar-sesion');
     }
   }, [isAuthenticated, isReady, showSplash, segments]);
@@ -58,6 +61,16 @@ function RootLayoutNav() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(autenticacion)" options={{ headerShown: false }} />
       <Stack.Screen name="(navegacion)" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/editar" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/medios-de-pago" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/metricas" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/mis-compras" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/mis-documentos" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/mis-ventas" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/subir-articulo" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      <Stack.Screen name="subastas/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="subastas/en-vivo/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

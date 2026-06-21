@@ -8,7 +8,7 @@ export class UsersService {
       include: {
         clientes: {
           include: {
-            extra_credencialesCliente: { take: 1 },
+            extra_credencialesCliente: true,
             paises: true,
           },
         },
@@ -23,39 +23,53 @@ export class UsersService {
       id: persona.identificador.toString(),
       firstName: persona.nombre.split(' ')[0] || '',
       lastName: persona.nombre.split(' ').slice(1).join(' ') || '',
-      email: persona.clientes?.extra_credencialesCliente?.[0]?.email ?? '',
+      email: persona.clientes?.extra_credencialesCliente?.email ?? '',
+      numeroPais: persona.clientes?.numeroPais ?? null,
       country: persona.clientes?.paises?.nombre || '',
       address: persona.direccion || '',
       category: persona.clientes?.categoria || 'comun',
       isApproved: persona.clientes?.admitido === 'si',
+      foto: persona.foto ? Buffer.from(persona.foto).toString('base64') : null,
       documentFront: persona.foto ? 'base64-image' : null,
       documentBack: null,
-      createdAt: persona.clientes?.extra_credencialesCliente?.[0]?.fechaRegistro?.toISOString().split('T')[0] ?? null,
+      createdAt: persona.clientes?.extra_credencialesCliente?.fechaRegistro?.toISOString().split('T')[0] ?? null,
     };
   }
 
   async updateProfile(userId: string, data: any) {
     const id = parseInt(userId, 10);
+
+    const personaData: any = {
+      nombre: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+      direccion: data.address || null,
+    };
+    if (data.foto) {
+      personaData.foto = Buffer.from(data.foto, 'base64');
+    }
+
     const persona = await prisma.personas.update({
       where: { identificador: id },
-      data: {
-        nombre: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
-        direccion: `${data.address || ''}, ${data.country || ''}`.trim(),
-      },
+      data: personaData,
       include: {
-        clientes: {
-          include: { extra_credencialesCliente: true },
-        },
+        clientes: { include: { extra_credencialesCliente: true, paises: true } },
       },
     });
+
+    if (data.numeroPais) {
+      await prisma.clientes.update({
+        where: { identificador: id },
+        data: { numeroPais: parseInt(data.numeroPais) },
+      });
+    }
 
     return {
       id: persona.identificador.toString(),
       firstName: persona.nombre.split(' ')[0] || '',
       lastName: persona.nombre.split(' ').slice(1).join(' ') || '',
-      email: persona.clientes?.extra_credencialesCliente?.[0]?.email ?? '',
-      country: data.country || '',
-      address: data.address || '',
+      email: persona.clientes?.extra_credencialesCliente?.email ?? '',
+      numeroPais: data.numeroPais ?? persona.clientes?.numeroPais,
+      country: persona.clientes?.paises?.nombre || '',
+      address: persona.direccion || '',
       category: persona.clientes?.categoria || 'comun',
     };
   }
