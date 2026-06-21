@@ -1,5 +1,17 @@
 import { prisma } from '../../configuracion/baseDatos';
 
+function parsearVencimiento(expiry: string | undefined, tipo: string): Date | null {
+  if (!expiry) return null;
+  if (tipo === 'cheque') {
+    const [dd, mm, aa] = expiry.split('/');
+    if (!dd || !mm || !aa) return null;
+    return new Date(Date.UTC(2000 + parseInt(aa), parseInt(mm) - 1, parseInt(dd)));
+  }
+  const [mm, aa] = expiry.split('/');
+  if (!mm || !aa) return null;
+  return new Date(Date.UTC(2000 + parseInt(aa), parseInt(mm) - 1, 1));
+}
+
 export class PaymentsService {
   async addPaymentMethod(data: {
     userId: string;
@@ -9,8 +21,10 @@ export class PaymentsService {
     tipo?: string;
     titular?: string;
     banco?: string;
-    paisCuenta?: string;
+    pais?: string;
     alias?: string;
+    fotoCheque?: Buffer;
+    montoGarantia?: string;
   }) {
     const tipo = data.tipo || 'tarjeta';
 
@@ -24,28 +38,93 @@ export class PaymentsService {
       throw new Error('El CBU debe tener exactamente 22 dígitos');
     }
 
+    const clienteId = parseInt(data.userId);
+    const estadoInicial = tipo === 'cheque' ? 'pendiente' : 'verificado';
+
     const method = await prisma.extra_metodosPago.create({
       data: {
-        cliente: parseInt(data.userId),
+        cliente: clienteId,
         tipo,
         numero: data.cardNumber.replace(/\s/g, ''),
-        vencimiento: data.expiry || null,
+        vencimiento: parsearVencimiento(data.expiry, tipo),
         cvv: data.cvc || null,
         titular: data.titular || null,
         banco: data.banco || null,
-        paisCuenta: data.paisCuenta || null,
+        pais: data.pais || null,
         alias: data.alias || null,
-        estado: tipo === 'cheque' ? 'pendiente' : 'verificado',
+        estado: estadoInicial,
+        fotoCheque: data.fotoCheque || null,
+        montoGarantia: data.montoGarantia ? parseFloat(data.montoGarantia) : null,
       },
     });
+
+    if (estadoInicial === 'verificado') {
+      const etiqueta = tipo === 'tarjeta' ? 'tarjeta' : 'cuenta bancaria';
+      await prisma.notificaciones.create({
+        data: {
+          identificadorPersona: clienteId,
+          mensaje: `Tu ${etiqueta} fue verificada exitosamente.`,
+        },
+      });
+    }
 
     return method;
   }
 
-  async getMyPaymentMethods(userId: string) {
-    return prisma.extra_metodosPago.findMany({
-      where: { cliente: parseInt(userId) },
+  async verificarMetodoPago(paymentId: string) {
+    const metodo = await prisma.extra_metodosPago.findUnique({
+      where: { identificador: parseInt(paymentId) },
     });
+    if (!metodo) throw new Error('Método de pago no encontrado');
+    if (metodo.estado === 'verificado') throw new Error('El método ya está verificado');
+
+    const updated = await prisma.extra_metodosPago.update({
+      where: { identificador: parseInt(paymentId) },
+      data: { estado: 'verificado' },
+    });
+
+    await prisma.notificaciones.create({
+      data: {
+        identificadorPersona: metodo.cliente,
+        mensaje: `Tu cheque (Nº ${metodo.numero}) fue verificado exitosamente.`,
+      },
+    });
+
+    return updated;
+  }
+
+  async getMyPaymentMethods(userId: string) {
+    const methods = await prisma.extra_metodosPago.findMany({
+      where: { cliente: parseInt(userId) },
+      select: {
+        identificador: true,
+        cliente: true,
+        tipo: true,
+        numero: true,
+        vencimiento: true,
+        estado: true,
+        titular: true,
+        banco: true,
+        pais: true,
+        alias: true,
+        montoGarantia: true,
+      },
+    });
+    return methods;
+  }
+
+  async getPaymentMethodById(paymentId: string, userId: string) {
+    const method = await prisma.extra_metodosPago.findUnique({
+      where: { identificador: parseInt(paymentId) },
+    });
+
+    if (!method) throw new Error('Método de pago no encontrado');
+    if (method.cliente !== parseInt(userId)) throw new Error('No autorizado');
+
+    return {
+      ...method,
+      fotoCheque: method.fotoCheque ? method.fotoCheque.toString('base64') : null,
+    };
   }
 
   async removePaymentMethod(paymentId: string, userId: string) {

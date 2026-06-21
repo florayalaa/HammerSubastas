@@ -1,14 +1,25 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, TextInputProps, Alert, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, TextInput, TextInputProps, Alert, Image } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, CreditCard, Trash2, Plus, FileText, Building2, Camera, X, ChevronDown } from 'lucide-react-native';
+import { ChevronLeft, CreditCard, Trash2, Plus, FileText, Building2, Camera, X, ChevronDown, ChevronRight } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
-import { apiGet, apiPost } from '@/app/lib/api';
+import { API_BASE_URL, apiGet } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { CountryPickerModal } from '@/components/authComponents';
 import * as ImagePicker from 'expo-image-picker';
 
 interface Pais { id: number; name: string; }
+
+function formatVenc(fecha: string | null | undefined, esCheque: boolean): string {
+  if (!fecha) return '—';
+  const d = new Date(fecha);
+  if (isNaN(d.getTime())) return '—';
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const aa = String(d.getUTCFullYear()).slice(-2);
+  return esCheque ? `${dd}/${mm}/${aa}` : `${mm}/${aa}`;
+}
 
 const CampoFormulario = ({ label, className = '', ...props }: { label: string } & TextInputProps) => (
   <View className="mb-3">
@@ -40,17 +51,21 @@ export default function PaymentMethods() {
   const [paisCuenta, setPaisCuenta] = useState('');
   const [alias, setAlias] = useState('');
   const [fotoCheque, setFotoCheque] = useState<string | null>(null);
+  const [montoGarantia, setMontoGarantia] = useState('');
+  const [vencimientoCheque, setVencimientoCheque] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const fetchMethods = useCallback(async () => {
+    // Países: endpoint público, carga independiente para que no falle con los pagos
+    apiGet('/paises').then(res => {
+      setPaises(res?.data ?? res ?? []);
+    }).catch(() => {});
+
+    if (!token) { setLoading(false); return; }
+
     try {
-      if (!token) return;
-      const [pagosRes, paisesRes] = await Promise.all([
-        apiGet('/pagos', token),
-        apiGet('/paises'),
-      ]);
+      const pagosRes = await apiGet('/pagos', token);
       if (pagosRes?.data) setMethods(pagosRes.data);
-      setPaises(paisesRes?.data ?? paisesRes ?? []);
     } catch {
       console.warn('Error al obtener medios de pago');
     } finally {
@@ -68,6 +83,21 @@ export default function PaymentMethods() {
     return digits.length >= 3 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
   };
 
+  const formatearMonto = (input: string): string => {
+    const limpio = input.replace(/[^0-9,]/g, '');
+    const [entero, decimal] = limpio.split(',');
+    const enteroFormateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return decimal !== undefined ? `${enteroFormateado},${decimal.slice(0, 2)}` : enteroFormateado;
+  };
+
+  // DD/MM/AA
+  const formatFechaCheque = (value: string) => {
+    const d = value.replace(/\D/g, '').slice(0, 6);
+    if (d.length >= 5) return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+    if (d.length >= 3) return `${d.slice(0, 2)}/${d.slice(2)}`;
+    return d;
+  };
+
   const resetForm = () => {
     setTipo(null);
     setCardNumber('');
@@ -78,18 +108,50 @@ export default function PaymentMethods() {
     setPaisCuenta('');
     setAlias('');
     setFotoCheque(null);
+    setMontoGarantia('');
+    setVencimientoCheque('');
+
     setPaisCuentaId(0);
     setPaisCuenta('');
   };
 
-  const tomarFotoCheque = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara para sacar la foto del cheque.');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
-    if (!result.canceled && result.assets[0]) setFotoCheque(result.assets[0].uri);
+  const tomarFotoCheque = () => {
+    Alert.alert('Foto del cheque', '¿Cómo querés cargar la foto?', [
+      {
+        text: 'Cámara', onPress: async () => {
+          const { status } = await ImagePicker.requestCameraPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara.');
+            return;
+          }
+          const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+          if (!result.canceled && result.assets[0]) setFotoCheque(result.assets[0].uri);
+        }
+      },
+      {
+        text: 'Galería', onPress: async () => {
+          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert('Permiso requerido', 'Necesitamos acceso a la galería.');
+            return;
+          }
+          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+          if (!result.canceled && result.assets[0]) setFotoCheque(result.assets[0].uri);
+        }
+      },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  };
+
+  const validarFechaCheque = (fecha: string): string | null => {
+    if (!fecha || fecha.length < 8) return null;
+    const [dd, mm, aa] = fecha.split('/');
+    const dia = parseInt(dd), mes = parseInt(mm), anio = 2000 + parseInt(aa);
+    if (mes < 1 || mes > 12) return 'El mes debe estar entre 01 y 12.';
+    if (dia < 1 || dia > 31) return 'El día debe estar entre 01 y 31.';
+    const fecha2 = new Date(anio, mes - 1, dia);
+    if (fecha2.getMonth() !== mes - 1) return 'La fecha ingresada no es válida.';
+    return null;
   };
 
   const handleAdd = async () => {
@@ -112,12 +174,41 @@ export default function PaymentMethods() {
       Alert.alert('Error', 'El alias debe tener entre 6 y 20 caracteres. Solo se permiten letras minúsculas, números, puntos y guiones.');
       return;
     }
+    if (tipo === 'cheque' && vencimientoCheque) {
+      const errorFecha = validarFechaCheque(vencimientoCheque);
+      if (errorFecha) { Alert.alert('Error', errorFecha); return; }
+    }
 
     const paisNombre = paises.find(p => p.id === paisCuentaId)?.name ?? paisCuenta;
 
     setSubmitting(true);
     try {
-      await apiPost('/pagos', { cardNumber, expiry, cvc, tipo, titular, banco, paisCuenta: paisNombre, alias }, token || '');
+      const formData = new FormData();
+      formData.append('cardNumber', cardNumber);
+      formData.append('cvc', cvc);
+      formData.append('tipo', tipo ?? '');
+      formData.append('titular', titular);
+      formData.append('banco', banco);
+      formData.append('pais', paisNombre);
+      formData.append('alias', alias);
+      if (montoGarantia) formData.append('montoGarantia', montoGarantia.replace(/\./g, '').replace(',', '.'));
+
+      const expiryParaEnviar = tipo === 'cheque' ? vencimientoCheque : expiry;
+      if (expiryParaEnviar) formData.append('expiry', expiryParaEnviar);
+
+      if (tipo === 'cheque' && fotoCheque) {
+        const filename = fotoCheque.split('/').pop() ?? 'cheque.jpg';
+        formData.append('fotoCheque', { uri: fotoCheque, name: filename, type: 'image/jpeg' } as any);
+      }
+
+      const res = await fetch(`${API_BASE_URL}/pagos`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
+
       Alert.alert('Éxito', 'Método de pago añadido');
       setShowAdd(false);
       resetForm();
@@ -130,17 +221,24 @@ export default function PaymentMethods() {
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/payments/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error();
-      Alert.alert('Éxito', 'Método de pago eliminado');
-      fetchMethods();
-    } catch {
-      Alert.alert('Error', 'No se pudo eliminar el método de pago');
-    }
+    Alert.alert('Eliminar', '¿Querés eliminar este método de pago?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar', style: 'destructive', onPress: async () => {
+          try {
+            const res = await fetch(`${API_BASE_URL}/pagos/${id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error();
+            Alert.alert('Éxito', 'Método de pago eliminado');
+            fetchMethods();
+          } catch {
+            Alert.alert('Error', 'No se pudo eliminar el método de pago');
+          }
+        }
+      }
+    ]);
   };
 
   if (loading) {
@@ -160,7 +258,7 @@ export default function PaymentMethods() {
         <Text className="text-xl font-bold text-[#333F48]">Medios de Pago</Text>
       </View>
 
-      <ScrollView className="flex-1 px-4 py-4">
+      <KeyboardAwareScrollView className="flex-1 px-4 py-4" keyboardShouldPersistTaps="handled" enableOnAndroid extraScrollHeight={20}>
         {methods.length === 0 && !showAdd ? (
           <View className="items-center justify-center py-10">
             <CreditCard color="#A08C79" size={48} />
@@ -186,7 +284,12 @@ export default function PaymentMethods() {
               '#6A4F99';
 
             return (
-              <View key={m.identificador} className="bg-white rounded-xl border border-gray-200 mb-3 shadow-sm overflow-hidden">
+              <TouchableOpacity
+                key={m.identificador}
+                onPress={() => router.push(`/perfil/medios-de-pago/${m.identificador}`)}
+                className="bg-white rounded-xl border border-gray-200 mb-3 shadow-sm overflow-hidden"
+                activeOpacity={0.85}
+              >
                 <View style={{ backgroundColor: color }} className="h-1.5 w-full" />
                 <View className="p-4 flex-row justify-between items-start">
                   <View className="flex-row items-start flex-1 mr-3">
@@ -196,7 +299,7 @@ export default function PaymentMethods() {
                     <View className="flex-1">
                       <Text className="font-bold text-[#333F48] mb-1">{titulo}</Text>
                       {m.titular ? <Text className="text-xs text-[#A08C79]">Titular: {m.titular}</Text> : null}
-                      {esTarjeta && m.vencimiento ? <Text className="text-xs text-[#A08C79]">Vence: {m.vencimiento}</Text> : null}
+                      {(esTarjeta || esCheque) && m.vencimiento ? <Text className="text-xs text-[#A08C79]">Vence: {formatVenc(m.vencimiento, esCheque)}</Text> : null}
                       {!esTarjeta && m.banco ? <Text className="text-xs text-[#A08C79]">Banco: {m.banco}</Text> : null}
                       {esCuenta && m.numero ? (
                         <Text className="text-xs text-[#A08C79]" numberOfLines={1}>
@@ -209,11 +312,14 @@ export default function PaymentMethods() {
                       </View>
                     </View>
                   </View>
-                  <TouchableOpacity onPress={() => handleDelete(String(m.identificador))} className="p-2 bg-red-50 rounded-full">
-                    <Trash2 color="#ef4444" size={18} />
-                  </TouchableOpacity>
+                  <View className="flex-row items-center gap-2">
+                    <ChevronRight color="#A08C79" size={18} />
+                    <TouchableOpacity onPress={() => handleDelete(String(m.identificador))} className="p-2 bg-red-50 rounded-full">
+                      <Trash2 color="#ef4444" size={18} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })
         )}
@@ -257,28 +363,35 @@ export default function PaymentMethods() {
                   placeholder="0000 0000 0000 0000"
                   maxLength={19}
                 />
-                <View className="flex-row gap-3 mb-3">
-                  <View className="flex-1">
-                    <CampoFormulario
-                      label="Vencimiento"
-                      value={expiry}
-                      onChangeText={(t) => setExpiry(formatExpiry(t))}
-                      keyboardType="numeric"
-                      placeholder="MM/AA"
-                      maxLength={5}
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <CampoFormulario
-                      label="CVC"
-                      value={cvc}
-                      onChangeText={(t) => setCvc(t.replace(/\D/g, '').slice(0, 4))}
-                      keyboardType="numeric"
-                      placeholder="123"
-                      maxLength={4}
-                      secureTextEntry
-                    />
-                  </View>
+                <CampoFormulario
+                  label="CVC"
+                  value={cvc}
+                  onChangeText={(t) => setCvc(t.replace(/\D/g, '').slice(0, 4))}
+                  keyboardType="numeric"
+                  placeholder="123"
+                  maxLength={4}
+                  secureTextEntry
+                />
+                <CampoFormulario
+                  label="Vencimiento (MM/AA)"
+                  value={expiry}
+                  onChangeText={(t) => setExpiry(formatExpiry(t))}
+                  keyboardType="numeric"
+                  placeholder="MM/AA"
+                  maxLength={5}
+                />
+                <CampoFormulario label="Banco emisor" value={banco} onChangeText={setBanco} placeholder="Ej: Banco Galicia" />
+                <View className="mb-3">
+                  <Text className="text-xs text-[#A08C79] mb-1">País</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowPaisModal(true)}
+                    className="border border-gray-200 rounded-lg p-3 flex-row items-center justify-between"
+                  >
+                    <Text style={{ color: paisCuentaId ? '#333F48' : '#C4B5A5' }}>
+                      {paisCuentaId ? paises.find(p => p.id === paisCuentaId)?.name : 'Seleccioná un país'}
+                    </Text>
+                    <ChevronDown color="#A08C79" size={16} />
+                  </TouchableOpacity>
                 </View>
               </>
             )}
@@ -288,13 +401,41 @@ export default function PaymentMethods() {
                 <CampoFormulario
                   label="Número de Cheque"
                   value={cardNumber}
-                  onChangeText={(t) => setCardNumber(t.replace(/\D/g, '').slice(0, 11))}
+                  onChangeText={(t) => setCardNumber(t.replace(/\D/g, '').slice(0, 8))}
                   keyboardType="numeric"
                   placeholder="Ej: 00123456"
-                  maxLength={11}
+                  maxLength={8}
                 />
+                <Text className="text-xs text-[#A08C79] -mt-2 mb-3">El número figura en el frente del cheque físico (8 dígitos).</Text>
                 <CampoFormulario label="Banco" value={banco} onChangeText={setBanco} placeholder="Ej: Banco Nación" />
                 <CampoFormulario label="Titular" value={titular} onChangeText={setTitular} placeholder="Nombre del titular" />
+                <CampoFormulario
+                  label="Vencimiento (DD/MM/AA)"
+                  value={vencimientoCheque}
+                  onChangeText={(t) => setVencimientoCheque(formatFechaCheque(t))}
+                  keyboardType="numeric"
+                  placeholder="DD/MM/AA"
+                  maxLength={8}
+                />
+                <CampoFormulario
+                  label="Monto del cheque ($)"
+                  value={montoGarantia}
+                  onChangeText={(t) => setMontoGarantia(formatearMonto(t))}
+                  keyboardType="decimal-pad"
+                  placeholder="Ej: 50.000,00"
+                />
+                <View className="mb-3">
+                  <Text className="text-xs text-[#A08C79] mb-1">País</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowPaisModal(true)}
+                    className="border border-gray-200 rounded-lg p-3 flex-row items-center justify-between"
+                  >
+                    <Text style={{ color: paisCuentaId ? '#333F48' : '#C4B5A5' }}>
+                      {paisCuentaId ? paises.find(p => p.id === paisCuentaId)?.name : 'Seleccioná un país'}
+                    </Text>
+                    <ChevronDown color="#A08C79" size={16} />
+                  </TouchableOpacity>
+                </View>
                 <View className="mb-3">
                   <Text className="text-xs text-[#A08C79] mb-2">Foto del Cheque</Text>
                   {fotoCheque ? (
@@ -367,7 +508,7 @@ export default function PaymentMethods() {
             <Text className="text-white font-bold">Agregar</Text>
           </TouchableOpacity>
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <CountryPickerModal
         visible={showPaisModal}

@@ -64,7 +64,8 @@ function RootLayoutNav() {
       <Stack.Screen name="(autenticacion)" options={{ headerShown: false }} />
       <Stack.Screen name="(navegacion)" options={{ headerShown: false }} />
       <Stack.Screen name="perfil/editar" options={{ headerShown: false }} />
-      <Stack.Screen name="perfil/medios-de-pago" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/medios-de-pago/index" options={{ headerShown: false }} />
+      <Stack.Screen name="perfil/medios-de-pago/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="perfil/metricas" options={{ headerShown: false }} />
       <Stack.Screen name="perfil/mis-compras" options={{ headerShown: false }} />
       <Stack.Screen name="perfil/mis-documentos" options={{ headerShown: false }} />

@@ -4,7 +4,7 @@ import { Link } from 'expo-router';
 import { Gavel, HandCoins, ChevronRight } from 'lucide-react-native';
 import { Card, CardContent } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
-import { apiGet } from '@/app/lib/api';
+import { apiGet, API_BASE_URL } from '@/app/lib/api';
 import { TarjetaSubasta } from '@/components/TarjetaSubasta';
 
 export default function Dashboard() {
@@ -18,7 +18,7 @@ export default function Dashboard() {
   React.useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.11:4000'}/api/subastas`);
+        const res = await fetch(`${API_BASE_URL.replace('/api', '')}/api/subastas`);
         if (res.ok) {
           const data = await res.json();
           

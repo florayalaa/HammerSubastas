@@ -15,9 +15,24 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
     const itemId = parseInt(req.params.catalogItemId);
     const amount = parseFloat(req.body.amount);
     const clienteId = parseInt(req.user?.id?.toString() ?? '0');
+    const metodoPagoId = req.body.metodoPagoId ? parseInt(req.body.metodoPagoId) : null;
 
     if (isNaN(itemId) || isNaN(amount) || !clienteId) {
       return res.status(400).json({ error: 'Invalid data' });
+    }
+
+    if (metodoPagoId) {
+      const metodoPago = await prisma.extra_metodosPago.findUnique({
+        where: { identificador: metodoPagoId },
+      });
+      if (metodoPago && metodoPago.tipo === 'cheque') {
+        const garantia = Number(metodoPago.montoGarantia ?? 0);
+        if (garantia < amount) {
+          return res.status(400).json({
+            error: 'El monto de tu cheque verificado no alcanza para esta puja. Elegí otro medio de pago o ajustá el monto.',
+          });
+        }
+      }
     }
 
     const item = await prisma.itemsCatalogo.findUnique({

@@ -91,13 +91,15 @@ model extra_metodosPago {
   cliente       Int
   tipo          String   @db.VarChar(20)
   numero        String   @db.VarChar(50)
-  vencimiento   String?  @db.VarChar(7)
+  vencimiento   DateTime? @db.Date
   cvv           String?  @db.VarChar(4)
   estado        String   @default("pendiente", map: "DF__extra_met__estad__1EA48E88") @db.VarChar(20)
   titular       String?  @db.VarChar(150)
   banco         String?  @db.VarChar(150)
-  paisCuenta    String?  @db.VarChar(100)
+  pais          String?  @db.VarChar(100)
   alias         String?  @db.VarChar(30)
+  fotoCheque    Bytes?
+  montoGarantia Decimal? @db.Decimal(18, 2)
   clientes      clientes @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_metodosPago_clientes")
 }
 
