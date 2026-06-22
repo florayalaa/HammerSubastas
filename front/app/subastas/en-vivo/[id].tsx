@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Modal, FlatList } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Modal, FlatList, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Users, HandCoins, CreditCard, FileText, Building2, ChevronDown } from 'lucide-react-native';
+import { ChevronLeft, HandCoins, CreditCard, FileText, Building2, ChevronDown } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
@@ -21,19 +21,16 @@ export default function LiveAuction() {
   const [metodosPago, setMetodosPago] = useState<any[]>([]);
   const [metodoPagoSeleccionado, setMetodoPagoSeleccionado] = useState<any>(null);
   const [showMetodoPicker, setShowMetodoPicker] = useState(false);
-  const [recentBids, setRecentBids] = useState<{user: string, amount: number, id: string}[]>([
-    { user: 'User***89', amount: 45000, id: '1' },
-    { user: 'User***21', amount: 44500, id: '2' },
-    { user: 'User***55', amount: 43000, id: '3' },
-  ]);
+  const [recentBids, setRecentBids] = useState<{user: string, amount: number, id: string}[]>([]);
+  const [esperandoOtroPujador, setEsperandoOtroPujador] = useState(false);
 
   const [currentItem, setCurrentItem] = useState({
-    title: "Anillo de Diamantes Art Déco",
-    currentBid: 45000,
-    basePrice: 40000,
-    highestBidder: "User***89",
-    image: "https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=800&q=80",
-    timeRemaining: "03:00:00"
+    title: "",
+    currentBid: 0,
+    basePrice: 0,
+    highestBidder: "",
+    image: null as string | null,
+    timeRemaining: "01:00",
   });
 
   const [activeItem, setActiveItem] = useState<any>(null);
@@ -50,31 +47,27 @@ export default function LiveAuction() {
       .catch(() => {});
   }, [isAuthenticated, token]);
 
-  // Fecha de fin estática a 3 horas desde el momento en que se abre la app
-  const [endTime] = useState(() => new Date(Date.now() + 3 * 60 * 60 * 1000));
+  const [endTime, setEndTime] = useState(() => new Date(Date.now() + 60 * 1000));
+  const [tiempoAgotado, setTiempoAgotado] = useState(false);
 
   useEffect(() => {
-    // Cronómetro que actualiza el state cada 1 segundo
+    setTiempoAgotado(false);
     const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = endTime.getTime() - now;
+      const distance = endTime.getTime() - Date.now();
 
-      if (distance < 0) {
+      if (distance <= 0) {
         clearInterval(interval);
-        setCurrentItem(prev => ({ ...prev, timeRemaining: "00:00:00" }));
+        setTiempoAgotado(true);
+        setCurrentItem(prev => ({ ...prev, timeRemaining: "00:00" }));
         return;
       }
 
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const minutes = Math.floor(distance / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-      const formatted = 
-        String(hours).padStart(2, '0') + ":" +
-        String(minutes).padStart(2, '0') + ":" +
-        String(seconds).padStart(2, '0');
-
-      setCurrentItem(prev => ({ ...prev, timeRemaining: formatted }));
+      setCurrentItem(prev => ({
+        ...prev,
+        timeRemaining: `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`,
+      }));
     }, 1000);
 
     return () => clearInterval(interval);
@@ -95,11 +88,11 @@ export default function LiveAuction() {
               title: firstItem.title,
               currentBid: firstItem.currentPrice,
               basePrice: firstItem.startingPrice,
-              image: "https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=800&q=80"
+              image: firstItem.image ? `${API_BASE_URL}${firstItem.image}` : null,
             }));
 
             // Obtenemos las pujas de este artículo
-            const bidsRes = await fetch(`${API_URL}/api/bids/item/${firstItem.id}`, {
+            const bidsRes = await fetch(`${API_URL}/api/pujos/item/${firstItem.id}`, {
               headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
             if (bidsRes.ok) {
@@ -107,6 +100,7 @@ export default function LiveAuction() {
               if (bidsData.length > 0) {
                 setCurrentItem(prev => ({
                   ...prev,
+                  currentBid: bidsData[0].amount,
                   highestBidder: bidsData[0].user?.firstName ? `${bidsData[0].user.firstName}***` : 'Desconocido',
                 }));
                 setRecentBids(bidsData.slice(0, 5).map((b: any) => ({
@@ -115,8 +109,8 @@ export default function LiveAuction() {
                   id: b.id
                 })));
               } else {
-                 setRecentBids([]);
-                 setCurrentItem(prev => ({ ...prev, highestBidder: 'Nadie (Sé el primero)' }));
+                setRecentBids([]);
+                setCurrentItem(prev => ({ ...prev, highestBidder: 'Nadie — ¡Sé el primero!' }));
               }
             }
 
@@ -128,9 +122,9 @@ export default function LiveAuction() {
               }).catch(() => {}); // ignoramos errores (ej: ya registrado)
             }
 
-            // Conectamos el socket para este artículo
+            // Conectamos el socket para este artículo (enviamos token para control de sesión única)
             socketService.connect();
-            socketService.joinAuction(firstItem.id);
+            socketService.joinAuction(firstItem.id, token ?? undefined);
           }
         }
       } catch (e) {
@@ -140,31 +134,48 @@ export default function LiveAuction() {
     if (id) fetchAuction();
 
     const handleNewBid = (bid: any) => {
-      // Actualizamos el artículo con la nueva puja más alta
       setCurrentItem(prev => ({
         ...prev,
         currentBid: bid.amount,
-        highestBidder: bid.user?.firstName ? `${bid.user.firstName}***` : 'Desconocido'
+        highestBidder: bid.user?.firstName ? `${bid.user.firstName}***` : 'Desconocido',
       }));
+      setRecentBids(prev =>
+        [{ user: bid.user?.firstName ? `${bid.user.firstName}***` : 'Desconocido', amount: bid.amount, id: bid.id || Date.now().toString() }, ...prev].slice(0, 5)
+      );
+      // Cualquier puja nueva (propia o ajena) libera el bloqueo de turno
+      setEsperandoOtroPujador(false);
+      setEndTime(new Date(Date.now() + 60 * 1000));
+    };
 
-      // Agregamos al historial de pujas recientes
-      setRecentBids(prev => {
-        const newBids = [
-          {
-            user: bid.user?.firstName ? `${bid.user.firstName}***` : 'Desconocido',
-            amount: bid.amount,
-            id: bid.id || Date.now().toString()
-          },
-          ...prev
-        ];
-        return newBids.slice(0, 5); // Mantenemos solo las últimas 5
-      });
+    const handleKicked = ({ motivo }: { motivo: string }) => {
+      socketService.offNewBid(handleNewBid);
+      socketService.offKicked();
+      socketService.offAuctionEnded();
+      socketService.disconnect();
+      Alert.alert('Sesión finalizada', motivo, [
+        { text: 'Aceptar', onPress: () => router.back() },
+      ]);
+    };
+
+    const handleAuctionEnded = (data: { itemId: string; winnerId: string; finalAmount: number }) => {
+      const soyGanador = user?.id && String(user.id) === data.winnerId;
+      Alert.alert(
+        soyGanador ? '🏆 ¡Ganaste!' : 'Subasta finalizada',
+        soyGanador
+          ? `Ganaste el artículo por $${Number(data.finalAmount).toLocaleString('es-AR')}. Podés ver tu compra en "Mis Compras".`
+          : `La subasta ha finalizado. Monto final: $${Number(data.finalAmount).toLocaleString('es-AR')}.`,
+        [{ text: 'Aceptar', onPress: () => router.back() }],
+      );
     };
 
     socketService.onNewBid(handleNewBid);
+    socketService.onKicked(handleKicked);
+    socketService.onAuctionEnded(handleAuctionEnded);
 
     return () => {
       socketService.offNewBid(handleNewBid);
+      socketService.offKicked();
+      socketService.offAuctionEnded();
       if (activeItem) {
         socketService.leaveAuction(activeItem.id);
       }
@@ -200,7 +211,7 @@ export default function LiveAuction() {
     
     try {
       if (!activeItem) throw new Error("Item no cargado");
-      const response = await fetch(`${API_URL}/api/bids/item/${activeItem.id}`, {
+      const response = await fetch(`${API_URL}/api/pujos/item/${activeItem.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,9 +226,11 @@ export default function LiveAuction() {
       }
 
       setBidAmount('');
+      // Bloquear hasta que otro usuario puje (socket event liberará esto)
+      setEsperandoOtroPujador(true);
       // Refrescamos las pujas inmediatamente (fallback ante fallas del socket)
       if (activeItem) {
-        const bidsRes = await fetch(`${API_URL}/api/bids/item/${activeItem.id}`, {
+        const bidsRes = await fetch(`${API_URL}/api/pujos/item/${activeItem.id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (bidsRes.ok) {
@@ -251,20 +264,20 @@ export default function LiveAuction() {
           <ChevronLeft color="white" size={24} />
         </TouchableOpacity>
         <View className="items-center">
-          <View className="flex-row items-center gap-2 mb-1">
-            <View className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <View className="flex-row items-center gap-2">
+            <View className="w-2 h-2 rounded-full bg-red-500" />
             <Text className="text-white font-bold tracking-widest">EN VIVO</Text>
-          </View>
-          <View className="flex-row items-center gap-1">
-            <Users color="#9CA3AF" size={14} />
-            <Text className="text-gray-400 text-xs">1,240 espectadores</Text>
           </View>
         </View>
         <View className="w-10 h-10" />
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="pb-32">
-        <Image source={{ uri: currentItem.image }} className="w-full h-72" contentFit="cover" />
+        <Image
+          source={{ uri: currentItem.image ?? "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80" }}
+          className="w-full h-72"
+          contentFit="cover"
+        />
         
         <View className="p-6 -mt-6 bg-gray-900 rounded-t-3xl">
           <Text className="text-2xl font-bold text-white mb-4">{currentItem.title}</Text>
@@ -286,8 +299,16 @@ export default function LiveAuction() {
           </View>
 
           <View className="flex-row items-center justify-center gap-2 mb-6">
-            <Text className="text-red-400 font-bold text-xl">{currentItem.timeRemaining}</Text>
-            <Text className="text-gray-400">restantes</Text>
+            {tiempoAgotado ? (
+              <Text className="text-gray-500 font-bold text-xl">Tiempo agotado</Text>
+            ) : (
+              <>
+                <Text className={`font-bold text-2xl ${Number(currentItem.timeRemaining?.split(':')[0]) === 0 && Number(currentItem.timeRemaining?.split(':')[1]) < 10 ? 'text-red-500' : 'text-orange-400'}`}>
+                  {currentItem.timeRemaining}
+                </Text>
+                <Text className="text-gray-400">para pujar</Text>
+              </>
+            )}
           </View>
 
           {isAuthenticated && (
@@ -310,24 +331,29 @@ export default function LiveAuction() {
       <View className="absolute bottom-0 w-full bg-gray-900 border-t border-gray-800 p-4 pb-8">
         {isAuthenticated ? (
           <>
-            {!isExempt && (
-              <Text className="text-gray-400 text-xs mb-3 text-center">
-                Límites de puja para tu categoría: ${minBid} - ${maxBid}
+            {esperandoOtroPujador && (
+              <Text className="text-yellow-400 text-xs mb-2 text-center font-semibold">
+                Esperando que otro usuario puje para continuar...
               </Text>
             )}
-            <View className="flex-row gap-3 mb-4">
-              <Button 
-                variant="secondary" 
+            {!isExempt && !esperandoOtroPujador && (
+              <Text className="text-gray-400 text-xs mb-2 text-center">
+                Límites de puja para tu categoría: ${minBid.toLocaleString('es-AR')} - ${maxBid.toLocaleString('es-AR')}
+              </Text>
+            )}
+            <View className="flex-row gap-3 mb-3">
+              <Button
+                variant="secondary"
                 className="flex-1 bg-gray-800 border-gray-700 h-12"
-                disabled={isSubmitting}
+                disabled={isSubmitting || tiempoAgotado || esperandoOtroPujador}
                 onPress={() => setBidAmount((currentItem.currentBid + 500).toString())}
               >
                 <Text className="text-white font-bold">+ $500</Text>
               </Button>
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 className="flex-1 bg-gray-800 border-gray-700 h-12"
-                disabled={isSubmitting}
+                disabled={isSubmitting || tiempoAgotado || esperandoOtroPujador}
                 onPress={() => setBidAmount((currentItem.currentBid + 1000).toString())}
               >
                 <Text className="text-white font-bold">+ $1000</Text>
@@ -341,7 +367,7 @@ export default function LiveAuction() {
                 {(() => {
                   const m = metodoPagoSeleccionado;
                   if (!m) return <Text className="text-gray-400 flex-1 text-sm">Seleccioná un medio de pago</Text>;
-                  const esTarjeta = m.tipo === 'tarjeta';
+                  const esTarjeta = m.tipo?.includes('tarjeta');
                   const esCheque = m.tipo === 'cheque';
                   const Icono = esTarjeta ? CreditCard : esCheque ? FileText : Building2;
                   const color = esTarjeta ? '#6A4F99' : esCheque ? '#C9A063' : '#4A7C59';
@@ -360,26 +386,30 @@ export default function LiveAuction() {
             )}
 
             <View className="flex-row items-center gap-3">
-              <View className="flex-1 flex-row items-center bg-gray-800 rounded-xl px-4 h-14 border border-gray-700">
+              <View className={`flex-1 flex-row items-center rounded-xl px-4 h-14 border ${(tiempoAgotado || esperandoOtroPujador) ? 'bg-gray-900 border-gray-800' : 'bg-gray-800 border-gray-700'}`}>
                 <Text className="text-gray-400 text-lg mr-2">$</Text>
                 <TextInput
                   value={bidAmount}
                   onChangeText={(t) => { setBidAmount(t); setErrorMsg(''); }}
-                  placeholder="Monto a pujar"
+                  placeholder={(tiempoAgotado || esperandoOtroPujador) ? '—' : 'Monto a pujar'}
                   placeholderTextColor="#9CA3AF"
                   keyboardType="numeric"
-                  className="flex-1 text-white text-lg h-full"
-                  editable={!isSubmitting}
+                  className="flex-1 text-white text-lg"
+                  style={{ paddingVertical: 0, height: 56, textAlignVertical: 'center' }}
+                  editable={!isSubmitting && !tiempoAgotado && !esperandoOtroPujador}
                 />
               </View>
               <TouchableOpacity
                 onPress={handleBid}
-                disabled={isSubmitting}
-                className={`w-14 h-14 rounded-xl items-center justify-center ${isSubmitting ? 'bg-gray-600' : 'bg-[#6A4F99]'}`}
+                disabled={isSubmitting || tiempoAgotado || esperandoOtroPujador}
+                className={`w-14 h-14 rounded-xl items-center justify-center ${(isSubmitting || tiempoAgotado || esperandoOtroPujador) ? 'bg-gray-700' : 'bg-[#6A4F99]'}`}
               >
-                {isSubmitting ? <ActivityIndicator color="white" /> : <HandCoins color="white" size={24} />}
+                {isSubmitting ? <ActivityIndicator color="white" /> : <HandCoins color={(tiempoAgotado || esperandoOtroPujador) ? '#6B7280' : 'white'} size={24} />}
               </TouchableOpacity>
             </View>
+            {tiempoAgotado && (
+              <Text className="text-gray-500 text-xs mt-2 text-center">El tiempo para pujar se agotó. Esperá una nueva puja para que el reloj se reinicie.</Text>
+            )}
             {errorMsg ? <Text className="text-red-400 text-xs mt-2 text-center">{errorMsg}</Text> : null}
           </>
         ) : (
@@ -399,7 +429,7 @@ export default function LiveAuction() {
             data={metodosPago}
             keyExtractor={(m) => String(m.identificador)}
             renderItem={({ item: m }) => {
-              const esTarjeta = m.tipo === 'tarjeta';
+              const esTarjeta = m.tipo?.includes('tarjeta');
               const esCheque = m.tipo === 'cheque';
               const Icono = esTarjeta ? CreditCard : esCheque ? FileText : Building2;
               const color = esTarjeta ? '#6A4F99' : esCheque ? '#C9A063' : '#4A7C59';

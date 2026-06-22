@@ -80,20 +80,31 @@ export class UsersService {
 
   async getUserStats(userId: string) {
     const id = parseInt(userId, 10);
-    
-    // Contar subastas donde este usuario participó (bids / pujos)
-    const pujos = await prisma.pujos.count({
-      where: { asistentes: { cliente: id } }
-    });
 
-    const ganadas = await prisma.pujos.count({
-      where: { asistentes: { cliente: id }, ganador: 'si' }
-    });
+    const [pujasTotales, pujasGanadas, sumaGanadas, sumaTotales, asistencias] = await Promise.all([
+      prisma.pujos.count({ where: { asistentes: { cliente: id } } }),
+      prisma.pujos.count({ where: { asistentes: { cliente: id }, ganador: 'si' } }),
+      prisma.pujos.aggregate({
+        where: { asistentes: { cliente: id }, ganador: 'si' },
+        _sum: { importe: true },
+      }),
+      prisma.pujos.aggregate({
+        where: { asistentes: { cliente: id } },
+        _sum: { importe: true },
+      }),
+      prisma.asistentes.findMany({
+        where: { cliente: id },
+        distinct: ['subasta'],
+        select: { subasta: true },
+      }),
+    ]);
 
     return {
-      totalBids: pujos,
-      auctionsWon: ganadas,
-      itemsSold: 0,
+      pujasTotales,
+      pujasGanadas,
+      subastasAsistidas: asistencias.length,
+      totalInvertido: Number(sumaGanadas._sum.importe ?? 0),
+      totalOfertado: Number(sumaTotales._sum.importe ?? 0),
     };
   }
 

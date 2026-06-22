@@ -1,10 +1,20 @@
+require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function check() {
-  const auction = await prisma.auction.findUnique({
-    where: { id: '0d49ff05-8263-4dca-b9e9-b36bcbb80523' }
+  console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'encontrada ✓' : 'NO encontrada ✗');
+
+  const subastas = await prisma.subastas.findMany({ take: 5 });
+  console.log('Subastas:', subastas);
+
+  const categorias = await prisma.subastas.findMany({
+    where: { categoria: { not: null } },
+    select: { identificador: true, categoria: true },
   });
-  console.log('Auction:', auction);
+  console.log('Categorías:', categorias);
 }
-check().finally(() => prisma.$disconnect());
+
+check()
+  .catch((e) => console.error('Error de conexión:', e))
+  .finally(() => prisma.$disconnect());

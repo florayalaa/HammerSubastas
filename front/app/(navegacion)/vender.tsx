@@ -1,18 +1,30 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, Image, FlatList } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Upload, X, CheckCircle, Info, ChevronDown, ChevronUp, Camera, Images, Tag } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import * as ImagePicker from 'expo-image-picker';
-import { apiPost } from '@/app/lib/api';
+import { apiPost, apiGet } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { CATEGORIAS } from '@/constants/categorias';
+
+interface CategoriaArticulo {
+  valor: string;
+  ejemplos: string;
+}
 
 export default function SellItem() {
   const router = useRouter();
   const { token } = useAuth();
   const scrollRef = useRef<ScrollView>(null);
   useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
+
+  const [categoriasArticulo, setCategoriasArticulo] = useState<CategoriaArticulo[]>([]);
+
+  useEffect(() => {
+    apiGet('/categorias-articulo', token ?? undefined)
+      .then((data) => { if (Array.isArray(data)) setCategoriasArticulo(data); })
+      .catch(() => {});
+  }, []);
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -217,7 +229,7 @@ export default function SellItem() {
                       <View style={{ flex: 1 }}>
                         <Text style={{ color: '#333F48', fontWeight: '600', fontSize: 14 }}>{formData.categoria}</Text>
                         <Text style={{ color: '#A08C79', fontSize: 12 }} numberOfLines={1}>
-                          {CATEGORIAS.find(c => c.valor === formData.categoria)?.ejemplos}
+                          {categoriasArticulo.find(c => c.valor === formData.categoria)?.ejemplos}
                         </Text>
                       </View>
                     ) : (
@@ -372,7 +384,7 @@ export default function SellItem() {
               </TouchableOpacity>
             </View>
             <FlatList
-              data={CATEGORIAS}
+              data={categoriasArticulo}
               keyExtractor={(item) => item.valor}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (

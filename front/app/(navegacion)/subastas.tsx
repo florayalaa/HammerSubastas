@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Picker } from '@react-native-picker/picker';
-import { Search } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import { apiGet, API_BASE_URL } from '@/app/lib/api';
+import { apiGet } from '@/app/lib/api';
 import { TarjetaSubasta } from '@/components/TarjetaSubasta';
 
 export default function Auctions() {
-  const [terminoBusqueda, setTermoBusqueda] = useState("");
-  const [filtroCategoria, setFiltroCategoria] = useState("");
-  const [filtroMoneda, setFiltroMoneda] = useState("");
   const scrollRef = useRef<ScrollView>(null);
   useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
 
@@ -35,8 +30,9 @@ export default function Auctions() {
               ? `$${Number(a.startingPrice).toLocaleString('es-AR')}`
               : 'No disponible',
             estado: a.status === 'abierta' ? 'en_vivo' : 'proxima',
-            imagen: a.image ? `${API_BASE_URL}${a.image}` : null,
+            imagen: a.image ?? null,
           }));
+          console.warn('[subastas] imágenes:', subastasFormateadas.map(s => `${s.titulo}: ${s.imagen}`));
           setSubastas(subastasFormateadas);
         }
       } catch (error) {
@@ -48,14 +44,7 @@ export default function Auctions() {
     obtenerSubastas();
   }, []);
 
-  // Multi-filtro optimizado con condicionales para la opción vacía "Todas"
-  const subastasFiltradas = subastas.filter((subasta) => {
-    const coincideBusqueda = subasta.titulo.toLowerCase().includes(terminoBusqueda.toLowerCase());
-    const coincideCategoria = filtroCategoria === "" || subasta.categoria.toLowerCase() === filtroCategoria.toLowerCase();
-    const coincideMoneda = filtroMoneda === "" || subasta.moneda.toLowerCase() === filtroMoneda.toLowerCase();
-    
-    return coincideBusqueda && coincideCategoria && coincideMoneda;
-  });
+  const subastasFiltradas = subastas;
 
   if (cargando) {
     return (
@@ -72,62 +61,7 @@ export default function Auctions() {
         <Text className="text-[#A08C79]">Explora todas las subastas activas y próximas</Text>
       </View>
 
-      {/* Formulario de Filtros Mejorado con Desplegables */}
-      <View className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-        {/* Campo Buscar */}
-        <View className="mb-3">
-          <Text className="text-sm font-medium text-slate-700 mb-1">Buscar</Text>
-          <View className="relative justify-center">
-            <View className="absolute left-3 z-10"><Search color="#A08C79" size={18} /></View>
-            <TextInput
-              className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
-              placeholder="Buscar subastas..."
-              placeholderTextColor="#94a3b8"
-              value={terminoBusqueda}
-              onChangeText={setTermoBusqueda}
-            />
-          </View>
-        </View>
-
-        {/* Desplegable Categoría */}
-        <View className="mb-3">
-          <Text className="text-sm font-medium text-slate-700 mb-1">Categoría</Text>
-          <View className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg justify-center overflow-hidden">
-            <Picker
-              selectedValue={filtroCategoria}
-              onValueChange={(itemValue) => setFiltroCategoria(itemValue)}
-              style={{ width: '100%', color: '#0f172a' }}
-              dropdownIconColor="#A08C79"
-            >
-              <Picker.Item label="Todas las categorías" value="" />
-              <Picker.Item label="Común" value="comun" />
-              <Picker.Item label="Especial" value="especial" />
-              <Picker.Item label="Plata" value="plata" />
-              <Picker.Item label="Oro" value="oro" />
-              <Picker.Item label="Platino" value="platino" />
-            </Picker>
-          </View>
-        </View>
-
-        {/* Desplegable Moneda */}
-        <View className="mb-1">
-          <Text className="text-sm font-medium text-slate-700 mb-1">Moneda</Text>
-          <View className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg justify-center overflow-hidden">
-            <Picker
-              selectedValue={filtroMoneda}
-              onValueChange={(itemValue) => setFiltroMoneda(itemValue)}
-              style={{ width: '100%', color: '#0f172a' }}
-              dropdownIconColor="#A08C79"
-            >
-              <Picker.Item label="Todas las monedas" value="" />
-              <Picker.Item label="ARG (Pesos)" value="pesos" />
-              <Picker.Item label="USD (Dólares)" value="USD" />
-            </Picker>
-          </View>
-        </View>
-      </View>
-
-      <Text className="text-[#A08C79] mb-4">
+<Text className="text-[#A08C79] mb-4">
         Mostrando <Text className="font-semibold text-[#333F48]">{subastasFiltradas.length}</Text> subastas
       </Text>
 

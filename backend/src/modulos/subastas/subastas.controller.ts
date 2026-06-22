@@ -63,11 +63,17 @@ function mapSubasta(s: any) {
     (c.itemsCatalogo ?? []).map((item: any) => mapItem(item, s.identificador.toString()))
   );
 
-  // Foto de portada: primera foto del primer producto del primer catálogo
+  // Foto de portada embebida como base64 para evitar problemas de ATS/HTTP en iOS
   const primerProducto = s.catalogos?.[0]?.itemsCatalogo?.[0]?.productos;
-  const imagen = primerProducto?.fotos?.length > 0
-    ? `/articulos/${primerProducto.identificador}/foto`
-    : null;
+  const rawFoto = primerProducto?.fotos?.[0]?.foto ?? null;
+  if (rawFoto) { const _b = Buffer.from(rawFoto); console.log('[mapSubasta]', extra?.titulo, '| bytes:', _b.length, '| mime:', getMimeType(_b), '| hex:', _b.slice(0, 4).toString('hex')); } else { console.log('[mapSubasta]', extra?.titulo, '| rawFoto: null'); }
+  let imagen: string | null = null;
+  if (rawFoto) {
+    const buf = Buffer.from(rawFoto);
+    if (buf.length > 4) {
+      imagen = `data:${getMimeType(buf)};base64,${buf.toString('base64')}`;
+    }
+  }
 
   // Precio mínimo entre todos los items
   const precios = (s.catalogos ?? []).flatMap((c: any) =>
@@ -83,7 +89,7 @@ function mapSubasta(s: any) {
     startTime: s.hora,
     endDate: extra?.fechaFin ?? null,
     category: s.categoria ?? null,
-    currency: 'pesos',
+    currency: extra?.moneda ?? 'pesos',
     status: deriveStatus(s),
     itemsCount: items.length,
     startingPrice,
@@ -119,6 +125,23 @@ function categoriasPermitidas(userCategory: string | undefined): string[] | null
     .filter(([, r]) => r <= rango)
     .map(([cat]) => cat);
 }
+
+export const getCategorias = async (req: AuthRequest, res: Response) => {
+  try {
+    const permitidas = categoriasPermitidas((req as any).user?.category);
+    const rows = await prisma.subastas.findMany({
+      where: permitidas ? { categoria: { in: permitidas } } : undefined,
+      select: { categoria: true },
+    });
+    const categorias = [...new Set(
+      rows.map((r) => r.categoria ?? 'comun')
+    )].sort((a, b) => (RANGO_CATEGORIA[a] ?? 99) - (RANGO_CATEGORIA[b] ?? 99));
+    res.json(categorias);
+  } catch (error) {
+    console.error('[getCategorias] error:', error);
+    res.status(500).json({ error: 'Error al obtener categorías' });
+  }
+};
 
 export const getAuctions = async (req: AuthRequest, res: Response) => {
   try {
@@ -217,3 +240,4 @@ export const registerForAuction = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Error registering for auction' });
   }
 };
+

@@ -12,8 +12,13 @@ router.get('/:id/foto', async (req: Request, res: Response) => {
     where: { producto: id },
     orderBy: { identificador: 'asc' },
   });
-  if (!foto?.foto) return res.status(404).end();
+  if (!foto?.foto) {
+    console.log(`[foto] producto ${id}: no encontrada`);
+    return res.status(404).end();
+  }
   const buf = Buffer.from(foto.foto);
+  console.log(`[foto] producto ${id}: ${buf.length} bytes, byte0=0x${buf[0]?.toString(16)}`);
+
   const mime =
     buf[0] === 0x52 && buf[8] === 0x57 ? 'image/webp' :
     buf[0] === 0x89 && buf[1] === 0x50 ? 'image/png' :

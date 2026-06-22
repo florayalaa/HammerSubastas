@@ -10,20 +10,21 @@ export default function Profile() {
   const router = useRouter();
   const { logout, user, token } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
-    const fetchProfile = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+    const fetchAll = async () => {
+      if (!token) { setLoading(false); return; }
       try {
-        const res = await apiGet('/usuarios/yo', token);
-        if (res && res.user) {
+        const [res, st] = await Promise.all([
+          apiGet('/usuarios/yo', token),
+          apiGet('/usuarios/yo/estadisticas', token),
+        ]);
+        if (res?.user) {
           setProfileData({
             firstName: res.user.firstName,
             lastName: res.user.lastName,
@@ -33,15 +34,11 @@ export default function Profile() {
             category: res.user.category ? res.user.category.charAt(0).toUpperCase() + res.user.category.slice(1).toLowerCase() : "Común",
             verified: res.user.isApproved,
             memberSince: res.user.createdAt ? res.user.createdAt.split('-').reverse().join('/') : 'Reciente',
-            paymentMethods: 0,
-            totalBids: 0,
-            wonAuctions: 0,
-            totalSpent: "$0",
           });
         }
+        if (st) setStats(st);
       } catch (e) {
         console.warn('Error al cargar el perfil', e);
-        // Fallback al user del context si la API falla
         if (user) {
           setProfileData({
             firstName: user.firstName || '',
@@ -52,17 +49,13 @@ export default function Profile() {
             category: user.category || "Común",
             verified: user.verified || false,
             memberSince: "Reciente",
-            paymentMethods: 0,
-            totalBids: 0,
-            wonAuctions: 0,
-            totalSpent: "$0",
           });
         }
       } finally {
         setLoading(false);
       }
     };
-    fetchProfile();
+    fetchAll();
   }, [token, user])
 );
 
@@ -85,10 +78,16 @@ export default function Profile() {
   const currentCategory = profileData?.category || "Común";
   const catColor = categoryColors[currentCategory] || categoryColors["Común"];
 
-  const stats = [
-    { label: "Pujas Totales", value: profileData?.totalBids },
-    { label: "Subastas Ganadas", value: profileData?.wonAuctions },
-    { label: "Total Invertido", value: profileData?.totalSpent, highlight: true },
+  const contadores = [
+    { label: "Pujas Totales", value: stats?.pujasTotales ?? 0 },
+    { label: "Pujas Ganadas", value: stats?.pujasGanadas ?? 0 },
+    {
+      label: "Total Invertido",
+      value: stats?.totalInvertido > 0
+        ? `$${Number(stats.totalInvertido).toLocaleString('es-AR')}`
+        : '$0',
+      highlight: true,
+    },
   ];
 
   return (
@@ -186,7 +185,7 @@ export default function Profile() {
       <View className="mb-6">
         <Text className="text-lg font-bold text-[#333F48] mb-3">Estadísticas de Cuenta</Text>
         <View className="flex-row gap-2">
-          {stats.map((stat, index) => (
+          {contadores.map((stat, index) => (
             <View
               key={index}
               className={`flex-1 p-4 rounded-xl border ${stat.highlight ? 'bg-[#C9A063] border-[#C9A063]' : 'bg-white border-gray-200'}`}

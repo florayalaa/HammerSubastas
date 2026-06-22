@@ -1,59 +1,104 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Link, useFocusEffect } from 'expo-router';
-import { Clock } from 'lucide-react-native';
-import { Image } from 'expo-image';
+import { Trophy, TrendingDown, Clock, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
 
+type EstadoPuja = 'ganada' | 'perdida' | 'ganando' | 'superada' | 'pendiente';
+
+interface ItemPuja {
+  itemId: string;
+  auctionId: string;
+  titulo: string;
+  miMejorPuja: number;
+  precioActual: number;
+  estado: EstadoPuja;
+  auctionTitle: string;
+  fechaFin: string | null;
+  subastaCerrada: boolean;
+}
+
+function resolverEstado(ganador: boolean, subastaCerrada: boolean, miPuja: number, precioActual: number): EstadoPuja {
+  if (ganador) return 'ganada';
+  if (subastaCerrada) return 'perdida';
+  if (miPuja >= precioActual) return 'ganando';
+  return 'superada';
+}
+
+const ESTADO_CONFIG: Record<EstadoPuja, { label: string; bg: string; text: string; Icon: any; iconColor: string }> = {
+  ganada:   { label: 'Ganada',   bg: 'bg-green-100', text: 'text-green-700', Icon: Trophy,       iconColor: '#16a34a' },
+  perdida:  { label: 'Perdida',  bg: 'bg-red-100',   text: 'text-red-700',   Icon: TrendingDown, iconColor: '#dc2626' },
+  ganando:  { label: 'Ganando',  bg: 'bg-[#6A4F99]/10', text: 'text-[#6A4F99]', Icon: Trophy,   iconColor: '#6A4F99' },
+  superada: { label: 'Superada', bg: 'bg-orange-100', text: 'text-orange-700', Icon: TrendingDown, iconColor: '#ea580c' },
+  pendiente:{ label: 'Pendiente',bg: 'bg-gray-100',  text: 'text-gray-600',  Icon: Clock,        iconColor: '#6b7280' },
+};
+
 export default function Bids() {
   const { token, isAuthenticated } = useAuth();
-  const [bids, setBids] = useState<any[]>([]);
+  const [items, setItems] = useState<ItemPuja[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
-  useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
 
-  useEffect(() => {
-    const fetchBids = async () => {
+  useFocusEffect(useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+    const cargar = async () => {
+      setLoading(true);
       try {
         if (!token) return;
         const res = await apiGet('/pujos/mis-pujos', token);
-        if (res && Array.isArray(res)) {
-          // Agrupamos por catalogItem para no mostrar duplicados si el usuario pujó varias veces en el mismo artículo
-          const uniqueItems = new Map();
-          res.forEach(bid => {
-            const item = bid.catalogItem;
-            if (!item) return;
-            
-            if (!uniqueItems.has(item.id)) {
-              uniqueItems.set(item.id, {
-                id: item.auctionId, // Link to auction details or live view
-                title: item.title,
-                currentBid: item.currentPrice,
-                myBid: bid.amount,
-                status: bid.amount >= item.currentPrice ? 'winning' : 'outbid',
-                timeLeft: 'Termina pronto',
-                image: 'https://images.unsplash.com/photo-1742240439165-60790db1ee93?auto=format&fit=crop&w=500&q=60',
-              });
-            } else {
-              // If we already have it, keep the highest of our bids
-              const existing = uniqueItems.get(item.id);
-              if (bid.amount > existing.myBid) {
-                existing.myBid = bid.amount;
-                existing.status = bid.amount >= item.currentPrice ? 'winning' : 'outbid';
-              }
-            }
-          });
-          setBids(Array.from(uniqueItems.values()));
+        if (!Array.isArray(res)) return;
+
+        // Por cada catalogItem, nos quedamos con la puja más alta del usuario
+        const mapa = new Map<string, ItemPuja>();
+        for (const bid of res) {
+          const ci = bid.catalogItem;
+          if (!ci) continue;
+          const subastaCerrada = ci.auctionStatus === 'cerrada' || ci.subastado === 'si';
+          const estado = resolverEstado(bid.ganador, subastaCerrada, bid.amount, ci.currentPrice);
+
+          const existing = mapa.get(ci.id);
+          if (!existing || bid.amount > existing.miMejorPuja) {
+            mapa.set(ci.id, {
+              itemId: ci.id,
+              auctionId: ci.auctionId,
+              titulo: ci.title,
+              miMejorPuja: bid.amount,
+              precioActual: ci.currentPrice,
+              estado,
+              auctionTitle: ci.auctionTitle,
+              fechaFin: ci.fechaFin,
+              subastaCerrada,
+            });
+          }
         }
-      } catch (error) {
-        console.warn("Error al obtener pujas", error);
+        // Ordenar: activas primero, luego cerradas
+        const orden: EstadoPuja[] = ['ganando', 'superada', 'pendiente', 'ganada', 'perdida'];
+        const lista = Array.from(mapa.values()).sort(
+          (a, b) => orden.indexOf(a.estado) - orden.indexOf(b.estado)
+        );
+        setItems(lista);
+      } catch (err) {
+        console.warn('Error al obtener pujas:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchBids();
-  }, [token]);
+    cargar();
+  }, [token]));
+
+  if (!isAuthenticated) {
+    return (
+      <View className="flex-1 bg-gray-50 items-center justify-center px-8">
+        <Text className="text-gray-500 mb-4 text-center">Iniciá sesión para ver tu historial de pujas.</Text>
+        <Link href="/(autenticacion)/iniciar-sesion" asChild>
+          <TouchableOpacity className="bg-[#6A4F99] px-6 py-3 rounded-xl">
+            <Text className="text-white font-bold">Iniciar Sesión</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+    );
+  }
 
   if (loading) {
     return (
@@ -63,61 +108,94 @@ export default function Bids() {
     );
   }
 
+  const activas = items.filter(i => !i.subastaCerrada);
+  const cerradas = items.filter(i => i.subastaCerrada);
+
   return (
-    <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 p-4">
+    <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
       <View className="mb-6">
-        <Text className="text-2xl font-bold text-[#333F48]">Mis Pujas Activas</Text>
-        <Text className="text-sm text-[#A08C79] mt-1">Seguimiento de las subastas en las que participás</Text>
+        <Text className="text-2xl font-bold text-[#333F48]">Mis Pujas</Text>
+        <Text className="text-sm text-[#A08C79] mt-1">Historial de artículos en los que participaste</Text>
       </View>
 
-      <View className="gap-4 mb-8">
-        {bids.map((bid, index) => (
-          <Link key={index} href={`/subastas/${bid.id}`} asChild>
-            <TouchableOpacity className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-row h-32">
-              <Image source={{ uri: bid.image }} className="w-1/3 h-full" contentFit="cover" />
-              <View className="p-3 flex-1 justify-between">
-                <View>
-                  <Text className="font-semibold text-base text-[#333F48] mb-1" numberOfLines={1}>
-                    {bid.title}
-                  </Text>
-                  <View className="flex-row items-center">
-                    <Clock size={12} color="#A08C79" />
-                    <Text className="text-xs text-[#A08C79] ml-1">Faltan {bid.timeLeft}</Text>
-                  </View>
-                </View>
-                <View>
-                  <View className="flex-row justify-between items-end mb-1">
-                    <Text className="text-xs text-slate-500">Puja actual:</Text>
-                    <Text className="text-sm font-bold text-[#333F48]">${bid.currentBid}</Text>
-                  </View>
-                  <View className="flex-row justify-between items-center">
-                    <Text className="text-xs text-slate-500">Mi puja:</Text>
-                    <View className={`px-2 py-1 rounded-full ${bid.status === 'winning' ? 'bg-green-100' : 'bg-red-100'}`}>
-                      <Text className={`text-xs font-medium ${bid.status === 'winning' ? 'text-green-700' : 'text-red-700'}`}>
-                        ${bid.myBid} {bid.status === 'winning' ? '(Ganando)' : '(Superada)'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </Link>
-        ))}
-        {!isAuthenticated ? (
-          <View className="items-center justify-center py-12">
-            <Text className="text-gray-500 mb-4 text-center">Iniciá sesión para ver tu historial de pujas.</Text>
-            <Link href="/(autenticacion)/iniciar-sesion" asChild>
-              <TouchableOpacity className="bg-[#6A4F99] px-6 py-3 rounded-xl">
-                <Text className="text-white font-bold">Iniciar Sesión</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-        ) : bids.length === 0 ? (
-          <View className="items-center justify-center py-12">
-            <Text className="text-gray-500">No tenés pujas activas.</Text>
-          </View>
-        ) : null}
-      </View>
+      {items.length === 0 ? (
+        <View className="items-center justify-center py-16">
+          <Clock color="#C4B5A5" size={40} />
+          <Text className="text-[#333F48] font-bold mt-3">Sin pujas aún</Text>
+          <Text className="text-[#A08C79] text-sm text-center mt-1">Participá en una subasta para ver tu historial aquí.</Text>
+        </View>
+      ) : (
+        <>
+          {activas.length > 0 && (
+            <>
+              <Text className="text-sm font-semibold text-[#A08C79] uppercase tracking-wide mb-3">En curso</Text>
+              {activas.map(item => <TarjetaPuja key={item.itemId} item={item} />)}
+            </>
+          )}
+
+          {cerradas.length > 0 && (
+            <>
+              <Text className="text-sm font-semibold text-[#A08C79] uppercase tracking-wide mt-4 mb-3">Finalizadas</Text>
+              {cerradas.map(item => <TarjetaPuja key={item.itemId} item={item} />)}
+            </>
+          )}
+        </>
+      )}
+
+      <View className="h-10" />
     </ScrollView>
+  );
+}
+
+function TarjetaPuja({ item }: { item: ItemPuja }) {
+  const cfg = ESTADO_CONFIG[item.estado];
+  const { Icon, iconColor } = cfg;
+  const cerrada = item.subastaCerrada;
+
+  return (
+    <Link href={cerrada ? `/subastas/${item.auctionId}` : `/subastas/en-vivo/${item.auctionId}`} asChild>
+      <TouchableOpacity className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden">
+        {/* Barra de estado */}
+        <View className={`h-1 w-full ${item.estado === 'ganada' ? 'bg-green-500' : item.estado === 'perdida' ? 'bg-red-400' : item.estado === 'ganando' ? 'bg-[#6A4F99]' : 'bg-orange-400'}`} />
+
+        <View className="p-4 flex-row items-center gap-3">
+          {/* Ícono estado */}
+          <View className={`w-10 h-10 rounded-full items-center justify-center ${cfg.bg}`}>
+            <Icon color={iconColor} size={18} />
+          </View>
+
+          {/* Contenido */}
+          <View className="flex-1">
+            <Text className="font-semibold text-[#333F48] text-sm" numberOfLines={1}>{item.titulo}</Text>
+            <Text className="text-[#A08C79] text-xs" numberOfLines={1}>{item.auctionTitle}</Text>
+
+            <View className="flex-row items-center gap-3 mt-2">
+              <View>
+                <Text className="text-[10px] text-[#A08C79]">Mi mejor puja</Text>
+                <Text className="text-sm font-bold text-[#333F48]">
+                  ${Number(item.miMejorPuja).toLocaleString('es-AR')}
+                </Text>
+              </View>
+              {!cerrada && (
+                <View>
+                  <Text className="text-[10px] text-[#A08C79]">Puja actual</Text>
+                  <Text className="text-sm font-bold text-[#333F48]">
+                    ${Number(item.precioActual).toLocaleString('es-AR')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Badge estado + chevron */}
+          <View className="items-end gap-2">
+            <View className={`px-2 py-1 rounded-full ${cfg.bg}`}>
+              <Text className={`text-[10px] font-bold ${cfg.text}`}>{cfg.label}</Text>
+            </View>
+            <ChevronRight color="#C4B5A5" size={16} />
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Link>
   );
 }

@@ -21,18 +21,12 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid data' });
     }
 
+    // Cargamos el método de pago una sola vez para reutilizarlo en ambas validaciones
+    let metodoPago = null;
     if (metodoPagoId) {
-      const metodoPago = await prisma.extra_metodosPago.findUnique({
+      metodoPago = await prisma.extra_metodosPago.findUnique({
         where: { identificador: metodoPagoId },
       });
-      if (metodoPago && metodoPago.tipo === 'cheque') {
-        const garantia = Number(metodoPago.montoGarantia ?? 0);
-        if (garantia < amount) {
-          return res.status(400).json({
-            error: 'El monto de tu cheque verificado no alcanza para esta puja. Elegí otro medio de pago o ajustá el monto.',
-          });
-        }
-      }
     }
 
     const item = await prisma.itemsCatalogo.findUnique({
@@ -54,6 +48,39 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
     const subasta = item.catalogos?.subastas;
     if (!subasta || subasta.estado !== 'abierta') {
       return res.status(400).json({ error: 'Auction is not active' });
+    }
+
+    // Validación: horario de la subasta
+    const now = new Date();
+    const hora = new Date(subasta.hora);
+    const startDateTime = subasta.fecha ? new Date(subasta.fecha) : new Date(hora);
+    startDateTime.setHours(hora.getHours(), hora.getMinutes(), hora.getSeconds(), 0);
+
+    if (now < startDateTime) {
+      return res.status(400).json({ error: 'La subasta aún no ha comenzado.' });
+    }
+
+    const extra = (subasta.extra_subastas as any[])?.[0];
+    if (extra?.fechaFin && new Date(extra.fechaFin) < now) {
+      return res.status(400).json({ error: 'La subasta ya ha finalizado.' });
+    }
+
+    const monedaSubasta = extra?.moneda ?? null;
+    // Validación: subasta en USD no admite cheques
+    if (monedaSubasta === 'USD' && metodoPago?.tipo === 'cheque') {
+      return res.status(400).json({
+        error: 'Las subastas en dólares no admiten pago con cheque. Usá una tarjeta de crédito o una cuenta bancaria.',
+      });
+    }
+
+    // Validación: cheque con garantía insuficiente
+    if (metodoPago?.tipo === 'cheque') {
+      const garantia = Number(metodoPago.montoGarantia ?? 0);
+      if (garantia < amount) {
+        return res.status(400).json({
+          error: 'El monto de tu cheque verificado no alcanza para esta puja. Elegí otro medio de pago o ajustá el monto.',
+        });
+      }
     }
 
     const subastaId = subasta.identificador;
@@ -96,7 +123,7 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
       },
     };
 
-    io.to(`item_${itemId}`).emit('new_bid', bidResponse);
+    io.to(`auction_${itemId}`).emit('new_bid', bidResponse);
 
     res.status(201).json(bidResponse);
   } catch (error) {
@@ -186,6 +213,9 @@ export const getMyBids = async (req: AuthRequest, res: Response) => {
           currentPrice,
           auctionId: subasta?.identificador?.toString() ?? '',
           auctionTitle: extra?.titulo ?? 'Sin título',
+          auctionStatus: subasta?.estado ?? 'pendiente',
+          fechaFin: extra?.fechaFin ?? null,
+          subastado: item?.subastado ?? 'no',
         },
       };
     });

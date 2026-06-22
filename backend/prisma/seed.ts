@@ -214,6 +214,7 @@ async function main() {
       tieneDeposito: 'si',
       seguridadPropia: 'si',
       categoria: 'comun',
+      moneda: 'pesos',
       extra_subastas: {
         create: {
           titulo: 'Subasta de Arte Moderno',
@@ -235,6 +236,7 @@ async function main() {
       tieneDeposito: 'si',
       seguridadPropia: 'si',
       categoria: 'oro',
+      moneda: 'USD',
       extra_subastas: {
         create: {
           titulo: 'Subasta Exclusiva de Joyas y Relojes',
@@ -256,6 +258,7 @@ async function main() {
       tieneDeposito: 'si',
       seguridadPropia: 'no',
       categoria: 'comun',
+      moneda: 'pesos',
       extra_subastas: {
         create: {
           titulo: 'Subasta de Antigüedades del Río de la Plata',

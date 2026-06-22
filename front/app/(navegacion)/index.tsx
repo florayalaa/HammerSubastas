@@ -4,7 +4,7 @@ import { Link, useFocusEffect } from 'expo-router';
 import { Gavel, HandCoins, ChevronRight } from 'lucide-react-native';
 import { Card, CardContent } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
-import { apiGet, API_BASE_URL } from '@/app/lib/api';
+import { apiGet } from '@/app/lib/api';
 import { TarjetaSubasta } from '@/components/TarjetaSubasta';
 
 export default function Dashboard() {
@@ -34,7 +34,7 @@ export default function Dashboard() {
               ? `$${Number(a.startingPrice).toLocaleString('es-AR')}`
               : 'No disponible',
             estado: a.status === 'abierta' ? 'en_vivo' : 'proxima',
-            imagen: a.image ? `${API_BASE_URL}${a.image}` : null,
+            imagen: a.image ?? null,
           }));
           setActiveAuctions(mapped.slice(0, 3));
         }

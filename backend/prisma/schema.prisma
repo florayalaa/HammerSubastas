@@ -112,6 +112,8 @@ model extra_subastas {
   categoriaBien    String?  @db.VarChar(30)
   esColeccion      Boolean  @default(false)
   clienteColeccion Int?
+  fechaFin         DateTime? @db.DateTime2
+  moneda           String?  @db.VarChar(20)
   subastas         subastas @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, map: "fk_extra_subastas_subastas")
 }
 

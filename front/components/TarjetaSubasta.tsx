@@ -1,12 +1,10 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Link } from 'expo-router';
 import { Calendar, Users, DollarSign, Lock } from 'lucide-react-native';
-import { Image } from 'expo-image';
 import { Card } from '@/components/ui/Card';
 
-
-const IMAGEN_PLACEHOLDER_URL = "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80";
+const IMAGEN_PLACEHOLDER = { uri: "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80" };
 
 interface TarjetaSubastaProps {
   subasta: {
@@ -25,26 +23,22 @@ interface TarjetaSubastaProps {
 }
 
 export const TarjetaSubasta = ({ subasta, estaAutenticado }: TarjetaSubastaProps) => {
-  // Evaluamos si el backend no mandó nada o si mandó un texto vacío
-  const usarFallback = 
-    !subasta.imagen || 
-    subasta.imagen.trim() === "" || 
-    subasta.imagen.includes("placeholder");
+  const [imgError, setImgError] = useState(false);
 
-  // IMPORTANTE: Al ser un link de internet, SIEMPRE se pasa estructurado como { uri: string }
-  const fuenteImagen = usarFallback 
-    ? { uri: IMAGEN_PLACEHOLDER_URL } 
-    : { uri: subasta.imagen || ""};
+  const fuenteImagen =
+    !imgError && subasta.imagen
+      ? { uri: subasta.imagen }
+      : IMAGEN_PLACEHOLDER;
 
   return (
     <Card className="overflow-hidden border-gray-200 bg-white rounded-xl mb-6 shadow-sm">
       {/* Contenedor de Imagen */}
       <View className="w-full h-48 bg-gray-100 justify-center items-center">
-        <Image 
-          source={fuenteImagen} 
-          contentFit="cover" // Se estira de forma uniforme cubriendo todo el recuadro
-          className="w-full h-full"
-          transition={200}
+        <Image
+          source={fuenteImagen}
+          resizeMode="cover"
+          style={{ width: '100%', height: '100%' }}
+          onError={() => setImgError(true)}
         />
       </View>
 

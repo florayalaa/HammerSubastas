@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter, Link } from 'expo-router';
-import { Calendar, MapPin, Package, ChevronLeft, Play, Lock } from 'lucide-react-native';
-import { Image } from 'expo-image';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Calendar, MapPin, Package, ChevronLeft, Play } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import { Card } from '@/components/ui/Card';
 import { apiGet, apiPost, API_BASE_URL } from '@/app/lib/api';
-
-const PLACEHOLDER = "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80";
+import { TarjetaArticulo } from '@/components/TarjetaArticulo';
 
 export default function DetallSubasta() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { isAuthenticated, token, user } = useAuth();
+  const { isAuthenticated, token } = useAuth();
 
   const [subasta, setSubasta] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
@@ -79,9 +76,11 @@ export default function DetallSubasta() {
   const enVivo = subasta.status === 'abierta';
   const items: any[] = subasta.catalogItems ?? [];
 
-  const hoyStr = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const hoyStr = now.toISOString().split('T')[0];
   const inicioStr = new Date(subasta.startDate).toISOString().split('T')[0];
   const haEmpezado = inicioStr <= hoyStr;
+  const haTerminado = subasta.endDate ? new Date(subasta.endDate) < now : subasta.status === 'cerrada';
 
   return (
     <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
@@ -99,9 +98,11 @@ export default function DetallSubasta() {
               <Text className="text-white text-xs">{subasta.category}</Text>
             </View>
           )}
-          <View className="px-3 py-1 bg-white/20 rounded-full">
-            <Text className="text-white text-xs">pesos</Text>
-          </View>
+          {subasta.currency && (
+            <View className="px-3 py-1 bg-white/20 rounded-full">
+              <Text className="text-white text-xs">{subasta.currency}</Text>
+            </View>
+          )}
           {enVivo && (
             <View className="px-3 py-1 bg-red-500 rounded-full flex-row items-center gap-1">
               <View className="w-1.5 h-1.5 bg-white rounded-full" />
@@ -125,7 +126,11 @@ export default function DetallSubasta() {
           )}
         </View>
 
-        {isAuthenticated ? (
+        {haTerminado ? (
+          <View className="mt-2 py-3 px-4 bg-white/10 rounded-xl border border-white/20">
+            <Text className="text-white/70 text-center text-sm">Esta subasta ha finalizado</Text>
+          </View>
+        ) : isAuthenticated ? (
           haEmpezado ? (
             <TouchableOpacity
               onPress={handleParticipar}
@@ -182,45 +187,18 @@ export default function DetallSubasta() {
             <Text className="text-[#A08C79]">Sin artículos cargados aún</Text>
           </View>
         ) : (
-          <View className="gap-6">
+          <View>
             {items.map((item, idx) => (
-              <Card key={item.id} className="overflow-hidden border-gray-200">
-                <Image
-                  source={{ uri: item.image ? `${API_BASE_URL}${item.image}` : PLACEHOLDER }}
-                  className="w-full h-56"
-                  contentFit="cover"
-                />
-                <View className="p-5">
-                  <Text className="text-xl font-bold text-[#333F48] mb-1">{item.title}</Text>
-
-                  <View className="flex-row justify-between mb-4">
-                    <View>
-                      <Text className="text-sm text-[#A08C79] mb-1">Precio Base</Text>
-                      {isAuthenticated ? (
-                        <Text className="text-xl font-bold text-[#C9A063]">
-                          ${Number(item.startingPrice).toLocaleString('es-AR')}
-                        </Text>
-                      ) : (
-                        <View className="flex-row items-center gap-1">
-                          <Lock color="#A08C79" size={14} />
-                          <Link href="/(autenticacion)/iniciar-sesion" asChild>
-                            <TouchableOpacity>
-                              <Text className="text-[#6A4F99] underline text-sm">Iniciá sesión</Text>
-                            </TouchableOpacity>
-                          </Link>
-                        </View>
-                      )}
-                    </View>
-                    <View className="items-end justify-center">
-                      <Text className="text-xs text-[#A08C79]">Lote #{String(idx + 1).padStart(3, '0')}</Text>
-                    </View>
-                  </View>
-
-                  {item.description ? (
-                    <Text className="text-[#A08C79] leading-5" numberOfLines={3}>{item.description}</Text>
-                  ) : null}
-                </View>
-              </Card>
+              <TarjetaArticulo
+                key={item.id}
+                item={{
+                  ...item,
+                  image: item.image ? `${API_BASE_URL}${item.image}` : null,
+                }}
+                idx={idx}
+                isAuthenticated={isAuthenticated}
+                moneda={subasta.currency}
+              />
             ))}
           </View>
         )}

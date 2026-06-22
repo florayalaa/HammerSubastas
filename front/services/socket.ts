@@ -1,8 +1,7 @@
 import { io, Socket } from 'socket.io-client';
+import { API_BASE_URL } from '@/app/lib/api';
 
-// Use the local network IP or an environment variable
-// TODO: Replace with the actual backend IP if running on a real device
-const BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const BACKEND_URL = API_BASE_URL.replace('/api', '');
 
 class SocketService {
   private socket: Socket | null = null;
@@ -15,11 +14,11 @@ class SocketService {
       });
 
       this.socket.on('connect', () => {
-        console.log('Connected to socket server:', this.socket?.id);
+        console.log('Socket conectado:', this.socket?.id);
       });
 
       this.socket.on('disconnect', () => {
-        console.log('Disconnected from socket server');
+        console.log('Socket desconectado');
       });
     }
   }
@@ -31,9 +30,9 @@ class SocketService {
     }
   }
 
-  joinAuction(auctionId: string) {
+  joinAuction(auctionId: string, token?: string) {
     if (this.socket) {
-      this.socket.emit('join_auction', auctionId);
+      this.socket.emit('join_auction', { auctionId, token });
     }
   }
 
@@ -44,15 +43,27 @@ class SocketService {
   }
 
   onNewBid(callback: (data: any) => void) {
-    if (this.socket) {
-      this.socket.on('new_bid', callback);
-    }
+    this.socket?.on('new_bid', callback);
   }
 
   offNewBid(callback?: (data: any) => void) {
-    if (this.socket) {
-      this.socket.off('new_bid', callback);
-    }
+    this.socket?.off('new_bid', callback);
+  }
+
+  onKicked(callback: (data: { motivo: string }) => void) {
+    this.socket?.on('kicked', callback);
+  }
+
+  offKicked(callback?: (data: any) => void) {
+    this.socket?.off('kicked', callback);
+  }
+
+  onAuctionEnded(callback: (data: { itemId: string; winnerId: string; finalAmount: number }) => void) {
+    this.socket?.on('auction_ended', callback);
+  }
+
+  offAuctionEnded(callback?: (data: any) => void) {
+    this.socket?.off('auction_ended', callback);
   }
 }
 
