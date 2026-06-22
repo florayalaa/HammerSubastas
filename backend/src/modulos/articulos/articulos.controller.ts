@@ -9,12 +9,13 @@ export class ArticlesController {
         return res.status(401).json({ message: 'No autenticado' });
       }
 
-      const { descripcionCatalogo, descripcionCompleta, fotosBase64 } = req.body;
+      const { descripcionCatalogo, descripcionCompleta, fotosBase64, categoria } = req.body;
       const result = await articlesService.submitArticle({
         userId: parseInt(userId, 10),
         descripcionCatalogo,
         descripcionCompleta,
-        fotosBase64
+        fotosBase64,
+        categoria,
       });
 
       res.status(201).json({ status: 'success', data: result });
@@ -45,6 +46,35 @@ export class ArticlesController {
       if (!userId || isNaN(productoId)) return res.status(400).json({ message: 'Datos inválidos' });
 
       await articlesService.aceptarPropuesta(productoId, userId);
+      res.json({ status: 'success' });
+    } catch (error: any) {
+      console.error(error);
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  }
+
+  async aprobarSolicitud(req: Request, res: Response) {
+    try {
+      const productoId = parseInt(req.params.id, 10);
+      const { precioBase, comision } = req.body;
+      if (isNaN(productoId) || precioBase == null || comision == null) {
+        return res.status(400).json({ message: 'Datos inválidos: se requiere precioBase y comision' });
+      }
+      await articlesService.aprobarSolicitud(productoId, parseFloat(precioBase), parseFloat(comision));
+      res.json({ status: 'success' });
+    } catch (error: any) {
+      console.error(error);
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  }
+
+  async rechazarPropuesta(req: Request, res: Response) {
+    try {
+      const userId = parseInt((req as any).user?.id ?? '0', 10);
+      const productoId = parseInt(req.params.id, 10);
+      if (!userId || isNaN(productoId)) return res.status(400).json({ message: 'Datos inválidos' });
+
+      await articlesService.rechazarPropuestaVendedor(productoId, userId);
       res.json({ status: 'success' });
     } catch (error: any) {
       console.error(error);

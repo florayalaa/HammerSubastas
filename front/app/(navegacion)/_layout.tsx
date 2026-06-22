@@ -11,7 +11,10 @@ export default function TabLayout() {
   const { unreadCount, refreshCount } = useNotificationBadge();
 
   useEffect(() => {
-    if (token) refreshCount(token);
+    if (!token) return;
+    refreshCount(token);
+    const interval = setInterval(() => refreshCount(token), 30000);
+    return () => clearInterval(interval);
   }, [token]);
 
   return (

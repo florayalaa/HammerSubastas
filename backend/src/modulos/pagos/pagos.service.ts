@@ -110,7 +110,7 @@ export class PaymentsService {
         montoGarantia: true,
       },
     });
-    return methods;
+    return methods.map(m => ({ ...m, tipo: (m.tipo ?? '').toLowerCase() }));
   }
 
   async getPaymentMethodById(paymentId: string, userId: string) {
@@ -123,6 +123,7 @@ export class PaymentsService {
 
     return {
       ...method,
+      tipo: (method.tipo ?? '').toLowerCase(),
       fotoCheque: method.fotoCheque ? method.fotoCheque.toString('base64') : null,
     };
   }

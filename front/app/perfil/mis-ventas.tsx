@@ -1,18 +1,43 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ChevronLeft, Package, ImageIcon, Trash2 } from 'lucide-react-native';
+import { ChevronLeft, Package, ImageIcon, Trash2, Check, X, Zap, AlertTriangle, Bell } from 'lucide-react-native';
 import { apiGet, apiDelete, apiPost } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { useNotificationBadge } from '@/context/NotificationContext';
+
+const formatMoney = (n: number | string | null | undefined): string => {
+  if (n == null) return '-';
+  const num = Number(n);
+  if (isNaN(num)) return '-';
+  const fixed = num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
+  const [integer, decimal] = fixed.split('.');
+  const intWithSep = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return decimal ? `${intWithSep},${decimal}` : intWithSep;
+};
 
 type Estado = { label: string; color: string; bg: string };
+
+function parseDescripcion(texto: string) {
+  const [base, extras] = texto.split('\n\n');
+  const campos: { label: string; valor: string }[] = [];
+  if (extras) {
+    extras.split(' | ').forEach((part) => {
+      const idx = part.indexOf(': ');
+      if (idx !== -1) campos.push({ label: part.slice(0, idx), valor: part.slice(idx + 2) });
+    });
+  }
+  return { base: base?.trim() ?? '', campos };
+}
 
 function estadoArticulo(producto: any): Estado {
   const sol = producto.extra_solicitudesVenta;
   if (!sol) return { label: 'Pendiente', color: '#2563eb', bg: '#eff6ff' };
   switch (sol.estado) {
     case 'pendiente':    return { label: 'Pendiente',   color: '#2563eb', bg: '#eff6ff' };
-    case 'aprobado':     return { label: 'Aprobado',    color: '#16a34a', bg: '#f0fdf4' };
+    case 'aprobado':
+      if (sol.precioBase == null || sol.comision == null) return { label: 'Pendiente', color: '#2563eb', bg: '#eff6ff' };
+      return { label: 'Aprobado', color: '#16a34a', bg: '#f0fdf4' };
     case 'rechazado':    return { label: 'Rechazado',   color: '#dc2626', bg: '#fef2f2' };
     case 'a_subastar':   return { label: 'A Subastar',  color: '#d97706', bg: '#fffbeb' };
     case 'en_subasta':   return { label: 'En Subasta',  color: '#C9A063', bg: '#fffbeb' };
@@ -29,7 +54,12 @@ function mensajeEstado(producto: any, estado: Estado): string {
     case 'Aprobado':
       return `Revisamos tu artículo y te proponemos un precio base de $${sol?.precioBase ?? '-'} con una comisión del ${sol?.comision ?? '-'}%. Aceptá para continuar.`;
     case 'Rechazado':
-      return sol?.motivo ? `Tu artículo no fue aceptado. Motivo: ${sol.motivo}` : 'Tu artículo no fue aceptado por nuestro equipo.';
+      if (sol?.motivo === 'Propuesta rechazada por el consignante') {
+        return 'Rechazaste la oferta del equipo de Hammer. El artículo no continuará el proceso de consignación.';
+      }
+      return sol?.motivo
+        ? `Tu artículo fue rechazado por nuestro equipo. Motivo: ${sol.motivo}`
+        : 'Tu artículo no fue aceptado por nuestro equipo.';
     case 'A Subastar':
       return 'Aceptaste la propuesta. Tu artículo está en espera de ser asignado a una subasta próxima.';
     case 'En Subasta':
@@ -44,10 +74,12 @@ function mensajeEstado(producto: any, estado: Estado): string {
 export default function MySales() {
   const router = useRouter();
   const { token } = useAuth();
+  const { unreadCount, refreshCount } = useNotificationBadge();
   const [ventas, setVentas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [eliminando, setEliminando] = useState<number | null>(null);
   const [aceptando, setAceptando] = useState<number | null>(null);
+  const [rechazando, setRechazando] = useState<number | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(useCallback(() => {
@@ -55,19 +87,25 @@ export default function MySales() {
   }, []));
 
   useEffect(() => {
-    const cargar = async () => {
-      if (!token) { setLoading(false); return; }
+    if (!token) { setLoading(false); return; }
+    apiGet('/articulos/mis-articulos', token)
+      .then((res) => { setVentas(res?.data ?? res ?? []); refreshCount(token); })
+      .catch(() => setVentas([]))
+      .finally(() => setLoading(false));
+  }, [token, refreshCount]);
+
+  useFocusEffect(useCallback(() => {
+    if (!token) return;
+    const poll = async () => {
       try {
         const res = await apiGet('/articulos/mis-articulos', token);
         setVentas(res?.data ?? res ?? []);
-      } catch {
-        setVentas([]);
-      } finally {
-        setLoading(false);
-      }
+        refreshCount(token);
+      } catch {}
     };
-    cargar();
-  }, [token]);
+    const interval = setInterval(poll, 15000);
+    return () => clearInterval(interval);
+  }, [token, refreshCount]));
 
   const handleAceptarPropuesta = async (id: number) => {
     setAceptando(id);
@@ -83,6 +121,33 @@ export default function MySales() {
     } finally {
       setAceptando(null);
     }
+  };
+
+  const handleRechazarPropuesta = (id: number, titulo: string) => {
+    Alert.alert(
+      'Rechazar propuesta',
+      `¿Seguro que querés rechazar la propuesta para "${titulo}"? Esta decisión es irreversible.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Rechazar', style: 'destructive', onPress: async () => {
+            setRechazando(id);
+            try {
+              await apiPost(`/articulos/${id}/rechazar-propuesta`, {}, token || '');
+              setVentas((prev) => prev.map((v) =>
+                v.identificador === id
+                  ? { ...v, extra_solicitudesVenta: { ...v.extra_solicitudesVenta, estado: 'rechazado', motivo: 'Propuesta rechazada por el consignante' } }
+                  : v
+              ));
+            } catch (e: any) {
+              Alert.alert('Error', e.message || 'No se pudo procesar el rechazo.');
+            } finally {
+              setRechazando(null);
+            }
+          }
+        },
+      ]
+    );
   };
 
   const handleEliminar = (id: number, titulo: string) => {
@@ -111,10 +176,24 @@ export default function MySales() {
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       <View style={{ backgroundColor: 'white', paddingTop: 48, paddingBottom: 16, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
-        <TouchableOpacity onPress={() => router.replace('/(navegacion)/perfil')} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-          <ChevronLeft color="#A08C79" size={24} />
-          <Text style={{ color: '#A08C79', marginLeft: 4, fontWeight: '500' }}>Ir al Perfil</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <TouchableOpacity onPress={() => router.replace('/(navegacion)/perfil')} style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <ChevronLeft color="#A08C79" size={24} />
+            <Text style={{ color: '#A08C79', marginLeft: 4, fontWeight: '500' }}>Ir al Perfil</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/notifications')} style={{ padding: 4 }}>
+            <View>
+              <Bell color="#333F48" size={24} />
+              {unreadCount > 0 && (
+                <View style={{ position: 'absolute', top: -4, right: -4, backgroundColor: '#ef4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
+                  <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
         <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#333F48', marginBottom: 2 }}>Mis Ventas</Text>
         <Text style={{ color: '#A08C79', fontSize: 14 }}>Artículos consignados para subasta</Text>
       </View>
@@ -136,8 +215,26 @@ export default function MySales() {
           {ventas.map((venta) => {
             const estado = estadoArticulo(venta);
             const referencia = `#V-${String(venta.identificador).padStart(3, '0')}`;
+            const sol = venta.extra_solicitudesVenta;
+            const tieneOferta = sol?.estado === 'aprobado' && sol?.precioBase != null && sol?.comision != null;
+            const comisionFrac = tieneOferta ? Number(sol.comision) : 0;
+            const precioBase = tieneOferta ? Number(sol.precioBase) : 0;
+            const comisionMonto = precioBase * comisionFrac;
+            const comisionPct = (comisionFrac * 100).toFixed(0);
+
             return (
               <View key={venta.identificador} style={{ backgroundColor: 'white', borderRadius: 16, overflow: 'hidden', marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, elevation: 3 }}>
+
+                {/* Banner de oferta recibida — solo si tiene precio y comisión asignados */}
+                {tieneOferta && (
+                  <View style={{ backgroundColor: '#C9A063', paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <Zap color="white" size={15} fill="white" />
+                    <Text style={{ color: 'white', fontWeight: '800', fontSize: 13, letterSpacing: 0.5 }}>
+                      OFERTA RECIBIDA - REQUIERE TU RESPUESTA
+                    </Text>
+                  </View>
+                )}
+
                 {/* Portada */}
                 {venta.portada ? (
                   <Image source={{ uri: venta.portada }} style={{ width: '100%', height: 220 }} resizeMode="cover" />
@@ -150,7 +247,7 @@ export default function MySales() {
 
                 <View style={{ padding: 16 }}>
                   {/* Referencia + estado */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                     <Text style={{ color: '#A08C79', fontSize: 13 }}>{referencia}</Text>
                     <View style={{ backgroundColor: estado.bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 }}>
                       <Text style={{ color: estado.color, fontSize: 12, fontWeight: '600' }}>{estado.label}</Text>
@@ -163,48 +260,117 @@ export default function MySales() {
                   </Text>
 
                   {/* Descripción */}
-                  {venta.descripcionCompleta ? (
-                    <Text style={{ color: '#6b7280', fontSize: 14, lineHeight: 20, marginBottom: 12 }} numberOfLines={3}>
-                      {venta.descripcionCompleta}
-                    </Text>
-                  ) : null}
+                  {venta.descripcionCompleta ? (() => {
+                    const { base, campos } = parseDescripcion(venta.descripcionCompleta);
+                    return (
+                      <View style={{ marginBottom: 12 }}>
+                        {base ? (
+                          <Text style={{ color: '#6b7280', fontSize: 14, lineHeight: 20 }} numberOfLines={3}>
+                            {base}
+                          </Text>
+                        ) : null}
+                        {campos.length > 0 && (
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: base ? 8 : 0 }}>
+                            {campos.map((c) => (
+                              <View key={c.label} style={{ backgroundColor: '#f3f4f6', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                                <Text style={{ fontSize: 12, color: '#374151' }}>
+                                  <Text style={{ fontWeight: '600' }}>{c.label}:</Text> {c.valor}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })() : null}
 
-                  {/* Info box */}
-                  <View style={{ backgroundColor: estado.bg, borderRadius: 10, padding: 14 }}>
-                    <Text style={{ color: estado.color, fontSize: 13, lineHeight: 19 }}>
-                      {mensajeEstado(venta, estado)}
-                    </Text>
-                  </View>
+                  {/* Contenido condicional según estado */}
+                  {tieneOferta ? (
+                    <>
+                      {/* Detalles de la oferta */}
+                      <View style={{ borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 14, marginBottom: 12 }}>
+                        <Text style={{ fontWeight: '700', color: '#374151', fontSize: 14, marginBottom: 12 }}>Detalles de la Oferta</Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ color: '#6b7280', fontSize: 12, marginBottom: 4 }}>Precio Base Asignado</Text>
+                            <Text style={{ color: '#111827', fontSize: 20, fontWeight: '700' }}>${formatMoney(precioBase)}</Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ color: '#6b7280', fontSize: 12, marginBottom: 4 }}>Comisión ({comisionPct}%)</Text>
+                            <Text style={{ color: '#111827', fontSize: 20, fontWeight: '700' }}>${formatMoney(comisionMonto)}</Text>
+                          </View>
+                        </View>
+                        <View style={{ backgroundColor: '#eff6ff', borderLeftWidth: 3, borderLeftColor: '#3b82f6', borderRadius: 6, padding: 10 }}>
+                          <Text style={{ color: '#1e40af', fontSize: 12, lineHeight: 17 }}>
+                            <Text style={{ fontWeight: '700' }}>Nota:</Text> El precio base es el valor inicial desde donde comenzará la puja en la subasta. La comisión se aplicará sobre el precio final de venta.
+                          </Text>
+                        </View>
+                      </View>
 
-                  {/* Botón aceptar propuesta — solo si está aprobado */}
-                  {estado.label === 'Aprobado' && (
-                    <TouchableOpacity
-                      onPress={() => handleAceptarPropuesta(venta.identificador)}
-                      disabled={aceptando === venta.identificador}
-                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 14, paddingVertical: 12, borderRadius: 10, backgroundColor: '#16a34a' }}
-                    >
-                      {aceptando === venta.identificador
-                        ? <ActivityIndicator size="small" color="white" />
-                        : <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Aceptar propuesta</Text>
-                      }
-                    </TouchableOpacity>
-                  )}
+                      {/* Botón Aceptar */}
+                      <TouchableOpacity
+                        onPress={() => handleAceptarPropuesta(venta.identificador)}
+                        disabled={aceptando === venta.identificador || rechazando === venta.identificador}
+                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 13, borderRadius: 10, backgroundColor: '#bbf7d0', marginBottom: 10, gap: 6 }}
+                      >
+                        {aceptando === venta.identificador
+                          ? <ActivityIndicator size="small" color="#166534" />
+                          : <>
+                              <Check color="#166534" size={17} />
+                              <Text style={{ color: '#166534', fontWeight: '700', fontSize: 15 }}>Aceptar Oferta</Text>
+                            </>
+                        }
+                      </TouchableOpacity>
 
-                  {/* Botón eliminar solo si está pendiente */}
-                  {estado.label === 'Pendiente' && (
-                    <TouchableOpacity
-                      onPress={() => handleEliminar(venta.identificador, venta.descripcionCatalogo || 'este artículo')}
-                      disabled={eliminando === venta.identificador}
-                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 14, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#fca5a5', backgroundColor: '#fff1f2' }}
-                    >
-                      {eliminando === venta.identificador
-                        ? <ActivityIndicator size="small" color="#ef4444" />
-                        : <>
-                            <Trash2 color="#ef4444" size={16} />
-                            <Text style={{ color: '#ef4444', fontWeight: '600', fontSize: 14, marginLeft: 6 }}>Cancelar solicitud</Text>
-                          </>
-                      }
-                    </TouchableOpacity>
+                      {/* Botón Rechazar */}
+                      <TouchableOpacity
+                        onPress={() => handleRechazarPropuesta(venta.identificador, venta.descripcionCatalogo || 'este artículo')}
+                        disabled={aceptando === venta.identificador || rechazando === venta.identificador}
+                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 13, borderRadius: 10, backgroundColor: '#fecaca', marginBottom: 10, gap: 6 }}
+                      >
+                        {rechazando === venta.identificador
+                          ? <ActivityIndicator size="small" color="#991b1b" />
+                          : <>
+                              <X color="#991b1b" size={17} />
+                              <Text style={{ color: '#991b1b', fontWeight: '700', fontSize: 15 }}>Rechazar Oferta</Text>
+                            </>
+                        }
+                      </TouchableOpacity>
+
+                      {/* Advertencia */}
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+                        <AlertTriangle color="#d97706" size={14} style={{ marginTop: 1 }} />
+                        <Text style={{ color: '#92400e', fontSize: 12, flex: 1, lineHeight: 17 }}>
+                          Ambas decisiones son irreversibles. Por favor, revisá cuidadosamente antes de continuar.
+                        </Text>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      {/* Info box normal */}
+                      <View style={{ backgroundColor: estado.bg, borderRadius: 10, padding: 14 }}>
+                        <Text style={{ color: estado.color, fontSize: 13, lineHeight: 19 }}>
+                          {mensajeEstado(venta, estado)}
+                        </Text>
+                      </View>
+
+                      {/* Botón eliminar solo si está pendiente */}
+                      {estado.label === 'Pendiente' && (
+                        <TouchableOpacity
+                          onPress={() => handleEliminar(venta.identificador, venta.descripcionCatalogo || 'este artículo')}
+                          disabled={eliminando === venta.identificador}
+                          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 14, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#fca5a5', backgroundColor: '#fff1f2' }}
+                        >
+                          {eliminando === venta.identificador
+                            ? <ActivityIndicator size="small" color="#ef4444" />
+                            : <>
+                                <Trash2 color="#ef4444" size={16} />
+                                <Text style={{ color: '#ef4444', fontWeight: '600', fontSize: 14, marginLeft: 6 }}>Cancelar solicitud</Text>
+                              </>
+                          }
+                        </TouchableOpacity>
+                      )}
+                    </>
                   )}
                 </View>
               </View>

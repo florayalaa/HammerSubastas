@@ -20,25 +20,22 @@ export default function Dashboard() {
   React.useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL.replace('/api', '')}/api/subastas`);
-        if (res.ok) {
-          const data = await res.json();
-          
-          // Mapeamos los datos respetando las claves esperadas por la TarjetaSubasta reutilizable
+        const data = await apiGet('/subastas', token ?? undefined);
+        if (Array.isArray(data)) {
           const mapped = data.map((a: any) => ({
             id: a.id,
             titulo: a.title,
-            fecha: new Date(a.startDate).toLocaleDateString(),
-            hora: new Date(a.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            categoria: a.category || "General",
-            moneda: a.currency || "USD",
-            articulos: a.itemsCount || a.items?.length || 0,
-            pujaInicial: `$${a.startingPrice || 0}`,
-            estado: a.status?.toLowerCase() === 'active' ? 'en_vivo' : 'proxima',
-            imagen: a.image || null,
+            fecha: new Date(a.startDate).toLocaleDateString('es-AR', { timeZone: 'UTC' }),
+            hora: a.startTime ? new Date(a.startTime).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : '',
+            categoria: a.category || 'comun',
+            moneda: a.currency || 'pesos',
+            articulos: a.itemsCount ?? 0,
+            pujaInicial: a.startingPrice != null
+              ? `$${Number(a.startingPrice).toLocaleString('es-AR')}`
+              : 'No disponible',
+            estado: a.status === 'abierta' ? 'en_vivo' : 'proxima',
+            imagen: a.image ? `${API_BASE_URL}${a.image}` : null,
           }));
-          
-          // Limitamos el renderizado únicamente a las primeras 3 subastas
           setActiveAuctions(mapped.slice(0, 3));
         }
       } catch (e) {
@@ -46,7 +43,7 @@ export default function Dashboard() {
       }
     };
     fetchAuctions();
-  }, []);
+  }, [token]);
 
   React.useEffect(() => {
     if (!isAuthenticated || !token) return;

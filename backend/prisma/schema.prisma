@@ -105,11 +105,14 @@ model extra_metodosPago {
 }
 
 model extra_subastas {
-  identificador Int      @id(map: "pk_extra_subastas") @default(autoincrement())
-  subasta       Int
-  titulo        String   @db.VarChar(200)
-  descripcion   String?  @db.VarChar(500)
-  subastas      subastas @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, map: "fk_extra_subastas_subastas")
+  identificador    Int      @id(map: "pk_extra_subastas") @default(autoincrement())
+  subasta          Int
+  titulo           String   @db.VarChar(200)
+  descripcion      String?  @db.VarChar(500)
+  categoriaBien    String?  @db.VarChar(30)
+  esColeccion      Boolean  @default(false)
+  clienteColeccion Int?
+  subastas         subastas @relation(fields: [subasta], references: [identificador], onUpdate: NoAction, map: "fk_extra_subastas_subastas")
 }
 
 model fotos {
@@ -176,6 +179,7 @@ model extra_solicitudesVenta {
   cliente            Int
   producto           Int       @unique(map: "uq_extra_solicitudesVenta_producto")
   estado             String    @default("pendiente") @db.VarChar(20)
+  categoria          String?   @db.VarChar(50)
   precioBase         Decimal?  @db.Decimal(18, 2)
   comision           Decimal?  @db.Decimal(18, 2)
   motivo             String?   @db.VarChar(500)

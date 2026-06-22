@@ -266,9 +266,10 @@ export default function PaymentMethods() {
           </View>
         ) : (
           methods.map((m) => {
-            const esTarjeta = m.tipo === 'tarjeta de credito';
-            const esCheque = m.tipo === 'cheque';
-            const esCuenta = m.tipo === 'cuenta bancaria' || m.tipo === 'transferencia';
+            const tipoNorm = (m.tipo ?? '').toLowerCase();
+            const esTarjeta = tipoNorm === 'tarjeta de credito';
+            const esCheque = tipoNorm === 'cheque';
+            const esCuenta = tipoNorm === 'cuenta bancaria' || tipoNorm === 'transferencia';
             const Icono = esTarjeta ? CreditCard : esCheque ? FileText : Building2;
             const color = esTarjeta ? '#6A4F99' : esCheque ? '#C9A063' : '#4A7C59';
 
@@ -276,7 +277,9 @@ export default function PaymentMethods() {
               ? `Tarjeta  ···· ${String(m.numero).slice(-4)}`
               : esCheque
               ? `Cheque Nº ${m.numero}`
-              : 'Cuenta Bancaria';
+              : esCuenta
+              ? 'Cuenta Bancaria'
+              : m.tipo ?? 'Método de pago';
 
             const estadoColor =
               m.estado === 'verificado' ? '#16a34a' :

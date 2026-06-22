@@ -10,6 +10,16 @@ export interface AuthRequest extends Request {
   };
 }
 
+export const optionalAuth = (req: AuthRequest, _res: Response, next: NextFunction) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return next();
+  try {
+    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'super_secret_jwt_key_12345') as any;
+    req.user = { id: decoded.id, email: decoded.email, category: decoded.category };
+  } catch { /* token inválido: continuar sin usuario */ }
+  next();
+};
+
 export const requireAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 

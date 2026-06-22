@@ -1,7 +1,21 @@
 import { prisma } from '../../configuracion/baseDatos';
 
+function getMimeType(buf: Buffer): string {
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+      buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return 'image/webp';
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return 'image/png';
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'image/jpeg';
+  return 'image/jpeg';
+}
+
+function fotoABase64(raw: any): string | null {
+  if (!raw) return null;
+  const buf = Buffer.from(raw);
+  return `data:${getMimeType(buf)};base64,${buf.toString('base64')}`;
+}
+
 export class ArticlesService {
-  async submitArticle(data: { userId: number, descripcionCatalogo: string, descripcionCompleta: string, fotosBase64?: string[] }) {
+  async submitArticle(data: { userId: number, descripcionCatalogo: string, descripcionCompleta: string, fotosBase64?: string[], categoria?: string }) {
     // Verificamos si el usuario es dueño
     let duenio = await prisma.duenios.findUnique({
       where: { identificador: data.userId }
@@ -59,7 +73,7 @@ export class ArticlesService {
     }
 
     await prisma.extra_solicitudesVenta.create({
-      data: { cliente: data.userId, producto: producto.identificador, estado: 'pendiente' }
+      data: { cliente: data.userId, producto: producto.identificador, estado: 'pendiente', categoria: data.categoria ?? null }
     });
 
     return producto;
@@ -96,6 +110,45 @@ export class ArticlesService {
     });
   }
 
+  async aprobarSolicitud(productoId: number, precioBase: number, comision: number) {
+    const solicitud = await prisma.extra_solicitudesVenta.findUnique({
+      where: { producto: productoId },
+      include: { productos: true }
+    });
+    if (!solicitud) throw new Error('Solicitud no encontrada');
+    if (solicitud.estado !== 'pendiente') throw new Error('La solicitud no está en estado pendiente');
+
+    await prisma.extra_solicitudesVenta.update({
+      where: { producto: productoId },
+      data: { estado: 'aprobado', precioBase, comision, fechaActualizacion: new Date() }
+    });
+
+    const titulo = solicitud.productos?.descripcionCatalogo ?? 'tu artículo';
+    const precioFmt = precioBase.toLocaleString('es-AR');
+    const comisionPct = (comision * 100).toFixed(0);
+    await prisma.notificaciones.create({
+      data: {
+        identificadorPersona: solicitud.cliente,
+        mensaje: `OFERTA-REF-${productoId} Tu artículo "${titulo}" fue aprobado. Revisá el precio base ($${precioFmt}) y la comisión (${comisionPct}%) en Mis Ventas y respondé para continuar.`
+      }
+    });
+  }
+
+  async rechazarPropuestaVendedor(productoId: number, userId: number) {
+    const solicitud = await prisma.extra_solicitudesVenta.findUnique({
+      where: { producto: productoId },
+      include: { productos: true }
+    });
+    if (!solicitud) throw new Error('Solicitud no encontrada');
+    if (solicitud.productos.duenio !== userId) throw new Error('No tenés permiso');
+    if (solicitud.estado !== 'aprobado') throw new Error('La solicitud no está en estado aprobado');
+
+    await prisma.extra_solicitudesVenta.update({
+      where: { producto: productoId },
+      data: { estado: 'rechazado', motivo: 'Propuesta rechazada por el consignante', fechaActualizacion: new Date() }
+    });
+  }
+
   async getMyArticles(userId: number) {
     const productos = await prisma.productos.findMany({
       where: { duenio: userId },
@@ -113,11 +166,53 @@ export class ArticlesService {
       }
     });
 
+    // Auto-notificar cambios de estado que el admin hizo directamente en la BD
+    for (const p of productos) {
+      const sol = p.extra_solicitudesVenta as any;
+      if (!sol) continue;
+
+      if (sol.estado === 'aprobado' && sol.precioBase != null && sol.comision != null) {
+        const ref = `OFERTA-REF-${p.identificador}`;
+        const existe = await prisma.notificaciones.findFirst({
+          where: { identificadorPersona: userId, mensaje: { startsWith: ref } }
+        });
+        if (!existe) {
+          const titulo = p.descripcionCatalogo ?? 'tu artículo';
+          const precioFmt = Number(sol.precioBase).toLocaleString('es-AR');
+          const comisionPct = (Number(sol.comision) * 100).toFixed(0);
+          await prisma.notificaciones.create({
+            data: {
+              identificadorPersona: userId,
+              mensaje: `${ref} Tu artículo "${titulo}" fue aprobado. Revisá el precio base ($${precioFmt}) y la comisión (${comisionPct}%) en Mis Ventas y respondé para continuar.`
+            }
+          });
+        }
+      }
+
+      if (
+        sol.estado === 'rechazado' &&
+        sol.motivo &&
+        sol.motivo !== 'Propuesta rechazada por el consignante'
+      ) {
+        const ref = `RECHAZO-REF-${p.identificador}`;
+        const existe = await prisma.notificaciones.findFirst({
+          where: { identificadorPersona: userId, mensaje: { startsWith: ref } }
+        });
+        if (!existe) {
+          const titulo = p.descripcionCatalogo ?? 'tu artículo';
+          await prisma.notificaciones.create({
+            data: {
+              identificadorPersona: userId,
+              mensaje: `${ref} Tu artículo "${titulo}" fue rechazado por nuestro equipo. Motivo: ${sol.motivo}`
+            }
+          });
+        }
+      }
+    }
+
     return productos.map((p) => {
       const fotoRaw = (p.fotos[0] as any)?.foto;
-      const portada = fotoRaw
-        ? `data:image/jpeg;base64,${Buffer.from(fotoRaw).toString('base64')}`
-        : null;
+      const portada = fotoRaw ? fotoABase64(fotoRaw) : null;
       const { fotos, ...resto } = p as any;
       return { ...resto, portada };
     });

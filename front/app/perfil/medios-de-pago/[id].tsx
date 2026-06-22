@@ -66,9 +66,10 @@ export default function DetalleMedioPago() {
     );
   }
 
-  const esTarjeta = metodo.tipo === 'tarjeta de credito';
-  const esCheque = metodo.tipo === 'cheque';
-  const esCuenta = metodo.tipo === 'cuenta bancaria' || metodo.tipo === 'transferencia';
+  const tipoNorm = (metodo.tipo ?? '').toLowerCase();
+  const esTarjeta = tipoNorm === 'tarjeta de credito';
+  const esCheque = tipoNorm === 'cheque';
+  const esCuenta = tipoNorm === 'cuenta bancaria' || tipoNorm === 'transferencia';
 
   const Icono = esTarjeta ? CreditCard : esCheque ? FileText : Building2;
   const color = esTarjeta ? '#6A4F99' : esCheque ? '#C9A063' : '#4A7C59';
@@ -77,7 +78,9 @@ export default function DetalleMedioPago() {
     ? `Tarjeta ···· ${String(metodo.numero).slice(-4)}`
     : esCheque
     ? `Cheque Nº ${metodo.numero}`
-    : 'Cuenta Bancaria';
+    : esCuenta
+    ? 'Cuenta Bancaria'
+    : metodo.tipo ?? 'Método de pago';
 
   const estadoColor =
     metodo.estado === 'verificado' ? '#16a34a' :

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../../middlewares/autenticacion';
+import { requireAuth, optionalAuth } from '../../middlewares/autenticacion';
 import {
   createAuction,
   getAuctions,
@@ -10,7 +10,7 @@ import {
 const router = Router();
 
 router.post('/', requireAuth, createAuction);
-router.get('/', getAuctions);
+router.get('/', optionalAuth, getAuctions);
 router.get('/:id', getAuctionById);
 router.post('/:id/registrar', requireAuth, registerForAuction);
 

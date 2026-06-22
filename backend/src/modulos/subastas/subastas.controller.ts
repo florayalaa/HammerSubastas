@@ -4,7 +4,22 @@ import { AuthRequest } from '../../middlewares/autenticacion';
 
 const prisma = new PrismaClient();
 
-const EMPLEADO_DEFAULT = 1; // empleado verificador por defecto para catálogos
+const EMPLEADO_DEFAULT = 1;
+
+function getMimeType(buf: Buffer): string {
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+      buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return 'image/webp';
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return 'image/png';
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'image/jpeg';
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return 'image/gif';
+  return 'image/jpeg';
+}
+
+function fotoABase64(raw: any): string | null {
+  if (!raw) return null;
+  const buf = Buffer.from(raw);
+  return `data:${getMimeType(buf)};base64,${buf.toString('base64')}`;
+} // empleado verificador por defecto para catálogos
 
 function mergeDateTime(fecha: Date | null, hora: Date): Date {
   if (!fecha) return hora;
@@ -27,6 +42,8 @@ function mapItem(item: any, subastaId: string) {
   const importes = item.pujos?.map((p: any) => Number(p.importe)) ?? [];
   const currentPrice = importes.length > 0 ? Math.max(...importes) : Number(item.precioBase);
   const winnerPuja = item.pujos?.find((p: any) => p.ganador === 'si');
+  const productoId = item.productos?.identificador ?? item.producto;
+  const image = item.productos?.fotos?.length > 0 ? `/articulos/${productoId}/foto` : null;
   return {
     id: item.identificador.toString(),
     auctionId: subastaId,
@@ -34,7 +51,8 @@ function mapItem(item: any, subastaId: string) {
     description: item.productos?.descripcionCompleta ?? '',
     startingPrice: Number(item.precioBase),
     currentPrice,
-    winnerId: winnerPuja ? item.pujos?.find((p: any) => p.ganador === 'si')?.asistente?.toString() ?? null : null,
+    image,
+    winnerId: winnerPuja ? winnerPuja.asistente?.toString() ?? null : null,
     status: item.subastado === 'si' ? 'vendido' : 'pendiente',
   };
 }
@@ -44,15 +62,32 @@ function mapSubasta(s: any) {
   const items = (s.catalogos ?? []).flatMap((c: any) =>
     (c.itemsCatalogo ?? []).map((item: any) => mapItem(item, s.identificador.toString()))
   );
+
+  // Foto de portada: primera foto del primer producto del primer catálogo
+  const primerProducto = s.catalogos?.[0]?.itemsCatalogo?.[0]?.productos;
+  const imagen = primerProducto?.fotos?.length > 0
+    ? `/articulos/${primerProducto.identificador}/foto`
+    : null;
+
+  // Precio mínimo entre todos los items
+  const precios = (s.catalogos ?? []).flatMap((c: any) =>
+    (c.itemsCatalogo ?? []).map((item: any) => Number(item.precioBase))
+  ).filter((p: number) => !isNaN(p) && p > 0);
+  const startingPrice = precios.length > 0 ? Math.min(...precios) : null;
+
   return {
     id: s.identificador.toString(),
     title: extra?.titulo ?? 'Sin título',
     description: extra?.descripcion ?? null,
-    startDate: mergeDateTime(s.fecha, s.hora),
+    startDate: s.fecha ?? s.hora,
+    startTime: s.hora,
     endDate: extra?.fechaFin ?? null,
     category: s.categoria ?? null,
     currency: 'pesos',
     status: deriveStatus(s),
+    itemsCount: items.length,
+    startingPrice,
+    image: imagen,
     catalogItems: items,
   };
 }
@@ -63,7 +98,9 @@ const includeSubasta = {
     include: {
       itemsCatalogo: {
         include: {
-          productos: true,
+          productos: {
+            include: { fotos: { take: 1, orderBy: { identificador: 'asc' } } },
+          },
           pujos: true,
         },
       },
@@ -71,9 +108,23 @@ const includeSubasta = {
   },
 } as const;
 
-export const getAuctions = async (req: Request, res: Response) => {
+const RANGO_CATEGORIA: Record<string, number> = {
+  comun: 1, especial: 2, plata: 3, oro: 4, platino: 5,
+};
+
+function categoriasPermitidas(userCategory: string | undefined): string[] | null {
+  if (!userCategory) return null; // sin filtro para no autenticados
+  const rango = RANGO_CATEGORIA[userCategory.toLowerCase()] ?? 1;
+  return Object.entries(RANGO_CATEGORIA)
+    .filter(([, r]) => r <= rango)
+    .map(([cat]) => cat);
+}
+
+export const getAuctions = async (req: AuthRequest, res: Response) => {
   try {
+    const permitidas = categoriasPermitidas((req as any).user?.category);
     const subastas = await prisma.subastas.findMany({
+      where: permitidas ? { categoria: { in: permitidas } } : { categoria: { not: null } },
       include: includeSubasta,
       orderBy: { identificador: 'desc' },
     });
@@ -140,6 +191,13 @@ export const registerForAuction = async (req: AuthRequest, res: Response) => {
 
     const subasta = await prisma.subastas.findUnique({ where: { identificador: subastaId } });
     if (!subasta) return res.status(404).json({ error: 'Auction not found' });
+
+    const metodosPago = await prisma.extra_metodosPago.count({
+      where: { cliente: clienteId, estado: 'verificado' },
+    });
+    if (metodosPago === 0) {
+      return res.status(403).json({ error: 'Necesitás al menos un método de pago verificado para participar.' });
+    }
 
     const existing = await prisma.asistentes.findFirst({
       where: { cliente: clienteId, subasta: subastaId },

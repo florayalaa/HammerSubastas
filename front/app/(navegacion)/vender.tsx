@@ -1,11 +1,12 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, Image, FlatList } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Upload, X, CheckCircle, Info, ChevronDown, ChevronUp, Camera, Images } from 'lucide-react-native';
+import { Upload, X, CheckCircle, Info, ChevronDown, ChevronUp, Camera, Images, Tag } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import * as ImagePicker from 'expo-image-picker';
 import { apiPost } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { CATEGORIAS } from '@/constants/categorias';
 
 export default function SellItem() {
   const router = useRouter();
@@ -17,11 +18,13 @@ export default function SellItem() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    categoria: '',
     agreedToTerms: false,
     artistOrDesigner: '',
     date: '',
     history: '',
   });
+  const [showCategoriaModal, setShowCategoriaModal] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<{ uri: string; base64: string }[]>([]);
   const [showInfoBanner, setShowInfoBanner] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -43,6 +46,10 @@ export default function SellItem() {
     }
     if (!formData.title || !formData.description) {
       Alert.alert('Atención', 'Por favor completá el título y la descripción.');
+      return;
+    }
+    if (!formData.categoria) {
+      Alert.alert('Atención', 'Por favor seleccioná una categoría.');
       return;
     }
     setStep(2);
@@ -105,6 +112,7 @@ export default function SellItem() {
         descripcionCatalogo: formData.title,
         descripcionCompleta,
         fotosBase64: uploadedImages.map((img) => img.base64),
+        categoria: formData.categoria,
       }, token || '', 60000);
 
       router.replace('/perfil/mis-ventas');
@@ -198,6 +206,29 @@ export default function SellItem() {
               </View>
 
               <View className="mt-4">
+                <Text className="text-sm font-medium text-[#333F48] mb-2">Categoría *</Text>
+                <TouchableOpacity
+                  onPress={() => setShowCategoriaModal(true)}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f9fafb', borderWidth: 1, borderColor: formData.categoria ? '#6A4F99' : '#e5e7eb', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12 }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                    <Tag color={formData.categoria ? '#6A4F99' : '#A08C79'} size={16} />
+                    {formData.categoria ? (
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#333F48', fontWeight: '600', fontSize: 14 }}>{formData.categoria}</Text>
+                        <Text style={{ color: '#A08C79', fontSize: 12 }} numberOfLines={1}>
+                          {CATEGORIAS.find(c => c.valor === formData.categoria)?.ejemplos}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={{ color: '#A08C79', fontSize: 14 }}>Seleccioná una categoría</Text>
+                    )}
+                  </View>
+                  <ChevronDown color="#A08C79" size={18} />
+                </TouchableOpacity>
+              </View>
+
+              <View className="mt-4">
                 <Text className="text-sm font-medium text-[#333F48] mb-2">Imágenes ({uploadedImages.length}/10) *</Text>
 
                 {uploadedImages.length > 0 && (
@@ -255,8 +286,8 @@ export default function SellItem() {
 
               <Button
                 onPress={handleStep1Submit}
-                className={`w-full mt-6 h-12 rounded-xl ${(!formData.title || !formData.description || !formData.agreedToTerms || uploadedImages.length < 6) ? 'bg-gray-400' : 'bg-[#6A4F99]'}`}
-                disabled={!formData.title || !formData.description || !formData.agreedToTerms || uploadedImages.length < 6}
+                className={`w-full mt-6 h-12 rounded-xl ${(!formData.title || !formData.description || !formData.categoria || !formData.agreedToTerms || uploadedImages.length < 6) ? 'bg-gray-400' : 'bg-[#6A4F99]'}`}
+                disabled={!formData.title || !formData.description || !formData.categoria || !formData.agreedToTerms || uploadedImages.length < 6}
               >
                 Continuar
               </Button>
@@ -269,15 +300,17 @@ export default function SellItem() {
                 </Text>
               </View>
 
-              <View>
-                <Text className="text-sm font-medium text-[#333F48] mb-2">Artista o Diseñador</Text>
-                <TextInput
-                  value={formData.artistOrDesigner}
-                  onChangeText={(t) => updateFormData('artistOrDesigner', t)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]"
-                  placeholder="Ej: Pablo Picasso"
-                />
-              </View>
+              {formData.categoria === 'Arte' && (
+                <View>
+                  <Text className="text-sm font-medium text-[#333F48] mb-2">Artista o Diseñador</Text>
+                  <TextInput
+                    value={formData.artistOrDesigner}
+                    onChangeText={(t) => updateFormData('artistOrDesigner', t)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]"
+                    placeholder="Ej: Pablo Picasso"
+                  />
+                </View>
+              )}
 
               <View>
                 <Text className="text-sm font-medium text-[#333F48] mb-2 mt-4">Fecha o Época</Text>
@@ -327,6 +360,41 @@ export default function SellItem() {
         </View>
         <View className="h-10" />
       </View>
+
+      {/* Modal Categoría */}
+      <Modal visible={showCategoriaModal} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 20, paddingBottom: 40, maxHeight: '80%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333F48' }}>Seleccioná una categoría</Text>
+              <TouchableOpacity onPress={() => setShowCategoriaModal(false)}>
+                <X color="#333F48" size={22} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={CATEGORIAS}
+              keyExtractor={(item) => item.valor}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => { updateFormData('categoria', item.valor); setShowCategoriaModal(false); }}
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f3f4f6', backgroundColor: formData.categoria === item.valor ? '#f5f3ff' : 'white' }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: formData.categoria === item.valor ? '#6A4F99' : '#333F48' }}>
+                      {item.valor}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: '#A08C79', marginTop: 2 }}>{item.ejemplos}</Text>
+                  </View>
+                  {formData.categoria === item.valor && (
+                    <CheckCircle color="#6A4F99" size={20} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
 
       {/* Modal Confirmación */}
       <Modal visible={showConfirmModal} transparent animationType="fade">

@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
 import { Search } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import { apiGet } from '@/app/lib/api';
+import { apiGet, API_BASE_URL } from '@/app/lib/api';
 import { TarjetaSubasta } from '@/components/TarjetaSubasta';
 
 export default function Auctions() {
@@ -14,26 +14,28 @@ export default function Auctions() {
   const scrollRef = useRef<ScrollView>(null);
   useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const [subastas, setSubastas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     const obtenerSubastas = async () => {
       try {
-        const res = await apiGet('/subastas');
+        const res = await apiGet('/subastas', token ?? undefined);
         if (res && Array.isArray(res)) {
           const subastasFormateadas = res.map((a: any) => ({
             id: a.id,
             titulo: a.title,
-            fecha: new Date(a.startDate).toLocaleDateString(),
-            hora: new Date(a.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fecha: new Date(a.startDate).toLocaleDateString('es-AR', { timeZone: 'UTC' }),
+            hora: a.startTime ? new Date(a.startTime).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : '',
             categoria: a.category || "comun",
-            moneda: a.currency || "USD",
-            articulos: a.itemsCount || a.items?.length || 0,
-            pujaInicial: `$${a.startingPrice}`,
-            estado: a.status === 'ACTIVE' ? 'en_vivo' : 'proxima',
-            imagen: a.image || null,
+            moneda: a.currency || "pesos",
+            articulos: a.itemsCount ?? 0,
+            pujaInicial: a.startingPrice != null
+              ? `$${Number(a.startingPrice).toLocaleString('es-AR')}`
+              : 'No disponible',
+            estado: a.status === 'abierta' ? 'en_vivo' : 'proxima',
+            imagen: a.image ? `${API_BASE_URL}${a.image}` : null,
           }));
           setSubastas(subastasFormateadas);
         }

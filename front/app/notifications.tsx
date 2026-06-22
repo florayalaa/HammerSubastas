@@ -88,7 +88,7 @@ export default function Notifications() {
                       </Text>
                     </View>
                     <Text className={`text-sm leading-relaxed ${notif.leido ? 'text-gray-600' : 'text-blue-800'}`}>
-                      {notif.mensaje}
+                      {notif.mensaje.replace(/^(OFERTA|RECHAZO)-REF-\d+\s*/, '')}
                     </Text>
                   </View>
                 </TouchableOpacity>
