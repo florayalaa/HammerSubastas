@@ -42,7 +42,7 @@ export default function PaymentMethods() {
   const [paisCuentaId, setPaisCuentaId] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [tipo, setTipo] = useState<'tarjeta' | 'cheque' | 'cuenta bancaria' | null>(null);
+  const [tipo, setTipo] = useState<'tarjeta de credito' | 'cheque' | 'cuenta bancaria' | null>(null);
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
@@ -124,7 +124,7 @@ export default function PaymentMethods() {
             Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara.');
             return;
           }
-          const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+          const result = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.7 });
           if (!result.canceled && result.assets[0]) setFotoCheque(result.assets[0].uri);
         }
       },
@@ -135,7 +135,7 @@ export default function PaymentMethods() {
             Alert.alert('Permiso requerido', 'Necesitamos acceso a la galería.');
             return;
           }
-          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.7 });
           if (!result.canceled && result.assets[0]) setFotoCheque(result.assets[0].uri);
         }
       },
@@ -159,7 +159,7 @@ export default function PaymentMethods() {
       Alert.alert('Error', 'Por favor, ingresá el número o identificador.');
       return;
     }
-    if (tipo === 'tarjeta') {
+    if (tipo === 'tarjeta de credito') {
       const raw = cardNumber.replace(/\s/g, '');
       if (raw.length < 16 || expiry.length < 5 || cvc.length < 3) {
         Alert.alert('Error', 'Completá número de tarjeta, vencimiento y CVC.');
@@ -266,7 +266,7 @@ export default function PaymentMethods() {
           </View>
         ) : (
           methods.map((m) => {
-            const esTarjeta = m.tipo === 'tarjeta';
+            const esTarjeta = m.tipo === 'tarjeta de credito';
             const esCheque = m.tipo === 'cheque';
             const esCuenta = m.tipo === 'cuenta bancaria' || m.tipo === 'transferencia';
             const Icono = esTarjeta ? CreditCard : esCheque ? FileText : Building2;
@@ -329,7 +329,7 @@ export default function PaymentMethods() {
             <Text className="font-bold text-[#333F48] mb-4">¿Qué tipo de medio querés agregar?</Text>
             <View className="gap-3">
               {([
-                { value: 'tarjeta', label: 'Tarjeta' },
+                { value: 'tarjeta de credito', label: 'Tarjeta de Crédito' },
                 { value: 'cheque', label: 'Cheque' },
                 { value: 'cuenta bancaria', label: 'Cuenta Bancaria' },
               ] as const).map((t) => (
@@ -349,10 +349,10 @@ export default function PaymentMethods() {
         ) : showAdd && tipo ? (
           <View className="bg-white p-4 rounded-xl border border-gray-200 mt-4 shadow-sm">
             <Text className="font-bold text-[#333F48] mb-4">
-              {tipo === 'tarjeta' ? 'Nueva Tarjeta' : tipo === 'cheque' ? 'Nuevo Cheque' : 'Nueva Cuenta Bancaria'}
+              {tipo === 'tarjeta de credito' ? 'Nueva Tarjeta de Crédito' : tipo === 'cheque' ? 'Nuevo Cheque' : 'Nueva Cuenta Bancaria'}
             </Text>
 
-            {tipo === 'tarjeta' && (
+            {tipo === 'tarjeta de credito' && (
               <>
                 <CampoFormulario label="Titular" value={titular} onChangeText={setTitular} placeholder="Nombre del titular" />
                 <CampoFormulario

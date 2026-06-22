@@ -1,27 +1,32 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Modal, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Upload, X, CheckCircle, Info, ChevronDown, ChevronUp, ChevronLeft } from 'lucide-react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, Image } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Upload, X, CheckCircle, Info, ChevronDown, ChevronUp, Camera, Images } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import * as ImagePicker from 'expo-image-picker';
+import { apiPost } from '@/app/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SellItem() {
   const router = useRouter();
+  const { token } = useAuth();
+  const scrollRef = useRef<ScrollView>(null);
+  useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
+    title: '',
+    description: '',
     agreedToTerms: false,
-    artistOrDesigner: "",
-    date: "",
-    history: "",
+    artistOrDesigner: '',
+    date: '',
+    history: '',
   });
-
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [submitted, setSubmitted] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<{ uri: string; base64: string }[]>([]);
   const [showInfoBanner, setShowInfoBanner] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const updateFormData = (field: string, value: string | boolean) => {
     setFormData({ ...formData, [field]: value });
@@ -29,31 +34,54 @@ export default function SellItem() {
 
   const handleStep1Submit = () => {
     if (uploadedImages.length < 6) {
-      Alert.alert("Atención", "Debes subir al menos 6 imágenes del artículo");
+      Alert.alert('Atención', 'Debés subir al menos 6 imágenes del artículo.');
       return;
     }
     if (!formData.agreedToTerms) {
-      Alert.alert("Atención", "Debes aceptar los términos y condiciones");
+      Alert.alert('Atención', 'Debés aceptar los términos y condiciones.');
       return;
     }
     if (!formData.title || !formData.description) {
-      Alert.alert("Atención", "Por favor completa el título y la descripción");
+      Alert.alert('Atención', 'Por favor completá el título y la descripción.');
       return;
     }
     setStep(2);
   };
 
-  const handleImageUpload = async () => {
-    if (uploadedImages.length < 10) {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-      if (!result.canceled) {
-        setUploadedImages([...uploadedImages, result.assets[0].uri]);
-      }
+  const handleGallery = async () => {
+    if (uploadedImages.length >= 10) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      allowsMultipleSelection: true,
+      base64: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const disponibles = 10 - uploadedImages.length;
+      const nuevas = result.assets
+        .slice(0, disponibles)
+        .filter((a) => a.base64)
+        .map((a) => ({ uri: a.uri, base64: a.base64! }));
+      setUploadedImages([...uploadedImages, ...nuevas]);
+    }
+  };
+
+  const handleCamera = async () => {
+    if (uploadedImages.length >= 10) return;
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara para tomar fotos.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      aspect: [4, 3],
+      base64: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0].base64) {
+      setUploadedImages([...uploadedImages, { uri: result.assets[0].uri, base64: result.assets[0].base64 }]);
     }
   };
 
@@ -61,58 +89,69 @@ export default function SellItem() {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
   };
 
-  if (submitted) {
+  const handleConfirmar = async () => {
+    setShowConfirmModal(false);
+    setSubmitting(true);
+    try {
+      let descripcionCompleta = formData.description;
+      const extras = [
+        formData.artistOrDesigner && `Artista/Diseñador: ${formData.artistOrDesigner}`,
+        formData.date && `Fecha/Época: ${formData.date}`,
+        formData.history && `Historia: ${formData.history}`,
+      ].filter(Boolean).join(' | ');
+      if (extras) descripcionCompleta += `\n\n${extras}`;
+
+      await apiPost('/articulos/enviar', {
+        descripcionCatalogo: formData.title,
+        descripcionCompleta,
+        fotosBase64: uploadedImages.map((img) => img.base64),
+      }, token || '', 60000);
+
+      router.replace('/perfil/mis-ventas');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'No se pudo enviar el artículo.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitting) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center px-6">
-        <View className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 items-center">
-          <View className="w-20 h-20 bg-green-100 rounded-full items-center justify-center mb-6">
-            <CheckCircle color="#16a34a" size={48} />
-          </View>
-          <Text className="text-2xl font-bold text-[#333F48] mb-4 text-center">¡Solicitud Enviada!</Text>
-          <Text className="text-[#A08C79] text-center mb-6 leading-relaxed">
-            Tu artículo ha sido enviado para revisión. Nuestro equipo te contactará en 48-72 horas.
-          </Text>
-          <Button 
-            className="w-full bg-[#6A4F99] h-12 rounded-xl"
-            onPress={() => router.back()}
-          >
-            Volver al Perfil
-          </Button>
-        </View>
+      <View className="flex-1 bg-gray-50 justify-center items-center">
+        <ActivityIndicator size="large" color="#6A4F99" />
+        <Text className="text-[#A08C79] mt-4">Enviando solicitud...</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollRef} className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
       {/* Header */}
-      <View className="bg-white pt-14 pb-4 px-4 border-b border-gray-200 flex-row items-center">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <ChevronLeft color="#333F48" size={28} />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-[#333F48]">Vender un Artículo</Text>
+      <View className="bg-white pt-14 pb-4 px-4 border-b border-gray-200">
+        <Text className="text-2xl font-bold text-[#333F48]">Vender un Artículo</Text>
+        <Text className="text-sm text-[#A08C79] mt-1">Consigná tu pieza para subasta</Text>
       </View>
 
       <View className="px-4 py-6">
-        {/* Progress */}
+        {/* Progreso */}
         <View className="flex-row items-center justify-center mb-8">
           <View className="items-center flex-row">
             <View className={`w-8 h-8 rounded-full items-center justify-center ${step >= 1 ? 'bg-[#6A4F99]' : 'bg-gray-300'}`}>
               <Text className="text-white font-bold">1</Text>
             </View>
-            <Text className={`ml-2 text-sm font-medium ${step >= 1 ? 'text-[#333F48]' : 'text-gray-400'}`}>Básica</Text>
+            <Text className={`ml-2 text-sm font-medium ${step >= 1 ? 'text-[#333F48]' : 'text-gray-400'}`}>Información básica</Text>
           </View>
           <View className={`h-1 w-12 mx-2 ${step >= 2 ? 'bg-[#6A4F99]' : 'bg-gray-300'}`} />
           <View className="items-center flex-row">
             <View className={`w-8 h-8 rounded-full items-center justify-center ${step >= 2 ? 'bg-[#6A4F99]' : 'bg-gray-300'}`}>
               <Text className="text-white font-bold">2</Text>
             </View>
-            <Text className={`ml-2 text-sm font-medium ${step >= 2 ? 'text-[#333F48]' : 'text-gray-400'}`}>Adicional</Text>
+            <Text className={`ml-2 text-sm font-medium ${step >= 2 ? 'text-[#333F48]' : 'text-gray-400'}`}>Info adicional</Text>
           </View>
         </View>
 
-        {/* Info Banner */}
-        <TouchableOpacity 
+        {/* Banner info */}
+        <TouchableOpacity
           onPress={() => setShowInfoBanner(!showInfoBanner)}
           className={`flex-row items-center justify-between p-4 bg-[#C9A063]/10 border border-[#C9A063]/30 ${showInfoBanner ? 'rounded-t-lg border-b-0' : 'rounded-lg mb-4'}`}
         >
@@ -128,7 +167,7 @@ export default function SellItem() {
             <Text className="text-xs text-[#A08C79] mb-2">• Mínimo 6 imágenes de alta calidad.</Text>
             <Text className="text-xs text-[#A08C79] mb-2">• El artículo debe ser de tu propiedad.</Text>
             <Text className="text-xs text-[#A08C79] mb-2">• Los costos de envío corren por tu cuenta.</Text>
-            <Text className="text-xs text-[#A08C79]">• Expertos determinan el valor base.</Text>
+            <Text className="text-xs text-[#A08C79]">• Nuestros expertos determinan el valor base.</Text>
           </View>
         )}
 
@@ -139,7 +178,7 @@ export default function SellItem() {
                 <Text className="text-sm font-medium text-[#333F48] mb-2">Título del Artículo *</Text>
                 <TextInput
                   value={formData.title}
-                  onChangeText={(t) => updateFormData("title", t)}
+                  onChangeText={(t) => updateFormData('title', t)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]"
                   placeholder="Ej: Reloj Omega Vintage"
                 />
@@ -149,9 +188,9 @@ export default function SellItem() {
                 <Text className="text-sm font-medium text-[#333F48] mb-2 mt-4">Descripción Detallada *</Text>
                 <TextInput
                   value={formData.description}
-                  onChangeText={(t) => updateFormData("description", t)}
+                  onChangeText={(t) => updateFormData('description', t)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]"
-                  placeholder="Describe el artículo..."
+                  placeholder="Describí el artículo, su estado, características..."
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
@@ -160,18 +199,17 @@ export default function SellItem() {
 
               <View className="mt-4">
                 <Text className="text-sm font-medium text-[#333F48] mb-2">Imágenes ({uploadedImages.length}/10) *</Text>
-                
+
                 {uploadedImages.length > 0 && (
                   <View className="flex-row flex-wrap gap-2 mb-3">
                     {uploadedImages.map((img, i) => (
-                      <View key={i} className="bg-gray-100 rounded-md p-1 flex-row items-center border border-gray-200">
-                        <View className="w-10 h-10 bg-gray-200 rounded mr-2 overflow-hidden">
-                          {/* Muestra un preview */}
-                          <View className="w-full h-full bg-[#A08C79]/20" />
-                        </View>
-                        <Text className="text-xs text-gray-600 mr-2 max-w-[80px]" numberOfLines={1}>img-{i+1}</Text>
-                        <TouchableOpacity onPress={() => removeImage(i)}>
-                          <X color="#ef4444" size={14} />
+                      <View key={i} style={{ position: 'relative' }}>
+                        <Image source={{ uri: img.uri }} style={{ width: 72, height: 72, borderRadius: 8 }} />
+                        <TouchableOpacity
+                          onPress={() => removeImage(i)}
+                          style={{ position: 'absolute', top: -6, right: -6, backgroundColor: '#ef4444', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <X color="white" size={12} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -179,30 +217,44 @@ export default function SellItem() {
                 )}
 
                 {uploadedImages.length < 10 && (
-                  <TouchableOpacity 
-                    onPress={handleImageUpload}
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 items-center justify-center bg-gray-50"
-                  >
-                    <Upload color="#A08C79" size={24} className="mb-2" />
-                    <Text className="text-sm text-[#A08C79] font-medium">Toca para subir imagen</Text>
-                  </TouchableOpacity>
+                  <View className="flex-row gap-3">
+                    <TouchableOpacity
+                      onPress={handleGallery}
+                      className="flex-1 border-2 border-dashed border-gray-300 rounded-lg p-5 items-center justify-center bg-gray-50"
+                    >
+                      <Images color="#A08C79" size={24} />
+                      <Text className="text-xs text-[#A08C79] font-medium mt-2 text-center">Galería</Text>
+                      <Text className="text-[10px] text-gray-400 mt-0.5 text-center">Selección múltiple</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleCamera}
+                      className="flex-1 border-2 border-dashed border-[#6A4F99]/40 rounded-lg p-5 items-center justify-center bg-[#6A4F99]/5"
+                    >
+                      <Camera color="#6A4F99" size={24} />
+                      <Text className="text-xs text-[#6A4F99] font-medium mt-2 text-center">Cámara</Text>
+                      <Text className="text-[10px] text-gray-400 mt-0.5 text-center">Sacar foto ahora</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </View>
 
               <View className="flex-row items-center mt-6 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                <TouchableOpacity 
-                  onPress={() => updateFormData("agreedToTerms", !formData.agreedToTerms)}
+                <TouchableOpacity
+                  onPress={() => updateFormData('agreedToTerms', !formData.agreedToTerms)}
                   className={`w-6 h-6 rounded border items-center justify-center mr-3 ${formData.agreedToTerms ? 'bg-[#6A4F99] border-[#6A4F99]' : 'border-gray-300 bg-white'}`}
                 >
                   {formData.agreedToTerms && <CheckCircle color="white" size={16} />}
                 </TouchableOpacity>
                 <Text className="text-sm text-[#333F48] flex-1">
-                  Acepto los <Text onPress={() => setShowTermsModal(true)} className="text-[#6A4F99] font-bold">términos y condiciones</Text>
+                  Acepto los{' '}
+                  <Text onPress={() => setShowTermsModal(true)} className="text-[#6A4F99] font-bold">
+                    términos y condiciones
+                  </Text>
                 </Text>
               </View>
 
-              <Button 
-                onPress={handleStep1Submit} 
+              <Button
+                onPress={handleStep1Submit}
                 className={`w-full mt-6 h-12 rounded-xl ${(!formData.title || !formData.description || !formData.agreedToTerms || uploadedImages.length < 6) ? 'bg-gray-400' : 'bg-[#6A4F99]'}`}
                 disabled={!formData.title || !formData.description || !formData.agreedToTerms || uploadedImages.length < 6}
               >
@@ -213,7 +265,7 @@ export default function SellItem() {
             <View className="space-y-4">
               <View className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                 <Text className="text-xs text-blue-800">
-                  <Text className="font-bold">Opcional:</Text> Esta información ayuda a nuestros expertos.
+                  <Text className="font-bold">Opcional:</Text> Esta información ayuda a nuestros expertos a valorar mejor tu pieza.
                 </Text>
               </View>
 
@@ -221,7 +273,7 @@ export default function SellItem() {
                 <Text className="text-sm font-medium text-[#333F48] mb-2">Artista o Diseñador</Text>
                 <TextInput
                   value={formData.artistOrDesigner}
-                  onChangeText={(t) => updateFormData("artistOrDesigner", t)}
+                  onChangeText={(t) => updateFormData('artistOrDesigner', t)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]"
                   placeholder="Ej: Pablo Picasso"
                 />
@@ -231,7 +283,7 @@ export default function SellItem() {
                 <Text className="text-sm font-medium text-[#333F48] mb-2 mt-4">Fecha o Época</Text>
                 <TextInput
                   value={formData.date}
-                  onChangeText={(t) => updateFormData("date", t)}
+                  onChangeText={(t) => updateFormData('date', t)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]"
                   placeholder="Ej: Siglo XVIII"
                 />
@@ -241,7 +293,7 @@ export default function SellItem() {
                 <Text className="text-sm font-medium text-[#333F48] mb-2 mt-4">Historia del Objeto</Text>
                 <TextInput
                   value={formData.history}
-                  onChangeText={(t) => updateFormData("history", t)}
+                  onChangeText={(t) => updateFormData('history', t)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[#333F48]"
                   placeholder="Contexto, dueños anteriores..."
                   multiline
@@ -252,28 +304,21 @@ export default function SellItem() {
 
               <View className="mt-4">
                 <Text className="text-sm font-medium text-[#333F48] mb-2">Comprobante de Origen Lícito (Opcional)</Text>
-                <Text className="text-xs text-[#A08C79] mb-3">Requerido por la empresa para sumas altas.</Text>
-                <TouchableOpacity 
-                  onPress={() => Alert.alert("Cargar Documento", "Funcionalidad simulada: documento subido exitosamente.")}
+                <Text className="text-xs text-[#A08C79] mb-3">Requerido para sumas altas.</Text>
+                <TouchableOpacity
+                  onPress={() => Alert.alert('Adjuntar', 'Funcionalidad de adjunto próximamente.')}
                   className="border-2 border-dashed border-[#6A4F99]/50 rounded-lg p-4 items-center justify-center bg-[#6A4F99]/5 flex-row"
                 >
-                  <Upload color="#6A4F99" size={20} className="mr-2" />
-                  <Text className="text-sm text-[#6A4F99] font-medium">Adjuntar Archivo o Foto</Text>
+                  <Upload color="#6A4F99" size={20} />
+                  <Text className="text-sm text-[#6A4F99] font-medium ml-2">Adjuntar Archivo o Foto</Text>
                 </TouchableOpacity>
               </View>
 
               <View className="flex-row gap-3 mt-6">
-                <Button 
-                  variant="secondary"
-                  onPress={() => setStep(1)} 
-                  className="flex-1 h-12 rounded-xl"
-                >
+                <Button variant="secondary" onPress={() => setStep(1)} className="flex-1 h-12 rounded-xl">
                   Volver
                 </Button>
-                <Button 
-                  onPress={() => setShowConfirmModal(true)} 
-                  className="flex-1 bg-[#6A4F99] h-12 rounded-xl"
-                >
+                <Button onPress={() => setShowConfirmModal(true)} className="flex-1 bg-[#6A4F99] h-12 rounded-xl">
                   Enviar
                 </Button>
               </View>
@@ -292,20 +337,10 @@ export default function SellItem() {
               Una vez enviada, la solicitud será revisada por nuestros expertos. Te contactaremos en 24-48 horas.
             </Text>
             <View className="flex-row gap-3">
-              <Button 
-                variant="secondary"
-                onPress={() => setShowConfirmModal(false)}
-                className="flex-1"
-              >
+              <Button variant="secondary" onPress={() => setShowConfirmModal(false)} className="flex-1">
                 Cancelar
               </Button>
-              <Button 
-                onPress={() => {
-                  setShowConfirmModal(false);
-                  setSubmitted(true);
-                }}
-                className="flex-1 bg-[#6A4F99]"
-              >
+              <Button onPress={handleConfirmar} className="flex-1 bg-[#6A4F99]">
                 Confirmar
               </Button>
             </View>
@@ -325,7 +360,7 @@ export default function SellItem() {
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text className="font-bold text-[#333F48] mb-1">1. Propiedad del Artículo</Text>
-              <Text className="text-sm text-[#A08C79] mb-4">Declaro que el artículo es de mi propiedad.</Text>
+              <Text className="text-sm text-[#A08C79] mb-4">Declaro que el artículo es de mi propiedad y tengo derecho a venderlo.</Text>
               <Text className="font-bold text-[#333F48] mb-1">2. Costos de Envío</Text>
               <Text className="text-sm text-[#A08C79] mb-4">Los costos de envío para inspección corren por mi cuenta.</Text>
               <Text className="font-bold text-[#333F48] mb-1">3. Valoración</Text>

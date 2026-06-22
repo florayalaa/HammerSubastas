@@ -219,10 +219,10 @@ export default function EditProfile() {
         </View>
 
         <View className="flex-col gap-3">
-          <Button onPress={handleSubmit} disabled={submitting} className="w-full bg-[#6A4F99] h-12 rounded-xl flex-row items-center justify-center">
-            <Save color="white" size={20} className="mr-2" />
-            <Text className="text-white font-bold text-base">{submitting ? 'Guardando...' : 'Guardar Cambios'}</Text>
-          </Button>
+          <TouchableOpacity onPress={handleSubmit} disabled={submitting} className="w-full bg-[#6A4F99] h-12 rounded-xl flex-row items-center justify-center">
+            <Save color="white" size={20} />
+            <Text className="text-white font-bold text-base text-center ml-2">{submitting ? 'Guardando...' : 'Guardar Cambios'}</Text>
+          </TouchableOpacity>
           <Button variant="secondary" onPress={() => router.back()} className="w-full h-12 rounded-xl">
             Cancelar
           </Button>

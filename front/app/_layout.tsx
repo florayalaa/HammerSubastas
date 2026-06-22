@@ -6,6 +6,7 @@ import '../global.css';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { useEffect } from 'react';
 import { View, Text } from 'react-native';
 
@@ -59,6 +60,7 @@ function RootLayoutNav() {
 
 
   return (
+    <NotificationProvider>
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(autenticacion)" options={{ headerShown: false }} />
@@ -75,6 +77,7 @@ function RootLayoutNav() {
       <Stack.Screen name="subastas/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="subastas/en-vivo/[id]" options={{ headerShown: false }} />
     </Stack>
+    </NotificationProvider>
   );
 }
 

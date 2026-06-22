@@ -179,6 +179,7 @@ export const getMyBids = async (req: AuthRequest, res: Response) => {
       return {
         id: p.identificador.toString(),
         amount: Number(p.importe),
+        ganador: p.ganador === 'si',
         catalogItem: {
           id: item?.identificador?.toString() ?? '',
           title: item?.productos?.descripcionCatalogo ?? '',

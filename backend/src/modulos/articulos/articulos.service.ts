@@ -47,7 +47,6 @@ export class ArticlesService {
       }
     });
 
-    // Guardar fotos simuladas
     if (data.fotosBase64 && data.fotosBase64.length > 0) {
       for (const f of data.fotosBase64) {
         await prisma.fotos.create({
@@ -59,13 +58,51 @@ export class ArticlesService {
       }
     }
 
+    await prisma.extra_solicitudesVenta.create({
+      data: { cliente: data.userId, producto: producto.identificador, estado: 'pendiente' }
+    });
+
     return producto;
+  }
+
+  async deleteArticle(productoId: number, userId: number) {
+    const producto = await prisma.productos.findUnique({
+      where: { identificador: productoId },
+      include: { itemsCatalogo: true },
+    });
+
+    if (!producto) throw new Error('Artículo no encontrado');
+    if (producto.duenio !== userId) throw new Error('No tenés permiso para eliminar este artículo');
+    if (producto.itemsCatalogo.length > 0) throw new Error('No se puede eliminar un artículo que ya fue aprobado o incluido en subasta');
+
+    await prisma.fotos.deleteMany({ where: { producto: productoId } });
+    await prisma.registroDeSubasta.deleteMany({ where: { producto: productoId } });
+    await prisma.extra_solicitudesVenta.deleteMany({ where: { producto: productoId } });
+    await prisma.productos.delete({ where: { identificador: productoId } });
+  }
+
+  async aceptarPropuesta(productoId: number, userId: number) {
+    const solicitud = await prisma.extra_solicitudesVenta.findUnique({
+      where: { producto: productoId },
+      include: { productos: true }
+    });
+    if (!solicitud) throw new Error('Solicitud no encontrada');
+    if (solicitud.productos.duenio !== userId) throw new Error('No tenés permiso');
+    if (solicitud.estado !== 'aprobado') throw new Error('La solicitud no está en estado aprobado');
+
+    await prisma.extra_solicitudesVenta.update({
+      where: { producto: productoId },
+      data: { estado: 'a_subastar', fechaActualizacion: new Date() }
+    });
   }
 
   async getMyArticles(userId: number) {
     const productos = await prisma.productos.findMany({
       where: { duenio: userId },
+      orderBy: { identificador: 'desc' },
       include: {
+        fotos: { take: 1 },
+        extra_solicitudesVenta: true,
         itemsCatalogo: {
           include: {
             catalogos: {
@@ -75,7 +112,15 @@ export class ArticlesService {
         }
       }
     });
-    return productos;
+
+    return productos.map((p) => {
+      const fotoRaw = (p.fotos[0] as any)?.foto;
+      const portada = fotoRaw
+        ? `data:image/jpeg;base64,${Buffer.from(fotoRaw).toString('base64')}`
+        : null;
+      const { fotos, ...resto } = p as any;
+      return { ...resto, portada };
+    });
   }
 }
 

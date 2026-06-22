@@ -4,11 +4,13 @@ import { useRouter } from 'expo-router';
 import { ChevronLeft, Bell, MessageSquare } from 'lucide-react-native';
 import { apiGet, apiPut } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { useNotificationBadge } from '@/context/NotificationContext';
 
 export default function Notifications() {
   const router = useRouter();
   const { token } = useAuth();
-  
+  const { refreshCount } = useNotificationBadge();
+
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,6 +19,7 @@ export default function Notifications() {
     try {
       const data = await apiGet('/notificaciones', token);
       setNotifications(data);
+      refreshCount(token);
     } catch (e) {
       console.warn("Error al obtener notificaciones", e);
     } finally {
@@ -34,9 +37,9 @@ export default function Notifications() {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, leido: true } : n));
     try {
       await apiPut(`/notificaciones/${id}/leida`, {}, token);
+      refreshCount(token);
     } catch (e) {
       console.warn("Error marcando como leída", e);
-      // Revertimos si falló
       fetchNotifications();
     }
   };

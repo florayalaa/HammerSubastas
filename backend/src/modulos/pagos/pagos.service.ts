@@ -26,12 +26,12 @@ export class PaymentsService {
     fotoCheque?: Buffer;
     montoGarantia?: string;
   }) {
-    const tipo = data.tipo || 'tarjeta';
+    const tipo = data.tipo || 'tarjeta de credito';
 
     if (!data.cardNumber) {
       throw new Error('El número / identificador es requerido');
     }
-    if (tipo === 'tarjeta' && data.cardNumber.replace(/\s/g, '').length < 13) {
+    if (tipo === 'tarjeta de credito' && data.cardNumber.replace(/\s/g, '').length < 13) {
       throw new Error('Número de tarjeta inválido');
     }
     if (tipo === 'cuenta bancaria' && data.cardNumber.replace(/\s/g, '').length !== 22) {
@@ -59,7 +59,7 @@ export class PaymentsService {
     });
 
     if (estadoInicial === 'verificado') {
-      const etiqueta = tipo === 'tarjeta' ? 'tarjeta' : 'cuenta bancaria';
+      const etiqueta = tipo === 'tarjeta de credito' ? 'tarjeta de crédito' : 'cuenta bancaria';
       await prisma.notificaciones.create({
         data: {
           identificadorPersona: clienteId,

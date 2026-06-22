@@ -28,7 +28,7 @@ export default function UploadArticle() {
       }, token || '');
 
       Alert.alert('Éxito', 'Artículo enviado a revisión exitosamente. Te notificaremos cuando se apruebe.', [
-        { text: 'OK', onPress: () => router.back() }
+        { text: 'OK', onPress: () => router.replace('/perfil/mis-ventas') }
       ]);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo enviar el artículo.');

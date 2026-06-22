@@ -66,7 +66,7 @@ export default function DetalleMedioPago() {
     );
   }
 
-  const esTarjeta = metodo.tipo === 'tarjeta';
+  const esTarjeta = metodo.tipo === 'tarjeta de credito';
   const esCheque = metodo.tipo === 'cheque';
   const esCuenta = metodo.tipo === 'cuenta bancaria' || metodo.tipo === 'transferencia';
 

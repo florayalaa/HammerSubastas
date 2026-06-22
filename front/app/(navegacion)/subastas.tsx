@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
 import { Search } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
@@ -8,9 +9,11 @@ import { TarjetaSubasta } from '@/components/TarjetaSubasta';
 
 export default function Auctions() {
   const [terminoBusqueda, setTermoBusqueda] = useState("");
-  const [filtroCategoria, setFiltroCategoria] = useState(""); // "" significa "Todas"
-  const [filtroMoneda, setFiltroMoneda] = useState("");       // "" significa "Todas"
-  
+  const [filtroCategoria, setFiltroCategoria] = useState("");
+  const [filtroMoneda, setFiltroMoneda] = useState("");
+  const scrollRef = useRef<ScrollView>(null);
+  useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
+
   const { isAuthenticated } = useAuth();
   const [subastas, setSubastas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -61,7 +64,7 @@ export default function Auctions() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
       <View className="mb-6">
         <Text className="text-3xl font-bold text-[#333F48] mb-1">Subastas Disponibles</Text>
         <Text className="text-[#A08C79]">Explora todas las subastas activas y próximas</Text>

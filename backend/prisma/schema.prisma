@@ -40,6 +40,7 @@ model clientes {
   extra_credencialesCliente extra_credencialesCliente?
   extra_documentosCliente   extra_documentosCliente?
   extra_metodosPago         extra_metodosPago[]
+  extra_solicitudesVenta    extra_solicitudesVenta[]
   registroDeSubasta         registroDeSubasta[]
 }
 
@@ -154,19 +155,34 @@ model personas {
 }
 
 model productos {
-  identificador       Int                 @id(map: "pk_productos") @default(autoincrement())
-  fecha               DateTime?           @db.Date
-  disponible          String?             @db.VarChar(2)
-  descripcionCatalogo String?             @default("No Posee", map: "DF__productos__descr__70DDC3D8") @db.VarChar(500)
-  descripcionCompleta String              @db.VarChar(300)
-  revisor             Int
-  duenio              Int
-  seguro              String?             @db.VarChar(30)
-  fotos               fotos[]
-  itemsCatalogo       itemsCatalogo[]
-  duenios             duenios             @relation(fields: [duenio], references: [identificador], onUpdate: NoAction, map: "fk_productos_duenios")
-  empleados           empleados           @relation(fields: [revisor], references: [identificador], onUpdate: NoAction, map: "fk_productos_empleados")
-  registroDeSubasta   registroDeSubasta[]
+  identificador          Int                      @id(map: "pk_productos") @default(autoincrement())
+  fecha                  DateTime?                @db.Date
+  disponible             String?                  @db.VarChar(2)
+  descripcionCatalogo    String?                  @default("No Posee", map: "DF__productos__descr__70DDC3D8") @db.VarChar(500)
+  descripcionCompleta    String                   @db.VarChar(300)
+  revisor                Int
+  duenio                 Int
+  seguro                 String?                  @db.VarChar(30)
+  fotos                  fotos[]
+  itemsCatalogo          itemsCatalogo[]
+  duenios                duenios                  @relation(fields: [duenio], references: [identificador], onUpdate: NoAction, map: "fk_productos_duenios")
+  empleados              empleados                @relation(fields: [revisor], references: [identificador], onUpdate: NoAction, map: "fk_productos_empleados")
+  registroDeSubasta      registroDeSubasta[]
+  extra_solicitudesVenta extra_solicitudesVenta?
+}
+
+model extra_solicitudesVenta {
+  identificador      Int       @id(map: "pk_extra_solicitudesVenta") @default(autoincrement())
+  cliente            Int
+  producto           Int       @unique(map: "uq_extra_solicitudesVenta_producto")
+  estado             String    @default("pendiente") @db.VarChar(20)
+  precioBase         Decimal?  @db.Decimal(18, 2)
+  comision           Decimal?  @db.Decimal(18, 2)
+  motivo             String?   @db.VarChar(500)
+  fechaSolicitud     DateTime  @default(now()) @db.DateTime2
+  fechaActualizacion DateTime? @db.DateTime2
+  clientes           clientes  @relation(fields: [cliente], references: [identificador], onUpdate: NoAction, map: "fk_extra_solicitudesVenta_clientes")
+  productos          productos @relation(fields: [producto], references: [identificador], onUpdate: NoAction, map: "fk_extra_solicitudesVenta_productos")
 }
 
 model pujos {
