@@ -55,7 +55,13 @@ export default function EditProfile() {
       Alert.alert('Permiso requerido', 'Necesitamos acceso a tus fotos.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7, base64: true });
+    const result = await ImagePicker.launchImageLibraryAsync({ 
+      mediaTypes: 'images',
+      allowsEditing: true, // Permite recortar la foto
+      aspect: [1, 1],      // Fuerza a que sea un cuadrado perfecto
+      quality: 0.3,        // Calidad 0.4 (pesará menos que 0.7)
+      base64: true,
+     });
     if (!result.canceled && result.assets[0]) {
       setFotoUri(result.assets[0].uri);
       setFotoBase64(result.assets[0].base64 ?? null);
@@ -68,7 +74,13 @@ export default function EditProfile() {
       Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara.');
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7, base64: true });
+    const result = await ImagePicker.launchCameraAsync({ 
+      mediaTypes: 'images',
+      allowsEditing: true, // Permite recortar la foto
+      aspect: [1, 1],      // Fuerza a que sea un cuadrado perfecto
+      quality: 0.3,        // Calidad 0.4 (pesará menos que 0.7)
+      base64: true,
+    });
     if (!result.canceled && result.assets[0]) {
       setFotoUri(result.assets[0].uri);
       setFotoBase64(result.assets[0].base64 ?? null);

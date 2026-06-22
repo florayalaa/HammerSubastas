@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, useFocusEffect } from 'expo-router';
 import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut, BarChart3, UploadCloud } from 'lucide-react-native';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
@@ -12,7 +12,9 @@ export default function Profile() {
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  //Para que se actualice el perfil al volver de editar o cambiar foto, usamos useFocusEffect para recargar los datos cada vez que la pantalla gana foco
+  useFocusEffect(
+    useCallback(() => {
     const fetchProfile = async () => {
       if (!token) {
         setLoading(false);
@@ -59,9 +61,9 @@ export default function Profile() {
         setLoading(false);
       }
     };
-
     fetchProfile();
-  }, [user, token]);
+  }, [token, user])
+);
 
   if (loading) {
     return (
