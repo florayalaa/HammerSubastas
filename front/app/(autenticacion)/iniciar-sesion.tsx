@@ -4,8 +4,7 @@ import { Link, useRouter } from 'expo-router';
 import { Mail } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
-// Importamos ambos componentes desde authComponents
-import { FormField, PasswordField } from './_components/authComponents'; 
+import { FormField, PasswordField } from '@/components/authComponents';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -20,7 +19,6 @@ export default function Login() {
     }
     try {
       await login(email, password);
-      router.replace('/(navegacion)');
     } catch (error: any) {
       if (error.message?.includes('completar el registro')) {
         Alert.alert(

@@ -5,7 +5,7 @@ import { ChevronLeft, Key, Mail } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { apiPost } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { FormField, PasswordField } from './_components/authComponents';
+import { FormField, PasswordField } from '@/components/authComponents';
 
 export default function CompleteRegistration() {
   const router = useRouter();

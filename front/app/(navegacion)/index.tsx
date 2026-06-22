@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useFocusEffect } from 'expo-router';
 import { Gavel, HandCoins, ChevronRight } from 'lucide-react-native';
 import { Card, CardContent } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
-import { apiGet } from '@/app/lib/api';
+import { apiGet, API_BASE_URL } from '@/app/lib/api';
 import { TarjetaSubasta } from '@/components/TarjetaSubasta';
 
 export default function Dashboard() {
   const { isAuthenticated, token, user } = useAuth();
+  const scrollRef = useRef<ScrollView>(null);
+  useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
 
   const [activeAuctions, setActiveAuctions] = React.useState<any[]>([]);
   const [stats, setStats] = React.useState({ totalBids: 0, auctionsWon: 0 });
@@ -18,7 +20,7 @@ export default function Dashboard() {
   React.useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.11:4000'}/api/subastas`);
+        const res = await fetch(`${API_BASE_URL.replace('/api', '')}/api/subastas`);
         if (res.ok) {
           const data = await res.json();
           
@@ -62,7 +64,7 @@ export default function Dashboard() {
   }, [isAuthenticated, token]);
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
 
       <View className="mb-6 flex-row items-center justify-between">
         <View>

@@ -2,16 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Lock, Eye, EyeOff } from 'lucide-react-native'; // <-- Importamos los íconos acá
+import { Lock, Eye, EyeOff } from 'lucide-react-native';
 
-// 1. FormField (Para textos normales: Nombre, Email, DNI, etc.)
 interface FormFieldProps {
   label: string;
   icon: React.ReactNode;
   value: string;
   onChangeText: (text: string) => void;
   placeholder: string;
-  [key: string]: any; 
+  [key: string]: any;
 }
 
 export const FormField = ({ label, icon, value, onChangeText, placeholder, ...props }: FormFieldProps) => (
@@ -31,13 +30,12 @@ export const FormField = ({ label, icon, value, onChangeText, placeholder, ...pr
   </View>
 );
 
-// 2. PasswordField (Especializado para contraseñas con el ojo integrado)
 interface PasswordFieldProps {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
-  showToggle?: boolean; 
+  showToggle?: boolean;
 }
 
 export const PasswordField = ({ label, value, onChangeText, placeholder = '••••••••', showToggle = true }: PasswordFieldProps) => {
@@ -50,9 +48,8 @@ export const PasswordField = ({ label, value, onChangeText, placeholder = '•�
         <View className="absolute left-3 z-10">
           <Lock color="#A08C79" size={18} />
         </View>
-
         <Input
-          className={`pl-9 ${showToggle ? 'pr-10' : ''}`} // Si no hay ojo, no necesita padding extra a la derecha
+          className={`pl-9 ${showToggle ? 'pr-10' : ''}`}
           containerClassName="mb-0"
           value={value}
           onChangeText={onChangeText}
@@ -60,11 +57,9 @@ export const PasswordField = ({ label, value, onChangeText, placeholder = '•�
           secureTextEntry={securePassword}
           autoCapitalize="none"
         />
-
-        {/* Solo renderiza el ojo si showToggle es true */}
         {showToggle && (
-          <TouchableOpacity 
-            className="absolute right-3 z-10 p-1" 
+          <TouchableOpacity
+            className="absolute right-3 z-10 p-1"
             onPress={() => setSecurePassword(!securePassword)}
             accessibilityRole="button"
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
@@ -81,7 +76,6 @@ export const PasswordField = ({ label, value, onChangeText, placeholder = '•�
   );
 };
 
-// 3. CountryPickerModal: Limpia el modal del selector de países
 interface Pais { id: number; name: string; }
 interface CountryModalProps {
   visible: boolean;
@@ -120,7 +114,6 @@ export const CountryPickerModal = ({ visible, onClose, paises, selectedId, onSel
   </Modal>
 );
 
-// 4. ConfirmModal: Aligera el final del archivo principal
 interface ConfirmModalProps {
   visible: boolean;
   onClose: () => void;

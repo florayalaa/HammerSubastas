@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Modal, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Users, HandCoins } from 'lucide-react-native';
+import { ChevronLeft, Users, HandCoins, CreditCard, FileText, Building2, ChevronDown } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { socketService } from '@/services/socket';
+import { API_BASE_URL } from '@/app/lib/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.11:4000';
+const API_URL = API_BASE_URL.replace('/api', '');
 
 export default function LiveAuction() {
   const { id } = useLocalSearchParams();
@@ -17,6 +18,9 @@ export default function LiveAuction() {
   const [bidAmount, setBidAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [metodosPago, setMetodosPago] = useState<any[]>([]);
+  const [metodoPagoSeleccionado, setMetodoPagoSeleccionado] = useState<any>(null);
+  const [showMetodoPicker, setShowMetodoPicker] = useState(false);
   const [recentBids, setRecentBids] = useState<{user: string, amount: number, id: string}[]>([
     { user: 'User***89', amount: 45000, id: '1' },
     { user: 'User***21', amount: 44500, id: '2' },
@@ -33,6 +37,18 @@ export default function LiveAuction() {
   });
 
   const [activeItem, setActiveItem] = useState<any>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+    fetch(`${API_URL}/api/pagos`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => {
+        const metodos = data?.data ?? [];
+        setMetodosPago(metodos);
+        if (metodos.length > 0) setMetodoPagoSeleccionado(metodos[0]);
+      })
+      .catch(() => {});
+  }, [isAuthenticated, token]);
 
   // Fecha de fin estática a 3 horas desde el momento en que se abre la app
   const [endTime] = useState(() => new Date(Date.now() + 3 * 60 * 60 * 1000));
@@ -190,7 +206,7 @@ export default function LiveAuction() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ amount })
+        body: JSON.stringify({ amount, metodoPagoId: metodoPagoSeleccionado?.identificador })
       });
 
       if (!response.ok) {
@@ -317,6 +333,32 @@ export default function LiveAuction() {
                 <Text className="text-white font-bold">+ $1000</Text>
               </Button>
             </View>
+            {metodosPago.length > 0 && (
+              <TouchableOpacity
+                onPress={() => setShowMetodoPicker(true)}
+                className="flex-row items-center bg-gray-800 rounded-xl px-4 h-12 border border-gray-700 mb-3"
+              >
+                {(() => {
+                  const m = metodoPagoSeleccionado;
+                  if (!m) return <Text className="text-gray-400 flex-1 text-sm">Seleccioná un medio de pago</Text>;
+                  const esTarjeta = m.tipo === 'tarjeta';
+                  const esCheque = m.tipo === 'cheque';
+                  const Icono = esTarjeta ? CreditCard : esCheque ? FileText : Building2;
+                  const color = esTarjeta ? '#6A4F99' : esCheque ? '#C9A063' : '#4A7C59';
+                  const label = esTarjeta
+                    ? `Tarjeta ···· ${String(m.numero).slice(-4)}`
+                    : esCheque ? `Cheque Nº ${m.numero}` : 'Cuenta Bancaria';
+                  return (
+                    <>
+                      <Icono color={color} size={16} />
+                      <Text className="text-white text-sm flex-1 ml-2">{label}</Text>
+                      <ChevronDown color="#9CA3AF" size={16} />
+                    </>
+                  );
+                })()}
+              </TouchableOpacity>
+            )}
+
             <View className="flex-row items-center gap-3">
               <View className="flex-1 flex-row items-center bg-gray-800 rounded-xl px-4 h-14 border border-gray-700">
                 <Text className="text-gray-400 text-lg mr-2">$</Text>
@@ -330,7 +372,7 @@ export default function LiveAuction() {
                   editable={!isSubmitting}
                 />
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handleBid}
                 disabled={isSubmitting}
                 className={`w-14 h-14 rounded-xl items-center justify-center ${isSubmitting ? 'bg-gray-600' : 'bg-[#6A4F99]'}`}
@@ -348,6 +390,43 @@ export default function LiveAuction() {
           </View>
         )}
       </View>
+
+      <Modal visible={showMetodoPicker} transparent animationType="slide" onRequestClose={() => setShowMetodoPicker(false)}>
+        <TouchableOpacity className="flex-1 bg-black/60" activeOpacity={1} onPress={() => setShowMetodoPicker(false)} />
+        <View className="bg-gray-900 rounded-t-3xl px-4 pt-4 pb-8 border-t border-gray-700">
+          <Text className="text-white font-bold text-base mb-4">Medio de pago</Text>
+          <FlatList
+            data={metodosPago}
+            keyExtractor={(m) => String(m.identificador)}
+            renderItem={({ item: m }) => {
+              const esTarjeta = m.tipo === 'tarjeta';
+              const esCheque = m.tipo === 'cheque';
+              const Icono = esTarjeta ? CreditCard : esCheque ? FileText : Building2;
+              const color = esTarjeta ? '#6A4F99' : esCheque ? '#C9A063' : '#4A7C59';
+              const label = esTarjeta
+                ? `Tarjeta ···· ${String(m.numero).slice(-4)}`
+                : esCheque ? `Cheque Nº ${m.numero}` : 'Cuenta Bancaria';
+              const seleccionado = metodoPagoSeleccionado?.identificador === m.identificador;
+              return (
+                <TouchableOpacity
+                  onPress={() => { setMetodoPagoSeleccionado(m); setShowMetodoPicker(false); }}
+                  className={`flex-row items-center p-4 rounded-xl mb-2 border ${seleccionado ? 'border-[#6A4F99] bg-[#6A4F99]/10' : 'border-gray-700 bg-gray-800'}`}
+                >
+                  <Icono color={color} size={20} />
+                  <View className="ml-3 flex-1">
+                    <Text className="text-white font-semibold text-sm">{label}</Text>
+                    {m.titular ? <Text className="text-gray-400 text-xs">{m.titular}</Text> : null}
+                    {esCheque && m.montoGarantia ? (
+                      <Text className="text-[#C9A063] text-xs">Garantía: ${Number(m.montoGarantia).toLocaleString('es-AR')}</Text>
+                    ) : null}
+                  </View>
+                  {seleccionado && <View className="w-2 h-2 rounded-full bg-[#6A4F99]" />}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>
+      </Modal>
     </View>
   );
 }

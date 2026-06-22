@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut, BarChart3, UploadCloud } from 'lucide-react-native';
+import { Link, useRouter, useFocusEffect } from 'expo-router';
+import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut, BarChart3 } from 'lucide-react-native';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
@@ -11,8 +11,11 @@ export default function Profile() {
   const { logout, user, token } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<ScrollView>(null);
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
     const fetchProfile = async () => {
       if (!token) {
         setLoading(false);
@@ -59,9 +62,9 @@ export default function Profile() {
         setLoading(false);
       }
     };
-
     fetchProfile();
-  }, [user, token]);
+  }, [token, user])
+);
 
   if (loading) {
     return (
@@ -89,7 +92,7 @@ export default function Profile() {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
       <View className="mb-6 flex-row justify-between items-center">
         <View>
           <Text className="text-3xl font-bold text-[#333F48] mb-1">Mi Perfil</Text>
@@ -205,13 +208,6 @@ export default function Profile() {
           <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
             <CreditCard color="#6A4F99" size={20} />
             <Text className="text-[#333F48] font-medium">Medios de Pago</Text>
-          </TouchableOpacity>
-        </Link>
-        
-        <Link href="/perfil/subir-articulo" asChild>
-          <TouchableOpacity className="flex-row items-center gap-3 p-3 border-b border-gray-100">
-            <UploadCloud color="#6A4F99" size={20} />
-            <Text className="text-[#333F48] font-medium">Subir Artículo (Consignar)</Text>
           </TouchableOpacity>
         </Link>
         

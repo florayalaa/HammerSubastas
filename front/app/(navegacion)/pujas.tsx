@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useFocusEffect } from 'expo-router';
 import { Clock } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +10,8 @@ export default function Bids() {
   const { token, isAuthenticated } = useAuth();
   const [bids, setBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<ScrollView>(null);
+  useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
 
   useEffect(() => {
     const fetchBids = async () => {
@@ -62,7 +64,7 @@ export default function Bids() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 p-4">
+    <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 p-4">
       <View className="mb-6">
         <Text className="text-2xl font-bold text-[#333F48]">Mis Pujas Activas</Text>
         <Text className="text-sm text-[#A08C79] mt-1">Seguimiento de las subastas en las que participás</Text>

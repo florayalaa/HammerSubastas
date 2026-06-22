@@ -5,7 +5,7 @@ import { User, Mail, MapPin, FileText, Upload, ChevronDown } from 'lucide-react-
 import { apiGet, apiPostFormData } from '@/app/lib/api';
 import { Button } from '@/components/ui/Button';
 import * as ImagePicker from 'expo-image-picker';
-import { FormField, CountryPickerModal, ConfirmModal } from './_components/authComponents'; 
+import { FormField, CountryPickerModal, ConfirmModal } from '@/components/authComponents';
 
 interface Pais { id: number; name: string; }
 

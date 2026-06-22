@@ -1,211 +1,217 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ChevronLeft, Package, Clock, XCircle, CheckCircle, MapPin, Shield, Check, X } from 'lucide-react-native';
-import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { ChevronLeft, Package, ImageIcon, Trash2 } from 'lucide-react-native';
+import { apiGet, apiDelete, apiPost } from '@/app/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
-type SaleItem = {
-  id: number;
-  title: string;
-  status: string;
-  rejectReason?: string;
-  basePrice?: number;
-  commission?: number;
-  depositLocation?: string;
-  insurancePolicy?: string;
-  userAccepted?: boolean;
-};
+type Estado = { label: string; color: string; bg: string };
+
+function estadoArticulo(producto: any): Estado {
+  const sol = producto.extra_solicitudesVenta;
+  if (!sol) return { label: 'Pendiente', color: '#2563eb', bg: '#eff6ff' };
+  switch (sol.estado) {
+    case 'pendiente':    return { label: 'Pendiente',   color: '#2563eb', bg: '#eff6ff' };
+    case 'aprobado':     return { label: 'Aprobado',    color: '#16a34a', bg: '#f0fdf4' };
+    case 'rechazado':    return { label: 'Rechazado',   color: '#dc2626', bg: '#fef2f2' };
+    case 'a_subastar':   return { label: 'A Subastar',  color: '#d97706', bg: '#fffbeb' };
+    case 'en_subasta':   return { label: 'En Subasta',  color: '#C9A063', bg: '#fffbeb' };
+    case 'vendido':      return { label: 'Vendido',     color: '#6A4F99', bg: '#f5f3ff' };
+    default:             return { label: 'Pendiente',   color: '#2563eb', bg: '#eff6ff' };
+  }
+}
+
+function mensajeEstado(producto: any, estado: Estado): string {
+  const sol = producto.extra_solicitudesVenta;
+  switch (estado.label) {
+    case 'Pendiente':
+      return 'Tu artículo está siendo evaluado por nuestro equipo de expertos. Recibirás una notificación cuando se te asigne un precio base y comisión.';
+    case 'Aprobado':
+      return `Revisamos tu artículo y te proponemos un precio base de $${sol?.precioBase ?? '-'} con una comisión del ${sol?.comision ?? '-'}%. Aceptá para continuar.`;
+    case 'Rechazado':
+      return sol?.motivo ? `Tu artículo no fue aceptado. Motivo: ${sol.motivo}` : 'Tu artículo no fue aceptado por nuestro equipo.';
+    case 'A Subastar':
+      return 'Aceptaste la propuesta. Tu artículo está en espera de ser asignado a una subasta próxima.';
+    case 'En Subasta':
+      return 'Tu artículo se encuentra actualmente en subasta. Podés seguir las pujas en tiempo real.';
+    case 'Vendido':
+      return 'La subasta de tu artículo ha finalizado exitosamente. El pago se acreditará en tu cuenta.';
+    default:
+      return '';
+  }
+}
 
 export default function MySales() {
   const router = useRouter();
+  const { token } = useAuth();
+  const [ventas, setVentas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [eliminando, setEliminando] = useState<number | null>(null);
+  const [aceptando, setAceptando] = useState<number | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
 
-  const [sales, setSales] = useState<SaleItem[]>([
-    {
-      id: 1,
-      title: "Juego de Té de Plata",
-      status: "inspecting", // inspecting, accepted, rejected
-    },
-    {
-      id: 2,
-      title: "Reloj Omega Vintage",
-      status: "rejected",
-      rejectReason: "El artículo no cumple con nuestros estándares mínimos de conservación (presenta daños irreparables en el mecanismo interno).",
-    },
-    {
-      id: 3,
-      title: "Cuadro de Artista Local",
-      status: "accepted",
-      basePrice: 5000,
-      commission: 15, // 15%
-      depositLocation: "Depósito Central, Sector B",
-      insurancePolicy: "Póliza #ZUR-8932 (Zurich Seguros)",
-      userAccepted: false,
-    },
-  ]);
+  useFocusEffect(useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, []));
 
-  const handleAcceptOffer = (id: number) => {
-    Alert.alert(
-      "Aceptar Cotización",
-      "Al aceptar, autorizas a la empresa a subastar tu artículo con el precio base y comisiones informadas. El dinero de la venta se depositará en tu cuenta a la vista configurada.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Aceptar Términos", 
-          onPress: () => {
-            setSales(sales.map(s => s.id === id ? { ...s, userAccepted: true } : s));
-          }
-        }
-      ]
-    );
+  useEffect(() => {
+    const cargar = async () => {
+      if (!token) { setLoading(false); return; }
+      try {
+        const res = await apiGet('/articulos/mis-articulos', token);
+        setVentas(res?.data ?? res ?? []);
+      } catch {
+        setVentas([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    cargar();
+  }, [token]);
+
+  const handleAceptarPropuesta = async (id: number) => {
+    setAceptando(id);
+    try {
+      await apiPost(`/articulos/${id}/aceptar-propuesta`, {}, token || '');
+      setVentas((prev) => prev.map((v) =>
+        v.identificador === id
+          ? { ...v, extra_solicitudesVenta: { ...v.extra_solicitudesVenta, estado: 'a_subastar' } }
+          : v
+      ));
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'No se pudo procesar la aceptación.');
+    } finally {
+      setAceptando(null);
+    }
   };
 
-  const handleRejectOffer = (id: number) => {
+  const handleEliminar = (id: number, titulo: string) => {
     Alert.alert(
-      "Rechazar Cotización",
-      "Al rechazar, procederemos con la devolución del artículo. Los gastos de envío de devolución correrán por tu cuenta.",
+      'Eliminar solicitud',
+      `¿Seguro que querés eliminar "${titulo}"? Esta acción no se puede deshacer.`,
       [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sí, Rechazar y Devolver", 
-          style: "destructive",
-          onPress: () => {
-            setSales(sales.filter(s => s.id !== id));
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar', style: 'destructive', onPress: async () => {
+            setEliminando(id);
+            try {
+              await apiDelete(`/articulos/${id}`, token || '');
+              setVentas((prev) => prev.filter((v) => v.identificador !== id));
+            } catch (e: any) {
+              Alert.alert('Error', e.message || 'No se pudo eliminar el artículo.');
+            } finally {
+              setEliminando(null);
+            }
           }
-        }
+        },
       ]
     );
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="bg-white pt-12 pb-4 px-4 border-b border-gray-200 z-10">
-        <TouchableOpacity onPress={() => router.back()} className="flex-row items-center mb-4">
+    <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+      <View style={{ backgroundColor: 'white', paddingTop: 48, paddingBottom: 16, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+        <TouchableOpacity onPress={() => router.replace('/(navegacion)/perfil')} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
           <ChevronLeft color="#A08C79" size={24} />
-          <Text className="text-[#A08C79] ml-1 font-medium">Volver al Perfil</Text>
+          <Text style={{ color: '#A08C79', marginLeft: 4, fontWeight: '500' }}>Ir al Perfil</Text>
         </TouchableOpacity>
-        <Text className="text-3xl font-bold text-[#333F48] mb-1">Mis Ventas</Text>
-        <Text className="text-[#A08C79]">Seguimiento de artículos consignados</Text>
+        <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#333F48', marginBottom: 2 }}>Mis Ventas</Text>
+        <Text style={{ color: '#A08C79', fontSize: 14 }}>Artículos consignados para subasta</Text>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerClassName="p-4 pb-12">
-        <Text className="text-xs text-[#A08C79] mb-4 text-center px-4">
-          {'El dinero de las ventas completadas se enviará a tu cuenta a la vista declarada en "Medios de Pago".'}
-        </Text>
-
-        {sales.length === 0 ? (
-          <View className="py-12 items-center justify-center">
-            <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-              <Package color="#A08C79" size={32} />
-            </View>
-            <Text className="text-[#333F48] font-bold text-lg mb-2">Aún no tienes ventas</Text>
-            <Text className="text-[#A08C79] text-center">Tus artículos enviados aparecerán aquí.</Text>
+      {loading ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color="#6A4F99" />
+        </View>
+      ) : ventas.length === 0 ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+          <View style={{ width: 80, height: 80, backgroundColor: '#f3f4f6', borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <Package color="#A08C79" size={32} />
           </View>
-        ) : (
-          sales.map(sale => (
-            <View key={sale.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
-              <View className="p-4 border-b border-gray-100 flex-row justify-between items-center bg-gray-50">
-                <Text className="font-bold text-lg text-[#333F48] flex-1 mr-2">{sale.title}</Text>
-                
-                {sale.status === 'inspecting' && (
-                  <View className="bg-blue-100 px-2 py-1 rounded-md flex-row items-center">
-                    <Clock color="#2563eb" size={12} className="mr-1" />
-                    <Text className="text-blue-800 text-[10px] font-bold uppercase">En Inspección</Text>
+          <Text style={{ color: '#333F48', fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>Aún no tenés artículos</Text>
+          <Text style={{ color: '#A08C79', textAlign: 'center' }}>Los artículos que consignes desde el tab Vender aparecerán aquí.</Text>
+        </View>
+      ) : (
+        <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
+          {ventas.map((venta) => {
+            const estado = estadoArticulo(venta);
+            const referencia = `#V-${String(venta.identificador).padStart(3, '0')}`;
+            return (
+              <View key={venta.identificador} style={{ backgroundColor: 'white', borderRadius: 16, overflow: 'hidden', marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, elevation: 3 }}>
+                {/* Portada */}
+                {venta.portada ? (
+                  <Image source={{ uri: venta.portada }} style={{ width: '100%', height: 220 }} resizeMode="cover" />
+                ) : (
+                  <View style={{ width: '100%', height: 180, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' }}>
+                    <ImageIcon color="#C4B5A5" size={40} />
+                    <Text style={{ color: '#C4B5A5', fontSize: 12, marginTop: 8 }}>Sin foto de portada</Text>
                   </View>
                 )}
-                {sale.status === 'rejected' && (
-                  <View className="bg-red-100 px-2 py-1 rounded-md flex-row items-center">
-                    <XCircle color="#ef4444" size={12} className="mr-1" />
-                    <Text className="text-red-800 text-[10px] font-bold uppercase">Rechazado</Text>
-                  </View>
-                )}
-                {sale.status === 'accepted' && (
-                  <View className="bg-green-100 px-2 py-1 rounded-md flex-row items-center">
-                    <CheckCircle color="#16a34a" size={12} className="mr-1" />
-                    <Text className="text-green-800 text-[10px] font-bold uppercase">Aprobado</Text>
-                  </View>
-                )}
-              </View>
 
-              <View className="p-4">
-                {sale.status === 'inspecting' && (
-                  <Text className="text-[#A08C79] text-sm">
-                    Nuestro equipo de expertos está evaluando tu artículo. Este proceso puede demorar hasta 72 horas.
+                <View style={{ padding: 16 }}>
+                  {/* Referencia + estado */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <Text style={{ color: '#A08C79', fontSize: 13 }}>{referencia}</Text>
+                    <View style={{ backgroundColor: estado.bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 }}>
+                      <Text style={{ color: estado.color, fontSize: 12, fontWeight: '600' }}>{estado.label}</Text>
+                    </View>
+                  </View>
+
+                  {/* Título */}
+                  <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 6 }}>
+                    {venta.descripcionCatalogo || 'Artículo sin título'}
                   </Text>
-                )}
 
-                {sale.status === 'rejected' && (
-                  <View>
-                    <Text className="text-sm font-bold text-[#333F48] mb-1">Motivo del rechazo:</Text>
-                    <Text className="text-[#A08C79] text-sm mb-4">{sale.rejectReason}</Text>
-                    <Text className="text-xs text-red-600 mb-2">El artículo será devuelto. Los gastos de envío se cargarán a tu cuenta.</Text>
+                  {/* Descripción */}
+                  {venta.descripcionCompleta ? (
+                    <Text style={{ color: '#6b7280', fontSize: 14, lineHeight: 20, marginBottom: 12 }} numberOfLines={3}>
+                      {venta.descripcionCompleta}
+                    </Text>
+                  ) : null}
+
+                  {/* Info box */}
+                  <View style={{ backgroundColor: estado.bg, borderRadius: 10, padding: 14 }}>
+                    <Text style={{ color: estado.color, fontSize: 13, lineHeight: 19 }}>
+                      {mensajeEstado(venta, estado)}
+                    </Text>
                   </View>
-                )}
 
-                {sale.status === 'accepted' && (
-                  <View>
-                    <View className="flex-row justify-between mb-2">
-                      <Text className="text-[#A08C79]">Precio Base Propuesto</Text>
-                      <Text className="font-bold text-[#6A4F99]">${sale.basePrice}</Text>
-                    </View>
-                    <View className="flex-row justify-between mb-4 pb-4 border-b border-gray-100">
-                      <Text className="text-[#A08C79]">Comisión por Venta</Text>
-                      <Text className="font-bold text-[#333F48]">{sale.commission}%</Text>
-                    </View>
-
-                    <Text className="text-sm font-bold text-[#333F48] mb-3">Información del Bien:</Text>
-                    
-                    <View className="flex-row items-center mb-2">
-                      <MapPin color="#A08C79" size={16} className="mr-2" />
-                      <Text className="text-sm text-[#333F48] flex-1">Ubicación: <Text className="font-semibold">{sale.depositLocation}</Text></Text>
-                    </View>
-                    
-                    <View className="flex-row items-center mb-4">
-                      <Shield color="#16a34a" size={16} className="mr-2" />
-                      <Text className="text-sm text-[#333F48] flex-1">Seguro: <Text className="font-semibold">{sale.insurancePolicy}</Text></Text>
-                    </View>
-                    
-                    <TouchableOpacity 
-                      onPress={() => Alert.alert("Seguro", "Comunícate al 0800-ZURICH para gestionar una ampliación de la póliza de tu artículo.")}
-                      className="mb-6"
+                  {/* Botón aceptar propuesta — solo si está aprobado */}
+                  {estado.label === 'Aprobado' && (
+                    <TouchableOpacity
+                      onPress={() => handleAceptarPropuesta(venta.identificador)}
+                      disabled={aceptando === venta.identificador}
+                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 14, paddingVertical: 12, borderRadius: 10, backgroundColor: '#16a34a' }}
                     >
-                      <Text className="text-[#6A4F99] text-xs font-semibold underline">Contactar para aumentar valor de la póliza</Text>
+                      {aceptando === venta.identificador
+                        ? <ActivityIndicator size="small" color="white" />
+                        : <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Aceptar propuesta</Text>
+                      }
                     </TouchableOpacity>
+                  )}
 
-                    {!sale.userAccepted ? (
-                      <View className="flex-row gap-3">
-                        <Button 
-                          onPress={() => handleRejectOffer(sale.id)} 
-                          variant="secondary" 
-                          className="flex-1 border-red-200 bg-red-50"
-                        >
-                          <View className="flex-row items-center justify-center">
-                            <X color="#ef4444" size={16} className="mr-1" />
-                            <Text className="text-red-700 font-bold text-xs">Rechazar</Text>
-                          </View>
-                        </Button>
-                        <Button 
-                          onPress={() => handleAcceptOffer(sale.id)} 
-                          className="flex-1 bg-green-600"
-                        >
-                          <View className="flex-row items-center justify-center">
-                            <Check color="white" size={16} className="mr-1" />
-                            <Text className="text-white font-bold text-xs">Aceptar</Text>
-                          </View>
-                        </Button>
-                      </View>
-                    ) : (
-                      <View className="bg-green-50 border border-green-200 p-3 rounded-lg items-center">
-                        <Text className="text-green-800 font-bold">¡Cotización Aceptada!</Text>
-                        <Text className="text-green-700 text-xs mt-1 text-center">El artículo será incluido en la próxima subasta disponible.</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
+                  {/* Botón eliminar solo si está pendiente */}
+                  {estado.label === 'Pendiente' && (
+                    <TouchableOpacity
+                      onPress={() => handleEliminar(venta.identificador, venta.descripcionCatalogo || 'este artículo')}
+                      disabled={eliminando === venta.identificador}
+                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 14, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#fca5a5', backgroundColor: '#fff1f2' }}
+                    >
+                      {eliminando === venta.identificador
+                        ? <ActivityIndicator size="small" color="#ef4444" />
+                        : <>
+                            <Trash2 color="#ef4444" size={16} />
+                            <Text style={{ color: '#ef4444', fontWeight: '600', fontSize: 14, marginLeft: 6 }}>Cancelar solicitud</Text>
+                          </>
+                      }
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
-            </View>
-          ))
-        )}
-      </ScrollView>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 }

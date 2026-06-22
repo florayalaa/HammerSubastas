@@ -24,6 +24,34 @@ export class ArticlesController {
     }
   }
 
+  async deleteArticle(req: Request, res: Response) {
+    try {
+      const userId = parseInt((req as any).user?.id ?? '0', 10);
+      const productoId = parseInt(req.params.id, 10);
+      if (!userId || isNaN(productoId)) return res.status(400).json({ message: 'Datos inválidos' });
+
+      await articlesService.deleteArticle(productoId, userId);
+      res.json({ status: 'success' });
+    } catch (error: any) {
+      console.error(error);
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  }
+
+  async aceptarPropuesta(req: Request, res: Response) {
+    try {
+      const userId = parseInt((req as any).user?.id ?? '0', 10);
+      const productoId = parseInt(req.params.id, 10);
+      if (!userId || isNaN(productoId)) return res.status(400).json({ message: 'Datos inválidos' });
+
+      await articlesService.aceptarPropuesta(productoId, userId);
+      res.json({ status: 'success' });
+    } catch (error: any) {
+      console.error(error);
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  }
+
   async getMyArticles(req: Request, res: Response) {
     try {
       const userId = (req as any).user?.id;

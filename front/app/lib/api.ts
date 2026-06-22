@@ -6,9 +6,9 @@ export function registrarManejadorSesionExpirada(handler: () => void) {
   manejadorSesionExpirada = handler;
 }
 
-async function request(path: string, init: RequestInit = {}) {
+async function request(path: string, init: RequestInit = {}, timeoutMs = 8000) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   let res: Response;
   try {
     res = await fetch(`${API_BASE_URL}${path}`, { ...init, signal: controller.signal });
@@ -49,7 +49,7 @@ export async function apiGet(path: string, token?: string) {
   });
 }
 
-export async function apiPost(path: string, body: any, token?: string) {
+export async function apiPost(path: string, body: any, token?: string, timeoutMs?: number) {
   return request(path, {
     method: 'POST',
     headers: {
@@ -57,7 +57,7 @@ export async function apiPost(path: string, body: any, token?: string) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(body),
-  });
+  }, timeoutMs);
 }
 
 export async function apiPut(path: string, body: any, token?: string) {
@@ -68,6 +68,15 @@ export async function apiPut(path: string, body: any, token?: string) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(body),
+  });
+}
+
+export async function apiDelete(path: string, token?: string) {
+  return request(path, {
+    method: 'DELETE',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 }
 

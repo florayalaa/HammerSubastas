@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform, Touchabl
 import { useRouter } from 'expo-router';
 import { Mail } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
-import { FormField } from './_components/authComponents'; 
+import { FormField } from '@/components/authComponents';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
