@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import app from './app';
 import http from 'http';
 import { Server } from 'socket.io';
