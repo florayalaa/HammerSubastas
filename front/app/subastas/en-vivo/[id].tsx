@@ -116,7 +116,7 @@ export default function LiveAuction() {
 
             // Registro automático a la subasta por si acaso
             if (token) {
-              await fetch(`${API_URL}/api/subastas/${id}/register`, {
+              await fetch(`${API_URL}/api/subastas/${id}/registrar`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
               }).catch(() => {}); // ignoramos errores (ej: ya registrado)

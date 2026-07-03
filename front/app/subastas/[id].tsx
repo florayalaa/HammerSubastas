@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, MapPin, Package, ChevronLeft, Play } from 'lucide-react-native';
+import { Calendar, MapPin, Package, ChevronLeft, Play, Users, Gavel, Tag, Clock } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet, apiPost, API_BASE_URL } from '@/app/lib/api';
 import { TarjetaArticulo } from '@/components/TarjetaArticulo';
@@ -113,15 +113,53 @@ export default function DetallSubasta() {
 
         <Text className="text-3xl font-bold text-white mb-4">{subasta.title}</Text>
 
-        <View className="space-y-3 mb-6">
+        <View className="space-y-2 mb-6">
           <View className="flex-row items-center gap-2 mb-1">
-            <Calendar color="white" size={18} />
-            <Text className="text-white">{fecha} • {hora}</Text>
+            <Calendar color="white" size={16} />
+            <Text className="text-white text-sm">Inicio: {fecha} • {hora}</Text>
           </View>
+
+          {subasta.endDate && (
+            <View className="flex-row items-center gap-2 mb-1">
+              <Clock color="white" size={16} />
+              <Text className="text-white text-sm">
+                Fin: {new Date(subasta.endDate).toLocaleDateString('es-AR', { timeZone: 'UTC' })} • {new Date(subasta.endDate).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
+              </Text>
+            </View>
+          )}
+
           {subasta.location && (
-            <View className="flex-row items-center gap-2">
-              <MapPin color="white" size={18} />
-              <Text className="text-white">{subasta.location}</Text>
+            <View className="flex-row items-center gap-2 mb-1">
+              <MapPin color="white" size={16} />
+              <Text className="text-white text-sm">{subasta.location}</Text>
+            </View>
+          )}
+
+          {subasta.auctioneer && (
+            <View className="flex-row items-center gap-2 mb-1">
+              <Gavel color="white" size={16} />
+              <Text className="text-white text-sm">Rematador: {subasta.auctioneer}</Text>
+            </View>
+          )}
+
+          {subasta.goodsCategory && (
+            <View className="flex-row items-center gap-2 mb-1">
+              <Tag color="white" size={16} />
+              <Text className="text-white text-sm">Tipo de bien: {subasta.goodsCategory}</Text>
+            </View>
+          )}
+
+          {subasta.isCollection && (
+            <View className="flex-row items-center gap-2 mb-1">
+              <Package color="white" size={16} />
+              <Text className="text-white text-sm">Subasta de colección</Text>
+            </View>
+          )}
+
+          {subasta.capacity && (
+            <View className="flex-row items-center gap-2 mb-1">
+              <Users color="white" size={16} />
+              <Text className="text-white text-sm">Capacidad: {subasta.capacity} asistentes</Text>
             </View>
           )}
         </View>
@@ -153,15 +191,15 @@ export default function DetallSubasta() {
               <Text className="text-white/70 text-center text-sm">Disponible el {fecha}</Text>
             </View>
           )
-        ) : (
+        ) : enVivo ? (
           <TouchableOpacity
-            onPress={() => router.push(`/subastas/en-vivo/${id}`)}
-            className="flex-row items-center justify-center gap-2 py-4 rounded-xl bg-gray-600/80 border border-gray-400 mt-2"
+            onPress={() => router.push('/(autenticacion)/iniciar-sesion')}
+            className="flex-row items-center justify-center gap-2 py-4 rounded-xl bg-red-500 mt-2"
           >
             <Play color="white" size={20} />
-            <Text className="text-white font-bold text-lg">Entrar como Espectador</Text>
+            <Text className="text-white font-bold text-lg">Iniciar sesión para pujar</Text>
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
 
       {/* Descripción */}

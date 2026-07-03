@@ -63,16 +63,12 @@ function mapSubasta(s: any) {
     (c.itemsCatalogo ?? []).map((item: any) => mapItem(item, s.identificador.toString()))
   );
 
-  // Foto de portada embebida como base64 para evitar problemas de ATS/HTTP en iOS
-  const primerProducto = s.catalogos?.[0]?.itemsCatalogo?.[0]?.productos;
-  const rawFoto = primerProducto?.fotos?.[0]?.foto ?? null;
-  if (rawFoto) { const _b = Buffer.from(rawFoto); console.log('[mapSubasta]', extra?.titulo, '| bytes:', _b.length, '| mime:', getMimeType(_b), '| hex:', _b.slice(0, 4).toString('hex')); } else { console.log('[mapSubasta]', extra?.titulo, '| rawFoto: null'); }
+  // Foto del primer item del primer catálogo (los artículos siempre tienen al menos 6 fotos)
+  const rawFoto = s.catalogos?.[0]?.itemsCatalogo?.[0]?.productos?.fotos?.[0]?.foto ?? null;
   let imagen: string | null = null;
   if (rawFoto) {
     const buf = Buffer.from(rawFoto);
-    if (buf.length > 4) {
-      imagen = `data:${getMimeType(buf)};base64,${buf.toString('base64')}`;
-    }
+    if (buf.length > 4) imagen = `data:${getMimeType(buf)};base64,${buf.toString('base64')}`;
   }
 
   // Precio mínimo entre todos los items
@@ -95,14 +91,22 @@ function mapSubasta(s: any) {
     startingPrice,
     image: imagen,
     catalogItems: items,
+    location: s.ubicacion ?? null,
+    auctioneer: s.subastadores?.personas?.nombre ?? null,
+    capacity: s.capacidadAsistentes ?? null,
+    goodsCategory: extra?.categoriaBien ?? null,
+    isCollection: extra?.esColeccion ?? false,
   };
 }
 
 const includeSubasta = {
   extra_subastas: true,
+  subastadores: { include: { personas: true } },
   catalogos: {
+    orderBy: { identificador: 'asc' as const },
     include: {
       itemsCatalogo: {
+        orderBy: { identificador: 'asc' as const },
         include: {
           productos: {
             include: { fotos: { take: 1, orderBy: { identificador: 'asc' } } },
@@ -112,7 +116,7 @@ const includeSubasta = {
       },
     },
   },
-} as const;
+};
 
 const RANGO_CATEGORIA: Record<string, number> = {
   comun: 1, especial: 2, plata: 3, oro: 4, platino: 5,
@@ -146,8 +150,13 @@ export const getCategorias = async (req: AuthRequest, res: Response) => {
 export const getAuctions = async (req: AuthRequest, res: Response) => {
   try {
     const permitidas = categoriasPermitidas((req as any).user?.category);
+    const ahora = new Date();
     const subastas = await prisma.subastas.findMany({
-      where: permitidas ? { categoria: { in: permitidas } } : { categoria: { not: null } },
+      where: {
+        ...(permitidas ? { categoria: { in: permitidas } } : { categoria: { not: null } }),
+        catalogos: { some: { itemsCatalogo: { some: {} } } },
+        NOT: { extra_subastas: { some: { fechaFin: { lt: ahora } } } },
+      },
       include: includeSubasta,
       orderBy: { identificador: 'desc' },
     });
