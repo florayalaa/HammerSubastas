@@ -34,7 +34,7 @@ export const requireAuth = async (req: AuthRequest, res: Response, next: NextFun
 
     const persona = await prisma.personas.findUnique({
       where: { identificador: parseInt(decoded.id) },
-      select: { estado: true },
+      select: { estado: true, clientes: { select: { categoria: true } } },
     });
 
     if (!persona) {
@@ -42,6 +42,13 @@ export const requireAuth = async (req: AuthRequest, res: Response, next: NextFun
     }
     if (persona.estado === 'inactivo') {
       return res.status(401).json({ status: 'error', message: 'Cuenta desactivada. Contactate con soporte en subastas.hammer@gmail.com' });
+    }
+
+    // Si la categoría del cliente cambió desde que se generó el token (ej: editada a mano
+    // en la base), forzamos a cerrar sesión en vez de dejar al usuario con datos desactualizados.
+    const categoriaActual = persona.clientes?.categoria ?? null;
+    if (categoriaActual && categoriaActual !== decoded.category) {
+      return res.status(401).json({ status: 'error', message: 'Tu cuenta cambió de categoría. Volvé a iniciar sesión.' });
     }
 
     req.user = {

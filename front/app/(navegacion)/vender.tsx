@@ -128,6 +128,20 @@ export default function SellItem() {
         categoria: formData.categoria,
       }, token || '', 60000);
 
+      // Reseteamos el formulario para que la próxima vez que se entre a "Vender" esté en blanco
+      // (esta pantalla no se desmonta al cambiar de tab, así que el estado quedaría viejo si no).
+      setStep(1);
+      setFormData({
+        title: '',
+        description: '',
+        categoria: '',
+        agreedToTerms: false,
+        artistOrDesigner: '',
+        date: '',
+        history: '',
+      });
+      setUploadedImages([]);
+
       router.replace('/perfil/mis-ventas');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo enviar el artículo.');
