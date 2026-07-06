@@ -31,7 +31,7 @@ export default function Auctions() {
         try {
           const [resSubastas, resCats, resMon] = await Promise.all([
             apiGet('/subastas', token ?? undefined),
-            apiGet('/subastas/categorias'),
+            apiGet('/subastas/categorias', token ?? undefined),
             apiGet('/monedas'),
           ]);
 

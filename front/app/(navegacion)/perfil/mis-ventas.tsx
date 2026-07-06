@@ -43,6 +43,7 @@ function estadoArticulo(producto: any): Estado {
     case 'a_subastar':   return { label: 'A Subastar',  color: '#d97706', bg: '#fffbeb' };
     case 'en_subasta':   return { label: 'En Subasta',  color: '#C9A063', bg: '#fffbeb' };
     case 'vendido':      return { label: 'Vendido',     color: '#6A4F99', bg: '#f5f3ff' };
+    case 'no_vendido':   return { label: 'No Vendido',  color: '#dc2626', bg: '#fef2f2' };
     default:             return { label: 'Pendiente',   color: '#2563eb', bg: '#eff6ff' };
   }
 }
@@ -67,6 +68,8 @@ function mensajeEstado(producto: any, estado: Estado): string {
       return 'Tu artículo se encuentra actualmente en subasta. Podés seguir las pujas en tiempo real.';
     case 'Vendido':
       return 'La subasta de tu artículo ha finalizado exitosamente. El pago se acreditará en tu cuenta.';
+    case 'No Vendido':
+      return 'La subasta de tu artículo finalizó sin postores. Contactá a soporte si querés reintentarlo en una próxima subasta.';
     default:
       return '';
   }

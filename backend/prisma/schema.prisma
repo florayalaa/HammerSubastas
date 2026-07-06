@@ -200,6 +200,7 @@ model pujos {
   item          Int
   importe       Decimal       @db.Decimal(18, 2)
   ganador       String?       @default("no", map: "DF__pujos__ganador__2EDAF651") @db.VarChar(2)
+  extra_pujos   extra_pujos?
   asistentes    asistentes    @relation(fields: [asistente], references: [identificador], onUpdate: NoAction, map: "fk_pujos_asistentes")
   itemsCatalogo itemsCatalogo @relation(fields: [item], references: [identificador], onUpdate: NoAction, map: "fk_pujos_itemsCatalogo")
 }
@@ -278,4 +279,10 @@ model extra_registroDeSubasta {
   fechaPago         DateTime?
   extra_metodosPago extra_metodosPago? @relation(fields: [metodoPago], references: [identificador], onDelete: NoAction, onUpdate: NoAction, map: "fk_extra_registroDeSubasta_metodoPago")
   registroDeSubasta registroDeSubasta  @relation(fields: [registro], references: [identificador], onUpdate: NoAction, map: "fk_extra_registroDeSubasta_registro")
+}
+
+model extra_pujos {
+  puja  Int      @id(map: "pk_extra_pujos")
+  fecha DateTime @default(now(), map: "DF__extra_puj__fecha__756D6ECB")
+  pujos pujos    @relation(fields: [puja], references: [identificador], onUpdate: NoAction, map: "fk_extra_pujos_pujos")
 }

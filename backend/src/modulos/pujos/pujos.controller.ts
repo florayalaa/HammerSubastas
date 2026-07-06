@@ -114,12 +114,23 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Bid amount must be greater than current price' });
     }
 
+    // No podés volver a pujar hasta que otro participante lo haga después de tu última puja.
+    const ultimaPuja = await prisma.pujos.findFirst({
+      where: { item: itemId },
+      orderBy: { identificador: 'desc' },
+      include: { asistentes: true },
+    });
+    if (ultimaPuja && ultimaPuja.asistentes.cliente === clienteId) {
+      return res.status(400).json({ error: 'Ya sos el mayor postor de este artículo. Esperá a que otro participante puje.' });
+    }
+
     const puja = await prisma.pujos.create({
       data: {
         asistente: attendee.identificador,
         item: itemId,
         importe: amount,
         ganador: 'no',
+        extra_pujos: { create: { fecha: new Date() } },
       },
       include: {
         asistentes: {

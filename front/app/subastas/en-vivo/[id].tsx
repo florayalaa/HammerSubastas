@@ -47,7 +47,7 @@ export default function LiveAuction() {
       .catch(() => {});
   }, [isAuthenticated, token]);
 
-  const [endTime, setEndTime] = useState(() => new Date(Date.now() + 60 * 1000));
+  const [endTime, setEndTime] = useState(() => new Date(Date.now() + 3 * 60 * 1000));
   const [tiempoAgotado, setTiempoAgotado] = useState(false);
 
   useEffect(() => {
@@ -144,9 +144,11 @@ export default function LiveAuction() {
       setRecentBids(prev =>
         [{ user: bid.user?.firstName ? `${bid.user.firstName}***` : 'Desconocido', amount: bid.amount, id: bid.id || Date.now().toString() }, ...prev].slice(0, 5)
       );
-      // Cualquier puja nueva (propia o ajena) libera el bloqueo de turno
-      setEsperandoOtroPujador(false);
-      setEndTime(new Date(Date.now() + 60 * 1000));
+      // Solo la puja de OTRO participante libera el bloqueo de turno
+      if (!(user?.id && bid.user?.id && String(user.id) === String(bid.user.id))) {
+        setEsperandoOtroPujador(false);
+      }
+      setEndTime(new Date(Date.now() + 3 * 60 * 1000));
     };
 
     const handleKicked = ({ motivo }: { motivo: string }) => {
