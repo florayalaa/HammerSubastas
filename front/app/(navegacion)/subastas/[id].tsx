@@ -5,6 +5,7 @@ import { Calendar, MapPin, Package, ChevronLeft, Play, Users, Gavel, Tag, Clock 
 import { useAuth } from '@/context/AuthContext';
 import { apiGet, apiPost, API_BASE_URL } from '@/app/lib/api';
 import { TarjetaArticulo } from '@/components/TarjetaArticulo';
+import { combinarFechaYHora, comoInstanteLocal } from '@/utils/fechasSubasta';
 
 export default function DetallSubasta() {
   const { id } = useLocalSearchParams();
@@ -77,10 +78,10 @@ export default function DetallSubasta() {
   const items: any[] = subasta.catalogItems ?? [];
 
   const now = new Date();
-  const hoyStr = now.toISOString().split('T')[0];
-  const inicioStr = new Date(subasta.startDate).toISOString().split('T')[0];
-  const haEmpezado = inicioStr <= hoyStr;
-  const haTerminado = subasta.endDate ? new Date(subasta.endDate) < now : subasta.status === 'cerrada';
+  const inicioSubasta = combinarFechaYHora(subasta.startDate, subasta.startTime);
+  const haEmpezado = inicioSubasta ? now >= inicioSubasta : false;
+  const finSubasta = comoInstanteLocal(subasta.endDate);
+  const haTerminado = finSubasta ? finSubasta < now : subasta.status === 'cerrada';
 
   return (
     <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>

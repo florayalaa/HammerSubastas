@@ -4,6 +4,7 @@ import { Link, useFocusEffect } from 'expo-router';
 import { Trophy, TrendingDown, Clock, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
+import { EncabezadoTab } from '@/components/EncabezadoTab';
 
 type EstadoPuja = 'ganada' | 'perdida' | 'ganando' | 'superada' | 'pendiente';
 
@@ -89,21 +90,27 @@ export default function Bids() {
 
   if (!isAuthenticated) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center px-8">
-        <Text className="text-gray-500 mb-4 text-center">Iniciá sesión para ver tu historial de pujas.</Text>
-        <Link href="/(autenticacion)/iniciar-sesion" asChild>
-          <TouchableOpacity className="bg-[#6A4F99] px-6 py-3 rounded-xl">
-            <Text className="text-white font-bold">Iniciar Sesión</Text>
-          </TouchableOpacity>
-        </Link>
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoTab titulo="Mis Pujas" />
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-gray-500 mb-4 text-center">Iniciá sesión para ver tu historial de pujas.</Text>
+          <Link href="/(autenticacion)/iniciar-sesion" asChild>
+            <TouchableOpacity className="bg-[#6A4F99] px-6 py-3 rounded-xl">
+              <Text className="text-white font-bold">Iniciar Sesión</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
       </View>
     );
   }
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#6A4F99" />
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoTab titulo="Mis Pujas" />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6A4F99" />
+        </View>
       </View>
     );
   }
@@ -112,9 +119,11 @@ export default function Bids() {
   const cerradas = items.filter(i => i.subastaCerrada);
 
   return (
+    <View className="flex-1 bg-gray-50">
+    <EncabezadoTab titulo="Mis Pujas" />
     <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
       <View className="mb-6">
-        <Text className="text-2xl font-bold text-[#333F48]">Mis Pujas</Text>
+        <Text className="text-3xl font-bold text-[#333F48]">Mis Pujas</Text>
         <Text className="text-sm text-[#A08C79] mt-1">Historial de artículos en los que participaste</Text>
       </View>
 
@@ -144,6 +153,7 @@ export default function Bids() {
 
       <View className="h-10" />
     </ScrollView>
+    </View>
   );
 }
 

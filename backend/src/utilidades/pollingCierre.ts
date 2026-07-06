@@ -1,8 +1,9 @@
 import { prisma } from '../configuracion/baseDatos';
 import { io } from '../index';
+import { ahoraComparable } from './horarioArgentina';
 
 async function cerrarSubastasVencidas() {
-  const now = new Date();
+  const now = ahoraComparable();
 
   const extras = await prisma.extra_subastas.findMany({
     where: {
@@ -108,9 +109,58 @@ async function cerrarSubastasVencidas() {
   }
 }
 
+// Si alguien extiende manualmente el fechaFin de una subasta ya cerrada a un valor futuro,
+// la reabre sola. Solo reabre los ítems que se cerraron SIN ganador (nadie pujó a tiempo);
+// los que ya tienen una puja ganadora declarada quedan como están, para no invalidar una venta ya resuelta.
+async function reabrirSubastasExtendidas() {
+  const now = ahoraComparable();
+
+  const extras = await prisma.extra_subastas.findMany({
+    where: {
+      fechaFin: { not: null, gt: now },
+      subastas: { estado: 'cerrada' },
+    },
+    include: {
+      subastas: {
+        include: {
+          catalogos: {
+            include: { itemsCatalogo: { where: { subastado: 'si' } } },
+          },
+        },
+      },
+    },
+  });
+
+  for (const extra of extras) {
+    const subasta = extra.subastas;
+
+    await prisma.subastas.update({
+      where: { identificador: subasta.identificador },
+      data: { estado: 'abierta' },
+    });
+
+    for (const catalogo of subasta.catalogos) {
+      for (const item of catalogo.itemsCatalogo) {
+        const tieneGanador = await prisma.pujos.findFirst({
+          where: { item: item.identificador, ganador: 'si' },
+        });
+        if (!tieneGanador) {
+          await prisma.itemsCatalogo.update({
+            where: { identificador: item.identificador },
+            data: { subastado: 'no' },
+          });
+        }
+      }
+    }
+
+    console.log(`[Cierre] subasta ${subasta.identificador} (${extra.titulo}) → reabierta (fechaFin extendido a futuro)`);
+  }
+}
+
 export function iniciarPollingCierre(intervaloMs = 30000) {
   setInterval(async () => {
     try {
+      await reabrirSubastasExtendidas();
       await cerrarSubastasVencidas();
     } catch (err) {
       console.error('[Cierre] error:', err);

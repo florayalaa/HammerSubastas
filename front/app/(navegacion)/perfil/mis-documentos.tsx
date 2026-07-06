@@ -1,22 +1,19 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ChevronLeft, FileText, CheckCircle, Clock } from 'lucide-react-native';
+import { FileText, CheckCircle, Clock } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import { EncabezadoVolver } from '@/components/EncabezadoVolver';
 
 export default function MyDocuments() {
-  const router = useRouter();
   const { user } = useAuth();
 
   const verificado = user?.verified ?? false;
 
   return (
+    <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+    <EncabezadoVolver />
     <ScrollView style={{ flex: 1, backgroundColor: '#f9fafb' }} showsVerticalScrollIndicator={false}>
-      <View style={{ backgroundColor: 'white', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-          <ChevronLeft color="#A08C79" size={24} />
-          <Text style={{ color: '#A08C79', marginLeft: 4, fontWeight: '500' }}>Volver al Perfil</Text>
-        </TouchableOpacity>
+      <View style={{ paddingTop: 24, paddingBottom: 16, paddingHorizontal: 16 }}>
         <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#333F48', marginBottom: 4 }}>Mis Documentos</Text>
         <Text style={{ color: '#A08C79' }}>Documentación de identidad</Text>
       </View>
@@ -58,5 +55,6 @@ export default function MyDocuments() {
         </View>
       </View>
     </ScrollView>
+    </View>
   );
 }

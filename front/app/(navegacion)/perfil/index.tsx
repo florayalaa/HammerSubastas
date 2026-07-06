@@ -1,14 +1,14 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Link, useRouter, useFocusEffect } from 'expo-router';
-import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, LogOut, BarChart3 } from 'lucide-react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { Link, useFocusEffect } from 'expo-router';
+import { User, Mail, MapPin, Globe, Shield, CreditCard, Award, Package, FileText, ShoppingBag, BarChart3 } from 'lucide-react-native';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
+import { EncabezadoTab } from '@/components/EncabezadoTab';
 
 export default function Profile() {
-  const router = useRouter();
-  const { logout, user, token } = useAuth();
+  const { user, token } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -34,6 +34,7 @@ export default function Profile() {
             category: res.user.category ? res.user.category.charAt(0).toUpperCase() + res.user.category.slice(1).toLowerCase() : "Común",
             verified: res.user.isApproved,
             memberSince: res.user.createdAt ? res.user.createdAt.split('-').reverse().join('/') : 'Reciente',
+            foto: res.user.foto || null,
           });
         }
         if (st) setStats(st);
@@ -61,8 +62,11 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#6A4F99" />
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoTab titulo="Perfil" />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6A4F99" />
+        </View>
       </View>
     );
   }
@@ -90,22 +94,24 @@ export default function Profile() {
     },
   ];
 
+  const nombreCompleto = profileData ? `${profileData.firstName} ${profileData.lastName}` : 'Mi Perfil';
+
   return (
+    <View className="flex-1 bg-gray-50">
+    <EncabezadoTab titulo="Perfil" />
     <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
-      <View className="mb-6 flex-row justify-between items-center">
-        <View>
-          <Text className="text-3xl font-bold text-[#333F48] mb-1">Mi Perfil</Text>
-          <Text className="text-[#A08C79]">Información de tu cuenta</Text>
-        </View>
-        <TouchableOpacity 
-          onPress={async () => {
-            await logout();
-            router.replace('/(autenticacion)/iniciar-sesion');
-          }} 
-          className="p-2 bg-red-100 rounded-full"
-        >
-          <LogOut color="#ef4444" size={20} />
-        </TouchableOpacity>
+      <View className="mb-6 flex-row items-center gap-3">
+        {profileData?.foto ? (
+          <Image
+            source={{ uri: `data:image/jpeg;base64,${profileData.foto}` }}
+            className="w-12 h-12 rounded-full"
+          />
+        ) : (
+          <View className="w-12 h-12 rounded-full bg-[#6A4F99]/10 items-center justify-center">
+            <User color="#6A4F99" size={24} />
+          </View>
+        )}
+        <Text className="text-3xl font-bold text-[#333F48]">{nombreCompleto}</Text>
       </View>
 
       {/* Category Card */}
@@ -241,5 +247,6 @@ export default function Profile() {
       
       <View className="h-10" />
     </ScrollView>
+    </View>
   );
 }

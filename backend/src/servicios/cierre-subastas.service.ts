@@ -1,10 +1,11 @@
 import { PrismaClient } from '@prisma/client';
+import { ahoraComparable } from '../utilidades/horarioArgentina';
 
 const prisma = new PrismaClient();
 
 export const checkAndCloseAuctions = async () => {
   try {
-    const now = new Date();
+    const now = ahoraComparable();
 
     // Buscar subastas abiertas cuya fechaFin ya pasó (requiere campo fechaFin en extra_subastas)
     const subastasAbiertas = await prisma.subastas.findMany({

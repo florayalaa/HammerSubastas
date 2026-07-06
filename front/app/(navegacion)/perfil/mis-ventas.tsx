@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { ChevronLeft, Package, ImageIcon, Trash2, Check, X, Zap, AlertTriangle, Bell } from 'lucide-react-native';
+import { useFocusEffect } from 'expo-router';
+import { Package, ImageIcon, Trash2, Check, X, Zap, AlertTriangle } from 'lucide-react-native';
 import { apiGet, apiDelete, apiPost } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useNotificationBadge } from '@/context/NotificationContext';
+import { EncabezadoVolver } from '@/components/EncabezadoVolver';
 
 const formatMoney = (n: number | string | null | undefined): string => {
   if (n == null) return '-';
@@ -72,9 +73,8 @@ function mensajeEstado(producto: any, estado: Estado): string {
 }
 
 export default function MySales() {
-  const router = useRouter();
   const { token } = useAuth();
-  const { unreadCount, refreshCount } = useNotificationBadge();
+  const { refreshCount } = useNotificationBadge();
   const [ventas, setVentas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [eliminando, setEliminando] = useState<number | null>(null);
@@ -175,26 +175,9 @@ export default function MySales() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-      <View style={{ backgroundColor: 'white', paddingTop: 48, paddingBottom: 16, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <TouchableOpacity onPress={() => router.replace('/(navegacion)/perfil')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <ChevronLeft color="#A08C79" size={24} />
-            <Text style={{ color: '#A08C79', marginLeft: 4, fontWeight: '500' }}>Ir al Perfil</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/notifications')} style={{ padding: 4 }}>
-            <View>
-              <Bell color="#333F48" size={24} />
-              {unreadCount > 0 && (
-                <View style={{ position: 'absolute', top: -4, right: -4, backgroundColor: '#ef4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
-                  <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
-        <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#333F48', marginBottom: 2 }}>Mis Ventas</Text>
+      <EncabezadoVolver />
+      <View style={{ paddingTop: 24, paddingBottom: 16, paddingHorizontal: 16 }}>
+        <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#333F48', marginBottom: 2 }}>Mis Ventas</Text>
         <Text style={{ color: '#A08C79', fontSize: 14 }}>Artículos consignados para subasta</Text>
       </View>
 

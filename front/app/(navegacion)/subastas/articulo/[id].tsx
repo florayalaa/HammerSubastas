@@ -5,6 +5,8 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet, API_BASE_URL } from '@/app/lib/api';
 import { Button } from '@/components/ui/Button';
+import { EncabezadoTab } from '@/components/EncabezadoTab';
+import { combinarFechaYHora, comoInstanteLocal } from '@/utils/fechasSubasta';
 
 const { width } = Dimensions.get('window');
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80';
@@ -15,6 +17,7 @@ export default function DetalleArticulo() {
   const { isAuthenticated } = useAuth();
 
   const [item, setItem] = useState<any>(null);
+  const [subasta, setSubasta] = useState<any>(null);
   const [fotos, setFotos] = useState<string[]>([]);
   const [cargando, setCargando] = useState(true);
   const [fotoActiva, setFotoActiva] = useState(0);
@@ -22,8 +25,9 @@ export default function DetalleArticulo() {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const subasta = await apiGet(`/subastas/${subastaId}`);
-        const encontrado = (subasta.catalogItems ?? []).find((it: any) => it.id === id);
+        const subastaData = await apiGet(`/subastas/${subastaId}`);
+        setSubasta(subastaData);
+        const encontrado = (subastaData.catalogItems ?? []).find((it: any) => it.id === id);
         setItem(encontrado ?? null);
 
         if (encontrado?.productId) {
@@ -39,29 +43,42 @@ export default function DetalleArticulo() {
     if (id && subastaId) cargar();
   }, [id, subastaId]);
 
+  const inicioSubasta = combinarFechaYHora(subasta?.startDate, subasta?.startTime);
+  const haEmpezado = inicioSubasta ? new Date() >= inicioSubasta : false;
+  const finSubasta = comoInstanteLocal(subasta?.endDate);
+  const haTerminado = finSubasta ? finSubasta < new Date() : subasta?.status === 'cerrada';
+  const puedeParticipar = haEmpezado && !haTerminado;
+
   const handlePujar = () => {
     if (!isAuthenticated) {
       router.push('/(autenticacion)/iniciar-sesion');
       return;
     }
+    if (!puedeParticipar) return;
     router.push({ pathname: '/subastas/en-vivo/[id]', params: { id: subastaId, itemId: id } });
   };
 
   if (cargando) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#6A4F99" />
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoTab titulo="Subastas" />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6A4F99" />
+        </View>
       </View>
     );
   }
 
   if (!item) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-        <Text className="text-[#333F48] text-lg font-bold mb-2">Artículo no encontrado</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-[#6A4F99] underline">Volver</Text>
-        </TouchableOpacity>
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoTab titulo="Subastas" />
+        <View className="flex-1 justify-center items-center px-6">
+          <Text className="text-[#333F48] text-lg font-bold mb-2">Artículo no encontrado</Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text className="text-[#6A4F99] underline">Volver</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -70,15 +87,14 @@ export default function DetalleArticulo() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="pt-12 pb-4 px-4 flex-row items-center bg-white border-b border-gray-200">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <ChevronLeft color="#333F48" size={24} />
-        </TouchableOpacity>
-        <Text className="text-[#333F48] font-bold text-base flex-1" numberOfLines={1}>{item.title}</Text>
-      </View>
+      <EncabezadoTab titulo="Subastas" />
 
       <ScrollView contentContainerClassName="pb-32">
+        <TouchableOpacity onPress={() => router.back()} className="flex-row items-center gap-2 px-4 pt-4">
+          <ChevronLeft color="#6A4F99" size={20} />
+          <Text className="text-[#6A4F99] font-semibold">Volver</Text>
+        </TouchableOpacity>
+
         {/* Galería de fotos */}
         <FlatList
           data={galeria}
@@ -107,7 +123,7 @@ export default function DetalleArticulo() {
         )}
 
         <View className="p-4">
-          <Text className="text-2xl font-bold text-[#333F48] mb-2">{item.title}</Text>
+          <Text className="text-3xl font-bold text-[#333F48] mb-2">{item.title}</Text>
           {item.description ? (
             <Text className="text-[#A08C79] leading-6 mb-4">{item.description}</Text>
           ) : null}
@@ -131,12 +147,20 @@ export default function DetalleArticulo() {
 
       {/* Acción */}
       <View className="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 pb-8">
+        {isAuthenticated && !puedeParticipar && (
+          <Text className="text-[#A08C79] text-xs text-center mb-2">
+            {haTerminado
+              ? 'Esta subasta ya finalizó.'
+              : `Podrás pujar cuando arranque la subasta${inicioSubasta ? `: ${inicioSubasta.toLocaleDateString('es-AR')} ${inicioSubasta.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}` : ''}.`}
+          </Text>
+        )}
         <Button
           onPress={handlePujar}
-          className="w-full bg-[#6A4F99] h-14 rounded-xl"
+          disabled={isAuthenticated && !puedeParticipar}
+          className={`w-full h-14 rounded-xl ${isAuthenticated && !puedeParticipar ? 'bg-gray-300' : 'bg-[#6A4F99]'}`}
           textClassName="text-white font-bold text-lg"
         >
-          {isAuthenticated ? 'Pujar por este artículo' : 'Iniciar sesión para pujar'}
+          {!isAuthenticated ? 'Iniciar sesión para pujar' : puedeParticipar ? 'Pujar por este artículo' : 'Pujas aún no habilitadas'}
         </Button>
       </View>
     </View>

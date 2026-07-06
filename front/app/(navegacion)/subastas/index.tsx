@@ -5,6 +5,7 @@ import { Search, ChevronDown, X, Check } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
 import { TarjetaSubasta } from '@/components/TarjetaSubasta';
+import { EncabezadoTab } from '@/components/EncabezadoTab';
 
 export default function Auctions() {
   const scrollRef = useRef<ScrollView>(null);
@@ -79,13 +80,18 @@ export default function Auctions() {
 
   if (cargando) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#6A4F99" />
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoTab titulo="Subastas" />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6A4F99" />
+        </View>
       </View>
     );
   }
 
   return (
+    <View className="flex-1 bg-gray-50">
+    <EncabezadoTab titulo="Subastas" />
     <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
       <View className="mb-4">
         <Text className="text-3xl font-bold text-[#333F48] mb-1">Subastas Disponibles</Text>
@@ -216,5 +222,6 @@ export default function Auctions() {
         </View>
       </Modal>
     </ScrollView>
+    </View>
   );
 }

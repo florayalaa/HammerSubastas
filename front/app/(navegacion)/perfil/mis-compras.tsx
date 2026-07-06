@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ChevronLeft, ShoppingBag, Trophy, Tag } from 'lucide-react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { ShoppingBag, Trophy, Tag } from 'lucide-react-native';
 import { apiGet } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { EncabezadoVolver } from '@/components/EncabezadoVolver';
 
 export default function MisCompras() {
-  const router = useRouter();
   const { token } = useAuth();
   const [compras, setCompras] = useState<any[]>([]);
   const [stats, setStats] = useState<{ total: number; monto: number }>({ total: 0, monto: 0 });
@@ -34,12 +33,9 @@ export default function MisCompras() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-white pt-12 pb-4 px-4 border-b border-gray-200">
-        <TouchableOpacity onPress={() => router.back()} className="flex-row items-center mb-4">
-          <ChevronLeft color="#A08C79" size={24} />
-          <Text className="text-[#A08C79] ml-1 font-medium">Volver al Perfil</Text>
-        </TouchableOpacity>
+      <EncabezadoVolver />
+      {/* Título */}
+      <View className="px-4 pt-6 pb-4">
         <Text className="text-3xl font-bold text-[#333F48] mb-1">Mis Compras</Text>
         <Text className="text-[#A08C79]">Artículos que ganaste en subasta</Text>
       </View>

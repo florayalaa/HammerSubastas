@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Trophy, TrendingUp, BarChart3, Calendar, DollarSign } from 'lucide-react-native';
+import { Trophy, TrendingUp, BarChart3, Calendar, DollarSign } from 'lucide-react-native';
 import { apiGet } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { EncabezadoVolver } from '@/components/EncabezadoVolver';
 
 export default function Metrics() {
-  const router = useRouter();
   const { token } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -33,12 +33,10 @@ export default function Metrics() {
   const fmt = (n: number) => `$${Number(n).toLocaleString('es-AR')}`;
 
   return (
+    <View className="flex-1 bg-gray-50">
+    <EncabezadoVolver />
     <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
-      <View className="bg-white pt-14 pb-4 px-4 border-b border-gray-200">
-        <TouchableOpacity onPress={() => router.back()} className="flex-row items-center mb-4">
-          <ChevronLeft color="#A08C79" size={24} />
-          <Text className="text-[#A08C79] ml-1 font-medium">Volver al Perfil</Text>
-        </TouchableOpacity>
+      <View className="px-4 pt-6 pb-4">
         <Text className="text-3xl font-bold text-[#333F48] mb-1">Mis Métricas</Text>
         <Text className="text-[#A08C79]">Análisis de tu participación en subastas</Text>
       </View>
@@ -143,5 +141,6 @@ export default function Metrics() {
       )}
       <View className="h-8" />
     </ScrollView>
+    </View>
   );
 }

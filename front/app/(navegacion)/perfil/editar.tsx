@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert, Image, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, User, MapPin, Save, Camera, ChevronDown } from 'lucide-react-native';
+import { User, MapPin, Save, Camera, ChevronDown } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet, apiPut } from '@/app/lib/api';
 import { CountryPickerModal } from '@/components/authComponents';
 import * as ImagePicker from 'expo-image-picker';
+import { EncabezadoVolver } from '@/components/EncabezadoVolver';
 
 interface Pais { id: number; name: string; }
 
@@ -123,19 +124,20 @@ export default function EditProfile() {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#6A4F99" />
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoVolver />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6A4F99" />
+        </View>
       </View>
     );
   }
 
   return (
+    <View className="flex-1 bg-gray-50">
+    <EncabezadoVolver />
     <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
-      <View className="bg-white pt-14 pb-4 px-4 border-b border-gray-200">
-        <TouchableOpacity onPress={() => router.back()} className="flex-row items-center mb-4">
-          <ChevronLeft color="#A08C79" size={24} />
-          <Text className="text-[#A08C79] ml-1 font-medium">Volver al Perfil</Text>
-        </TouchableOpacity>
+      <View className="px-4 pt-6">
         <Text className="text-3xl font-bold text-[#333F48] mb-1">Editar Perfil</Text>
         <Text className="text-[#A08C79]">Actualizá tu información personal</Text>
       </View>
@@ -238,5 +240,6 @@ export default function EditProfile() {
         onSelect={(id) => { setNumeroPais(id); setShowPaisModal(false); }}
       />
     </ScrollView>
+    </View>
   );
 }

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Upload, PackagePlus } from 'lucide-react-native';
+import { Upload, PackagePlus } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { apiPost } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { EncabezadoVolver } from '@/components/EncabezadoVolver';
 
 export default function UploadArticle() {
   const router = useRouter();
@@ -39,14 +40,10 @@ export default function UploadArticle() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <View className="pt-12 pb-4 px-4 flex-row items-center border-b border-gray-200 bg-white">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <ChevronLeft color="#333F48" size={24} />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-[#333F48]">Subir Artículo</Text>
-      </View>
+      <EncabezadoVolver />
 
       <ScrollView className="flex-1 px-4 py-4">
+        <Text className="text-3xl font-bold text-[#333F48] mb-4">Subir Artículo</Text>
         <View className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6 items-center">
           <View className="w-16 h-16 bg-[#6A4F99]/10 rounded-full items-center justify-center mb-4">
             <PackagePlus color="#6A4F99" size={32} />

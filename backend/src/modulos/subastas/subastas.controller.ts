@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../../middlewares/autenticacion';
+import { ahoraComparable } from '../../utilidades/horarioArgentina';
 
 const prisma = new PrismaClient();
 
@@ -31,7 +32,7 @@ function mergeDateTime(fecha: Date | null, hora: Date): Date {
 function deriveStatus(subasta: any): string {
   if (!subasta.estado) return 'pendiente';
   const extra = subasta.extra_subastas?.[0];
-  const now = new Date();
+  const now = ahoraComparable();
   if (extra?.fechaFin && new Date(extra.fechaFin) < now) return 'cerrada';
   const startDate = mergeDateTime(subasta.fecha, subasta.hora);
   if (startDate > now) return 'pendiente';
@@ -151,7 +152,7 @@ export const getCategorias = async (req: AuthRequest, res: Response) => {
 export const getAuctions = async (req: AuthRequest, res: Response) => {
   try {
     const permitidas = categoriasPermitidas((req as any).user?.category);
-    const ahora = new Date();
+    const ahora = ahoraComparable();
     const subastas = await prisma.subastas.findMany({
       where: {
         ...(permitidas ? { categoria: { in: permitidas } } : { categoria: { not: null } }),

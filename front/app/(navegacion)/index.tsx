@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 import { apiGet } from '@/app/lib/api';
 import { TarjetaSubasta } from '@/components/TarjetaSubasta';
+import { EncabezadoTab } from '@/components/EncabezadoTab';
 
 export default function Dashboard() {
   const { isAuthenticated, token, user } = useAuth();
@@ -63,6 +64,8 @@ export default function Dashboard() {
   const catLabel = (user?.category ?? 'Común').charAt(0).toUpperCase() + (user?.category ?? 'común').slice(1).toLowerCase();
 
   return (
+    <View className="flex-1 bg-gray-50">
+    <EncabezadoTab titulo="Inicio" />
     <ScrollView ref={scrollRef} className="flex-1 bg-gray-50 px-4 py-4" showsVerticalScrollIndicator={false}>
 
       {/* Encabezado */}
@@ -147,5 +150,6 @@ export default function Dashboard() {
 
       <View className="h-10" />
     </ScrollView>
+    </View>
   );
 }

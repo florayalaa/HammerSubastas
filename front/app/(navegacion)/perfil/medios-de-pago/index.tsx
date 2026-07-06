@@ -2,12 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, TextInput, TextInputProps, Alert, Image } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, CreditCard, Trash2, Plus, FileText, Building2, Camera, X, ChevronDown, ChevronRight } from 'lucide-react-native';
+import { CreditCard, Trash2, Plus, FileText, Building2, Camera, X, ChevronDown, ChevronRight } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { API_BASE_URL, apiGet } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { CountryPickerModal } from '@/components/authComponents';
 import * as ImagePicker from 'expo-image-picker';
+import { EncabezadoVolver } from '@/components/EncabezadoVolver';
 
 interface Pais { id: number; name: string; }
 
@@ -243,22 +244,21 @@ export default function PaymentMethods() {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#6A4F99" />
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoVolver />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6A4F99" />
+        </View>
       </View>
     );
   }
 
   return (
     <View className="flex-1 bg-gray-50">
-      <View className="pt-12 pb-4 px-4 flex-row items-center border-b border-gray-200 bg-white">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <ChevronLeft color="#333F48" size={24} />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-[#333F48]">Medios de Pago</Text>
-      </View>
+      <EncabezadoVolver />
 
       <KeyboardAwareScrollView className="flex-1 px-4 py-4" keyboardShouldPersistTaps="handled" enableOnAndroid extraScrollHeight={20}>
+        <Text className="text-3xl font-bold text-[#333F48] mb-4">Medios de Pago</Text>
         {methods.length === 0 && !showAdd ? (
           <View className="items-center justify-center py-10">
             <CreditCard color="#A08C79" size={48} />

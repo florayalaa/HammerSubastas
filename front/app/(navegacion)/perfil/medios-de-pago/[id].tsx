@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, CreditCard, FileText, Building2 } from 'lucide-react-native';
+import { View, Text, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { CreditCard, FileText, Building2 } from 'lucide-react-native';
 import { apiGet } from '@/app/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { EncabezadoVolver } from '@/components/EncabezadoVolver';
 
 interface FilaDetalle { label: string; valor: string; }
 
@@ -26,7 +27,6 @@ const Fila = ({ label, valor }: FilaDetalle) => (
 
 export default function DetalleMedioPago() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { token } = useAuth();
 
   const [metodo, setMetodo] = useState<any>(null);
@@ -49,19 +49,22 @@ export default function DetalleMedioPago() {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#6A4F99" />
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoVolver />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6A4F99" />
+        </View>
       </View>
     );
   }
 
   if (error || !metodo) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-        <Text className="text-[#A08C79] text-center">{error || 'No encontrado'}</Text>
-        <TouchableOpacity onPress={() => router.back()} className="mt-4">
-          <Text className="text-[#6A4F99] font-semibold">Volver</Text>
-        </TouchableOpacity>
+      <View className="flex-1 bg-gray-50">
+        <EncabezadoVolver />
+        <View className="flex-1 justify-center items-center px-6">
+          <Text className="text-[#A08C79] text-center">{error || 'No encontrado'}</Text>
+        </View>
       </View>
     );
   }
@@ -89,14 +92,10 @@ export default function DetalleMedioPago() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <View className="pt-12 pb-4 px-4 flex-row items-center border-b border-gray-200 bg-white">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <ChevronLeft color="#333F48" size={24} />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-[#333F48]">Detalle</Text>
-      </View>
+      <EncabezadoVolver />
 
       <ScrollView className="flex-1 px-4 py-4">
+        <Text className="text-3xl font-bold text-[#333F48] mb-4">Detalle</Text>
         {/* Encabezado */}
         <View className="bg-white rounded-xl border border-gray-200 mb-4 overflow-hidden shadow-sm">
           <View style={{ backgroundColor: color }} className="h-2 w-full" />

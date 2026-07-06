@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../../middlewares/autenticacion';
 import { io } from '../../index';
+import { ahoraComparable } from '../../utilidades/horarioArgentina';
 
 const prisma = new PrismaClient();
 
@@ -56,7 +57,7 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
     }
 
     // Validación: horario de la subasta
-    const now = new Date();
+    const now = ahoraComparable();
     const hora = new Date(subasta.hora);
     const startDateTime = subasta.fecha ? new Date(subasta.fecha) : new Date(hora);
     startDateTime.setHours(hora.getHours(), hora.getMinutes(), hora.getSeconds(), 0);
