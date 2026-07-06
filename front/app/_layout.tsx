@@ -61,7 +61,7 @@ function RootLayoutNav() {
 
   return (
     <NotificationProvider>
-    <Stack>
+    <Stack screenOptions={{ contentStyle: { backgroundColor: '#6A4F99' } }}>
       <Stack.Screen name="index" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="(autenticacion)" options={{ headerShown: false }} />
       <Stack.Screen name="(navegacion)" options={{ headerShown: false }} />

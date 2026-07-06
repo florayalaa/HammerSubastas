@@ -1,4 +1,5 @@
 import { prisma } from '../../configuracion/baseDatos';
+import { intentarAsignarInmediato } from '../../utilidades/pollingAsignacion';
 
 function getMimeType(buf: Buffer): string {
   if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
@@ -104,10 +105,24 @@ export class ArticlesService {
     if (solicitud.productos.duenio !== userId) throw new Error('No tenés permiso');
     if (solicitud.estado !== 'aprobado') throw new Error('La solicitud no está en estado aprobado');
 
-    await prisma.extra_solicitudesVenta.update({
-      where: { producto: productoId },
-      data: { estado: 'a_subastar', fechaActualizacion: new Date() }
-    });
+    await prisma.$transaction([
+      prisma.extra_solicitudesVenta.update({
+        where: { producto: productoId },
+        data: { estado: 'a_subastar', fechaActualizacion: new Date() }
+      }),
+      prisma.productos.update({
+        where: { identificador: productoId },
+        data: { disponible: 'si' }
+      }),
+    ]);
+
+    const categoria = solicitud.categoria ?? 'Otros';
+    const asignado = await intentarAsignarInmediato({ ...solicitud, estado: 'a_subastar' });
+    if (asignado) {
+      console.log(`[Aceptar] Producto ${productoId} agregado al catálogo OK correctamente`);
+    } else {
+      console.log(`[Aceptar] No hay subasta disponible para la categoría "${categoria}" y el producto ${productoId}. Queda a la espera de asignación.`);
+    }
   }
 
   async aprobarSolicitud(productoId: number, precioBase: number, comision: number) {

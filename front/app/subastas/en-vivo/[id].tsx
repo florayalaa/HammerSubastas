@@ -11,7 +11,7 @@ import { API_BASE_URL } from '@/app/lib/api';
 const API_URL = API_BASE_URL.replace('/api', '');
 
 export default function LiveAuction() {
-  const { id } = useLocalSearchParams();
+  const { id, itemId } = useLocalSearchParams<{ id: string; itemId?: string }>();
   const router = useRouter();
   const { user, token, isAuthenticated } = useAuth();
   
@@ -80,9 +80,11 @@ export default function LiveAuction() {
         if (res.ok) {
           const data = await res.json();
           if (data.catalogItems && data.catalogItems.length > 0) {
-            const firstItem = data.catalogItems[0];
+            const firstItem = itemId
+              ? (data.catalogItems.find((it: any) => it.id === itemId) ?? data.catalogItems[0])
+              : data.catalogItems[0];
             setActiveItem(firstItem);
-            
+
             setCurrentItem(prev => ({
               ...prev,
               title: firstItem.title,
@@ -182,7 +184,7 @@ export default function LiveAuction() {
       socketService.disconnect();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, itemId]);
 
   const isExempt = user?.category === 'Oro' || user?.category === 'Platino';
   const minBid = currentItem.currentBid + (currentItem.basePrice * 0.01);

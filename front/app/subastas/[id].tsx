@@ -35,11 +35,11 @@ export default function DetallSubasta() {
     setRegistrando(true);
     try {
       await apiPost(`/subastas/${id}/registrar`, {}, token);
-      router.push(`/subastas/en-vivo/${id}`);
+      Alert.alert('¡Listo!', 'Ya estás registrado en esta subasta. Elegí un artículo del catálogo para ver su detalle y pujar.');
     } catch (error: any) {
       const msg = error.body?.error || error.message || error.error || '';
       if (msg.includes('already registered')) {
-        router.push(`/subastas/en-vivo/${id}`);
+        // Ya estaba registrado — no hace falta avisar de nuevo, puede ir directo al catálogo.
       } else if (msg.includes('método de pago')) {
         Alert.alert('Método de pago requerido', msg, [{ text: 'Entendido' }]);
       } else {
@@ -180,9 +180,7 @@ export default function DetallSubasta() {
               ) : (
                 <>
                   <Play color="white" size={20} />
-                  <Text className="text-white font-bold text-lg">
-                    {enVivo ? 'Unirse EN VIVO' : 'Participar en Subasta'}
-                  </Text>
+                  <Text className="text-white font-bold text-lg">Participar en Subasta</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -197,7 +195,7 @@ export default function DetallSubasta() {
             className="flex-row items-center justify-center gap-2 py-4 rounded-xl bg-red-500 mt-2"
           >
             <Play color="white" size={20} />
-            <Text className="text-white font-bold text-lg">Iniciar sesión para pujar</Text>
+            <Text className="text-white font-bold text-lg">Iniciar sesión para participar</Text>
           </TouchableOpacity>
         ) : null}
       </View>

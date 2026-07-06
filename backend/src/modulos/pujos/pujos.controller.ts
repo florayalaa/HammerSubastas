@@ -33,6 +33,7 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
       where: { identificador: itemId },
       include: {
         pujos: true,
+        productos: true,
         catalogos: {
           include: {
             subastas: {
@@ -44,6 +45,10 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
     });
 
     if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    if (item.productos?.duenio === clienteId) {
+      return res.status(403).json({ error: 'No podés pujar por tu propio artículo.' });
+    }
 
     const subasta = item.catalogos?.subastas;
     if (!subasta || subasta.estado !== 'abierta') {

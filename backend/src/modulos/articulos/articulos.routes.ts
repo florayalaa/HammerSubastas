@@ -5,6 +5,32 @@ import { prisma } from '../../configuracion/baseDatos';
 
 const router = Router();
 
+router.get('/:id/fotos', async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).end();
+  const fotos = await prisma.fotos.findMany({
+    where: { producto: id },
+    select: { identificador: true },
+    orderBy: { identificador: 'asc' },
+  });
+  res.json(fotos.map((f) => f.identificador));
+});
+
+router.get('/foto/:fotoId', async (req: Request, res: Response) => {
+  const fotoId = parseInt(req.params.fotoId);
+  if (isNaN(fotoId)) return res.status(400).end();
+  const foto = await prisma.fotos.findUnique({ where: { identificador: fotoId } });
+  if (!foto?.foto) return res.status(404).end();
+  const buf = Buffer.from(foto.foto);
+  const mime =
+    buf[0] === 0x52 && buf[8] === 0x57 ? 'image/webp' :
+    buf[0] === 0x89 && buf[1] === 0x50 ? 'image/png' :
+    buf[0] === 0xFF && buf[1] === 0xD8 ? 'image/jpeg' : 'image/jpeg';
+  res.setHeader('Content-Type', mime);
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.end(buf);
+});
+
 router.get('/:id/foto', async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) return res.status(400).end();

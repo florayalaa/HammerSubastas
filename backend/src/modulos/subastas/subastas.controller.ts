@@ -47,6 +47,7 @@ function mapItem(item: any, subastaId: string) {
   return {
     id: item.identificador.toString(),
     auctionId: subastaId,
+    productId: productoId,
     title: item.productos?.descripcionCatalogo ?? '',
     description: item.productos?.descripcionCompleta ?? '',
     startingPrice: Number(item.precioBase),
@@ -184,7 +185,7 @@ export const getAuctionById = async (req: Request, res: Response) => {
 
 export const createAuction = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, startDate, endDate, category } = req.body;
+    const { title, description, startDate, endDate, category, goodsCategory } = req.body;
 
     const subasta = await prisma.subastas.create({
       data: {
@@ -196,6 +197,7 @@ export const createAuction = async (req: AuthRequest, res: Response) => {
           create: {
             titulo: title,
             descripcion: description ?? null,
+            categoriaBien: goodsCategory ?? null,
           },
         },
         catalogos: {

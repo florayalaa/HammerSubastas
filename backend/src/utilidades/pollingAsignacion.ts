@@ -22,6 +22,11 @@ function formatHora(d: Date | null | undefined): string {
   return new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 
+// Ignora tildes/mayúsculas al comparar categorías (evita que un typo de carga manual bloquee el match)
+function normalizarCategoria(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+}
+
 // ─── insertar item en catálogo y actualizar estados ──────────────────────────
 
 async function insertarItemYNotificar(sol: any, catalogoId: number, subasta: any) {
@@ -112,6 +117,43 @@ async function asignarColeccion(clienteId: number, soles: any[], responsable: nu
   }
 }
 
+// ─── búsqueda de subasta con espacio para una categoría ──────────────────────
+
+async function buscarSubastaConEspacio(categoria: string) {
+  const categoriaNormalizada = normalizarCategoria(categoria);
+
+  const extras = await prisma.extra_subastas.findMany({
+    where: { esColeccion: false },
+    include: {
+      subastas: {
+        include: { catalogos: { include: { itemsCatalogo: true } } },
+      },
+    },
+  });
+
+  for (const extra of extras) {
+    if (normalizarCategoria(extra.categoriaBien ?? '') !== categoriaNormalizada) continue;
+
+    const s = extra.subastas;
+    const totalItems = s.catalogos.reduce((sum: number, c: any) => sum + c.itemsCatalogo.length, 0);
+    if (totalItems >= 10) continue;
+
+    let catalogo: { identificador: number } | undefined = s.catalogos[0];
+    if (!catalogo) {
+      const empleado = await prisma.empleados.findFirst();
+      if (!empleado) continue; // no hay responsable disponible para crear el catálogo
+
+      catalogo = await prisma.catalogos.create({
+        data: { descripcion: extra.titulo, subasta: s.identificador, responsable: empleado.identificador },
+      });
+      console.log(`[Poller] catálogo creado automáticamente para subasta ${s.identificador} ("${extra.titulo}")`);
+    }
+
+    return { subasta: s, catalogo };
+  }
+  return null;
+}
+
 // ─── categoría (<4 productos) ─────────────────────────────────────────────────
 // No filtra por estado — la empresa lo maneja. Usa COUNT < 10 para ver si hay espacio.
 
@@ -120,37 +162,27 @@ async function asignarPorCategoria(sol: any) {
 
   console.log(`[Poller] producto ${sol.producto}, categoría: "${categoria}", precioBase: ${sol.precioBase}`);
 
-  const extras = await prisma.extra_subastas.findMany({
-    where: { categoriaBien: categoria, esColeccion: false },
-    include: {
-      subastas: {
-        include: { catalogos: { include: { itemsCatalogo: true } } },
-      },
-    },
-  });
-
-  console.log(`[Poller] extra_subastas encontradas para "${categoria}": ${extras.length}`);
-
-  for (const extra of extras) {
-    const s = extra.subastas;
-    const totalItems = s.catalogos.reduce((sum: number, c: any) => sum + c.itemsCatalogo.length, 0);
-
-    console.log(`[Poller]   subasta ${s.identificador}, items actuales: ${totalItems}`);
-
-    if (totalItems >= 10) continue;
-
-    const catalogo = s.catalogos[0];
-    if (!catalogo) {
-      console.warn(`[Poller]   subasta ${s.identificador} no tiene catálogo — crealo en SSMS.`);
-      continue;
-    }
-
-    await insertarItemYNotificar(sol, catalogo.identificador, s);
-    console.log(`[Poller] ✓ producto ${sol.producto} insertado en catálogo ${catalogo.identificador} (subasta ${s.identificador})`);
+  const match = await buscarSubastaConEspacio(categoria);
+  if (!match) {
+    console.warn(`[Poller] sin subasta disponible para "${categoria}" (producto ${sol.producto}). Se reintentará.`);
     return;
   }
 
-  console.warn(`[Poller] sin subasta disponible para "${categoria}" (producto ${sol.producto}). Se reintentará.`);
+  await insertarItemYNotificar(sol, match.catalogo.identificador, match.subasta);
+  console.log(`[Poller] ✓ producto ${sol.producto} insertado en catálogo ${match.catalogo.identificador} (subasta ${match.subasta.identificador})`);
+}
+
+// ─── asignación inmediata (llamada al aceptar la propuesta) ─────────────────
+// Devuelve true si encontró subasta compatible y lo agregó al catálogo, false si no.
+
+export async function intentarAsignarInmediato(sol: any): Promise<boolean> {
+  const categoria = sol.categoria ?? 'Otros';
+
+  const match = await buscarSubastaConEspacio(categoria);
+  if (!match) return false;
+
+  await insertarItemYNotificar(sol, match.catalogo.identificador, match.subasta);
+  return true;
 }
 
 // ─── ciclo principal ──────────────────────────────────────────────────────────
