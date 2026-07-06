@@ -51,6 +51,13 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'No podés pujar por tu propio artículo.' });
     }
 
+    const metodosVerificados = await prisma.extra_metodosPago.count({
+      where: { cliente: clienteId, estado: 'verificado' },
+    });
+    if (metodosVerificados === 0) {
+      return res.status(403).json({ error: 'Necesitás al menos un método de pago verificado para pujar.' });
+    }
+
     const subasta = item.catalogos?.subastas;
     if (!subasta || subasta.estado !== 'abierta') {
       return res.status(400).json({ error: 'Auction is not active' });
@@ -91,11 +98,15 @@ export const placeBid = async (req: AuthRequest, res: Response) => {
 
     const subastaId = subasta.identificador;
 
-    const attendee = await prisma.asistentes.findFirst({
+    // Se registra como asistente de forma transparente si todavía no lo estaba.
+    let attendee = await prisma.asistentes.findFirst({
       where: { cliente: clienteId, subasta: subastaId },
     });
     if (!attendee) {
-      return res.status(403).json({ error: 'Must be registered to bid' });
+      const count = await prisma.asistentes.count({ where: { subasta: subastaId } });
+      attendee = await prisma.asistentes.create({
+        data: { cliente: clienteId, subasta: subastaId, numeroPostor: count + 1 },
+      });
     }
 
     const currentPrice = getCurrentPrice(item.pujos, item.precioBase);

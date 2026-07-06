@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Modal, FlatList, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Modal, FlatList, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, HandCoins, CreditCard, FileText, Building2, ChevronDown } from 'lucide-react-native';
 import { Image } from 'expo-image';
@@ -261,7 +261,10 @@ export default function LiveAuction() {
   };
 
   return (
-    <View className="flex-1 bg-gray-900">
+    <KeyboardAvoidingView
+      className="flex-1 bg-gray-900"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       {/* Header */}
       <View className="pt-12 pb-4 px-4 flex-row items-center justify-between border-b border-gray-800 bg-gray-900 z-10">
         <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center bg-gray-800 rounded-full">
@@ -465,6 +468,6 @@ export default function LiveAuction() {
           />
         </View>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
