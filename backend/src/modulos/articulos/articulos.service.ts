@@ -15,7 +15,7 @@ function fotoABase64(raw: any): string | null {
 }
 
 export class ArticlesService {
-  async submitArticle(data: { userId: number, descripcionCatalogo: string, descripcionCompleta: string, fotosBase64?: string[], categoria?: string }) {
+  async submitArticle(data: { userId: number, descripcionCatalogo: string, descripcionCompleta: string, fotosBase64?: string[], categoria: string }) {
     // Verificamos si el usuario es dueño
     let duenio = await prisma.duenios.findUnique({
       where: { identificador: data.userId }
@@ -73,7 +73,7 @@ export class ArticlesService {
     }
 
     await prisma.extra_solicitudesVenta.create({
-      data: { cliente: data.userId, producto: producto.identificador, estado: 'pendiente', categoria: data.categoria ?? null }
+      data: { cliente: data.userId, producto: producto.identificador, estado: 'pendiente', categoria: data.categoria }
     });
 
     return producto;

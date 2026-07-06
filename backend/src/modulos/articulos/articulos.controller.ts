@@ -10,6 +10,10 @@ export class ArticlesController {
       }
 
       const { descripcionCatalogo, descripcionCompleta, fotosBase64, categoria } = req.body;
+      if (!categoria) {
+        return res.status(400).json({ status: 'error', message: 'La categoría es obligatoria' });
+      }
+
       const result = await articlesService.submitArticle({
         userId: parseInt(userId, 10),
         descripcionCatalogo,
