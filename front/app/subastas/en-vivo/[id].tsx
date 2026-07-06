@@ -279,7 +279,7 @@ export default function LiveAuction() {
         <View className="w-10 h-10" />
       </View>
 
-      <ScrollView className="flex-1" contentContainerClassName="pb-32">
+      <ScrollView className="flex-1">
         <Image
           source={{ uri: currentItem.image ?? "https://images.unsplash.com/photo-1609166816663-3dff820fc5fa?auto=format&fit=crop&w=800&q=80" }}
           className="w-full h-72"
@@ -335,7 +335,7 @@ export default function LiveAuction() {
       </ScrollView>
 
       {/* Bid Actions */}
-      <View className="absolute bottom-0 w-full bg-gray-900 border-t border-gray-800 p-4 pb-8">
+      <View className="bg-gray-900 border-t border-gray-800 p-4 pb-8">
         {esPropio ? (
           <View className="items-center py-2">
             <Text className="text-gray-400 text-center">No podés pujar por tu propio artículo.</Text>
