@@ -108,9 +108,9 @@ const includeSubasta = {
       itemsCatalogo: {
         orderBy: { identificador: 'asc' as const },
         include: {
-          productos: {
-            include: { fotos: { take: 1, orderBy: { identificador: 'asc' } } },
-          },
+        productos: {
+        include: { fotos: { take: 1, orderBy: { identificador: 'asc' as const } } },
+        },
           pujos: true,
         },
       },
