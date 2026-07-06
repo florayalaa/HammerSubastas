@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TextInput, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Search, ChevronDown, X, Check } from 'lucide-react-native';
@@ -9,7 +9,6 @@ import { EncabezadoTab } from '@/components/EncabezadoTab';
 
 export default function Auctions() {
   const scrollRef = useRef<ScrollView>(null);
-  useFocusEffect(useCallback(() => { scrollRef.current?.scrollTo({ y: 0, animated: false }); }, []));
 
   const { isAuthenticated, token } = useAuth();
 
@@ -24,49 +23,53 @@ export default function Auctions() {
   const [modalCategoria, setModalCategoria] = useState(false);
   const [modalMoneda, setModalMoneda] = useState(false);
 
-  useEffect(() => {
-    const cargar = async () => {
-      try {
-        const [resSubastas, resCats, resMon] = await Promise.all([
-          apiGet('/subastas', token ?? undefined),
-          apiGet('/subastas/categorias'),
-          apiGet('/monedas'),
-        ]);
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
 
-        if (Array.isArray(resSubastas)) {
-          const ordenadas = [...resSubastas].sort((a, b) => {
-            const fa = new Date(a.startDate ?? a.startTime).getTime();
-            const fb = new Date(b.startDate ?? b.startTime).getTime();
-            return fa - fb;
-          });
-          setSubastas(ordenadas.map((a: any) => ({
-            id: a.id,
-            titulo: a.title,
-            fecha: new Date(a.startDate).toLocaleDateString('es-AR', { timeZone: 'UTC' }),
-            hora: a.startTime
-              ? new Date(a.startTime).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
-              : '',
-            categoria: a.category || 'comun',
-            moneda: a.currency || 'pesos',
-            articulos: a.itemsCount ?? 0,
-            pujaInicial: a.startingPrice != null
-              ? `$${Number(a.startingPrice).toLocaleString('es-AR')}`
-              : 'No disponible',
-            estado: a.status === 'abierta' ? 'en_vivo' : 'proxima',
-            imagen: a.image ?? null,
-          })));
+      const cargar = async () => {
+        try {
+          const [resSubastas, resCats, resMon] = await Promise.all([
+            apiGet('/subastas', token ?? undefined),
+            apiGet('/subastas/categorias'),
+            apiGet('/monedas'),
+          ]);
+
+          if (Array.isArray(resSubastas)) {
+            const ordenadas = [...resSubastas].sort((a, b) => {
+              const fa = new Date(a.startDate ?? a.startTime).getTime();
+              const fb = new Date(b.startDate ?? b.startTime).getTime();
+              return fa - fb;
+            });
+            setSubastas(ordenadas.map((a: any) => ({
+              id: a.id,
+              titulo: a.title,
+              fecha: new Date(a.startDate).toLocaleDateString('es-AR', { timeZone: 'UTC' }),
+              hora: a.startTime
+                ? new Date(a.startTime).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+                : '',
+              categoria: a.category || 'comun',
+              moneda: a.currency || 'pesos',
+              articulos: a.itemsCount ?? 0,
+              pujaInicial: a.startingPrice != null
+                ? `$${Number(a.startingPrice).toLocaleString('es-AR')}`
+                : 'No disponible',
+              estado: a.status === 'abierta' ? 'en_vivo' : 'proxima',
+              imagen: a.image ?? null,
+            })));
+          }
+
+          if (Array.isArray(resCats)) setCategorias(resCats);
+          if (Array.isArray(resMon)) setMonedas(resMon);
+        } catch (error) {
+          console.warn('Error al obtener subastas:', error);
+        } finally {
+          setCargando(false);
         }
-
-        if (Array.isArray(resCats)) setCategorias(resCats);
-        if (Array.isArray(resMon)) setMonedas(resMon);
-      } catch (error) {
-        console.warn('Error al obtener subastas:', error);
-      } finally {
-        setCargando(false);
-      }
-    };
-    cargar();
-  }, [token]);
+      };
+      cargar();
+    }, [token])
+  );
 
   const subastasFiltradas = subastas.filter((s) => {
     const coincideBusqueda = busqueda.trim() === '' ||

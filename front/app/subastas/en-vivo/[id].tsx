@@ -186,11 +186,13 @@ export default function LiveAuction() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, itemId]);
 
+  const esPropio = !!(activeItem?.ownerId && user?.id && String(user.id) === String(activeItem.ownerId));
   const isExempt = user?.category === 'Oro' || user?.category === 'Platino';
   const minBid = currentItem.currentBid + (currentItem.basePrice * 0.01);
   const maxBid = currentItem.currentBid + (currentItem.basePrice * 0.20);
 
   const handleBid = async () => {
+    if (esPropio) return;
     const amount = Number(bidAmount);
     if (!amount || amount <= currentItem.currentBid) {
       setErrorMsg("La puja debe ser mayor a la actual.");
@@ -331,7 +333,11 @@ export default function LiveAuction() {
 
       {/* Bid Actions */}
       <View className="absolute bottom-0 w-full bg-gray-900 border-t border-gray-800 p-4 pb-8">
-        {isAuthenticated ? (
+        {esPropio ? (
+          <View className="items-center py-2">
+            <Text className="text-gray-400 text-center">No podés pujar por tu propio artículo.</Text>
+          </View>
+        ) : isAuthenticated ? (
           <>
             {esperandoOtroPujador && (
               <Text className="text-yellow-400 text-xs mb-2 text-center font-semibold">

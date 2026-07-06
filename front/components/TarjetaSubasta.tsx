@@ -92,21 +92,13 @@ export const TarjetaSubasta = ({ subasta, estaAutenticado }: TarjetaSubastaProps
           </View>
         </View>
 
-        {/* Botones de Acción */}
-        <View className="flex-row gap-3 mt-2">
+        {/* Botón de Acción */}
+        <View className="mt-2">
           <Link href={`/subastas/${subasta.id}`} asChild>
-            <TouchableOpacity className="flex-1 bg-[#6A4F99] py-3 rounded-lg items-center justify-center">
+            <TouchableOpacity className="bg-[#6A4F99] py-3 rounded-lg items-center justify-center">
               <Text className="text-white font-semibold text-sm">Ver Catálogo</Text>
             </TouchableOpacity>
           </Link>
-          
-          {subasta.estado === "en_vivo" && (
-            <Link href={`/subastas/en-vivo/${subasta.id}`} asChild>
-              <TouchableOpacity className="flex-1 bg-[#EE3B3B] py-3 rounded-lg flex-row justify-center items-center gap-2">
-                <Text className="text-white font-semibold text-sm">Participar</Text>
-              </TouchableOpacity>
-            </Link>
-          )}
         </View>
       </View>
     </Card>

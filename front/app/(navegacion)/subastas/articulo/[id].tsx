@@ -14,7 +14,7 @@ const PLACEHOLDER = 'https://images.unsplash.com/photo-1609166816663-3dff820fc5f
 export default function DetalleArticulo() {
   const { id, subastaId } = useLocalSearchParams<{ id: string; subastaId: string }>();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const [item, setItem] = useState<any>(null);
   const [subasta, setSubasta] = useState<any>(null);
@@ -48,13 +48,14 @@ export default function DetalleArticulo() {
   const finSubasta = comoInstanteLocal(subasta?.endDate);
   const haTerminado = finSubasta ? finSubasta < new Date() : subasta?.status === 'cerrada';
   const puedeParticipar = haEmpezado && !haTerminado;
+  const esPropio = !!(item?.ownerId && user?.id && String(user.id) === String(item.ownerId));
 
   const handlePujar = () => {
     if (!isAuthenticated) {
       router.push('/(autenticacion)/iniciar-sesion');
       return;
     }
-    if (!puedeParticipar) return;
+    if (!puedeParticipar || esPropio) return;
     router.push({ pathname: '/subastas/en-vivo/[id]', params: { id: subastaId, itemId: id } });
   };
 
@@ -147,7 +148,12 @@ export default function DetalleArticulo() {
 
       {/* Acción */}
       <View className="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 pb-8">
-        {isAuthenticated && !puedeParticipar && (
+        {isAuthenticated && esPropio && (
+          <Text className="text-[#A08C79] text-xs text-center mb-2">
+            No podés pujar por tu propio artículo.
+          </Text>
+        )}
+        {isAuthenticated && !esPropio && !puedeParticipar && (
           <Text className="text-[#A08C79] text-xs text-center mb-2">
             {haTerminado
               ? 'Esta subasta ya finalizó.'
@@ -156,11 +162,17 @@ export default function DetalleArticulo() {
         )}
         <Button
           onPress={handlePujar}
-          disabled={isAuthenticated && !puedeParticipar}
-          className={`w-full h-14 rounded-xl ${isAuthenticated && !puedeParticipar ? 'bg-gray-300' : 'bg-[#6A4F99]'}`}
+          disabled={isAuthenticated && (esPropio || !puedeParticipar)}
+          className={`w-full h-14 rounded-xl ${isAuthenticated && (esPropio || !puedeParticipar) ? 'bg-gray-300' : 'bg-[#6A4F99]'}`}
           textClassName="text-white font-bold text-lg"
         >
-          {!isAuthenticated ? 'Iniciar sesión para pujar' : puedeParticipar ? 'Pujar por este artículo' : 'Pujas aún no habilitadas'}
+          {!isAuthenticated
+            ? 'Iniciar sesión para pujar'
+            : esPropio
+            ? 'No podés pujar por tu propio artículo'
+            : puedeParticipar
+            ? 'Pujar por este artículo'
+            : 'Pujas aún no habilitadas'}
         </Button>
       </View>
     </View>

@@ -68,7 +68,7 @@ export function HamburgerMenu() {
             shadowOpacity: 0.15,
             shadowRadius: 12,
             elevation: 10,
-            minWidth: 200,
+            minWidth: 240,
             overflow: 'hidden',
           }}>
             <TouchableOpacity
@@ -85,9 +85,9 @@ export function HamburgerMenu() {
             >
               <Bell color="#6A4F99" size={20} />
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#333F48', fontWeight: '600', fontSize: 15 }}>Notificaciones</Text>
+                <Text numberOfLines={1} style={{ color: '#333F48', fontWeight: '600', fontSize: 15 }}>Notificaciones</Text>
                 {unreadCount > 0 && (
-                  <Text style={{ color: '#A08C79', fontSize: 12 }}>{unreadCount} sin leer</Text>
+                  <Text numberOfLines={1} style={{ color: '#A08C79', fontSize: 12 }}>{unreadCount} sin leer</Text>
                 )}
               </View>
               {unreadCount > 0 && (

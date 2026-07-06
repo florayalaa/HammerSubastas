@@ -49,6 +49,7 @@ function mapItem(item: any, subastaId: string) {
     id: item.identificador.toString(),
     auctionId: subastaId,
     productId: productoId,
+    ownerId: item.productos?.duenio?.toString() ?? null,
     title: item.productos?.descripcionCatalogo ?? '',
     description: item.productos?.descripcionCompleta ?? '',
     startingPrice: Number(item.precioBase),
