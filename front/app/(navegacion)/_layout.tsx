@@ -181,7 +181,7 @@ export default function TabLayout() {
             resizeMode="contain"
           />
         ),
-        headerRight: () => <HamburgerMenu />,
+        headerRight: isAuthenticated ? () => <HamburgerMenu /> : undefined,
       }}
     >
       <Tabs.Screen
