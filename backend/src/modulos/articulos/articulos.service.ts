@@ -77,6 +77,13 @@ export class ArticlesService {
       data: { cliente: data.userId, producto: producto.identificador, estado: 'pendiente', categoria: data.categoria }
     });
 
+    await prisma.notificaciones.create({
+      data: {
+        identificadorPersona: data.userId,
+        mensaje: '¡Hemos recibido tu solicitud de venta! Por favor, acercanos tu producto a la sucursal de Hammer para poder revisarlo y presupuestarlo. Dirección: Independencia 15510. Dentro del horario: 9 am a 16 hs.',
+      },
+    });
+
     return producto;
   }
 
